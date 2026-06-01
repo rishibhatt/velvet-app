@@ -1,0 +1,142 @@
+export type Mood =
+  | "wedding"
+  | "travel"
+  | "fashion"
+  | "home"
+  | "events"
+  | "lifestyle"
+  | "other";
+
+export type BoardRole = "viewer" | "editor" | "admin";
+
+export type ItemType = "url" | "image" | "video" | "note";
+
+export type ItemSource =
+  | "instagram"
+  | "youtube"
+  | "amazon"
+  | "pinterest"
+  | "web"
+  | "upload";
+
+export interface Profile {
+  id: string;
+  username: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  website: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Board {
+  id: string;
+  owner_id: string;
+  title: string;
+  slug: string | null;
+  description: string | null;
+  cover_url: string | null;
+  mood: Mood | null;
+  is_public: boolean;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  item_count?: number;
+  members?: BoardMember[];
+}
+
+export interface BoardMember {
+  id: string;
+  board_id: string;
+  user_id: string;
+  role: BoardRole;
+  created_at: string;
+  profile?: Profile;
+}
+
+export interface Item {
+  id: string;
+  board_id: string;
+  user_id: string;
+  type: ItemType;
+  source_url: string | null;
+  image_url: string | null;
+  title: string | null;
+  description: string | null;
+  source: ItemSource | null;
+  notes: string | null;
+  sort_order: number;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  tags?: Tag[];
+  is_favorited?: boolean;
+}
+
+export interface Tag {
+  id: string;
+  board_id: string;
+  name: string;
+  color: string | null;
+  created_at: string;
+}
+
+export interface Comment {
+  id: string;
+  item_id: string;
+  user_id: string;
+  content: string;
+  parent_id: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  profile?: Profile;
+  likes?: number;
+}
+
+export interface ActivityLog {
+  id: string;
+  board_id: string;
+  user_id: string;
+  action: string;
+  entity: string | null;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  profile?: Profile;
+}
+
+export interface CreateBoardInput {
+  title: string;
+  mood: Mood;
+  isPublic: boolean;
+  description?: string;
+}
+
+export interface UpdateBoardInput {
+  title?: string;
+  description?: string | null;
+  isPublic?: boolean;
+  coverUrl?: string | null;
+  mood?: Mood;
+}
+
+export interface SaveItemInput {
+  boardId: string;
+  type: ItemType;
+  sourceUrl?: string;
+  imageUrl?: string;
+  title?: string;
+  description?: string;
+  source?: ItemSource;
+  notes?: string;
+  tags?: string[];
+}
+
+export interface UrlMetadata {
+  title: string;
+  imageUrl: string | null;
+  description: string | null;
+  source: ItemSource;
+}

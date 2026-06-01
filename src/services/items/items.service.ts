@@ -1,0 +1,211 @@
+import { requireSupabase } from "@/lib/supabase-errors";
+import { isSupabaseConfigured } from "@/lib/utils";
+import { createClient } from "@/services/supabase/client";
+import type { Comment, Item, SaveItemInput } from "@/types/board.types";
+import type { Profile } from "@/types/board.types";
+
+const ITEM_SELECT = `
+  *,
+  item_tags(
+    tag:tags(id, board_id, name, color, created_at)
+  )
+`;
+
+function mapItem(row: Record<string, unknown>): Item {
+  const itemTags = (row.item_tags as Array<{ tag: unknown }>) ?? [];
+  const { item_tags: _tags, ...rest } = row;
+  return {
+    ...(rest as unknown as Item),
+    tags: itemTags.map((it) => it.tag).filter(Boolean) as Item["tags"],
+  };
+}
+
+export const itemsService = {
+  async getItems(boardId: string): Promise<Item[]> {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("items")
+      .select(ITEM_SELECT)
+      .eq("board_id", boardId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => mapItem(row as Record<string, unknown>));
+  },
+
+  async getItemById(itemId: string): Promise<Item | null> {
+    if (!isSupabaseConfigured()) return null;
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("items")
+      .select(ITEM_SELECT)
+      .eq("id", itemId)
+      .single();
+    if (error) return null;
+    return mapItem(data as Record<string, unknown>);
+  },
+
+  async saveItem(input: SaveItemInput): Promise<Item> {
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in to save items.");
+
+    const { data, error } = await supabase
+      .from("items")
+      .insert({
+        board_id: input.boardId,
+        user_id: user.id,
+        type: input.type,
+        source_url: input.sourceUrl ?? null,
+        image_url: input.imageUrl ?? null,
+        title: input.title ?? null,
+        description:
+          input.description ??
+          (input.type === "note" ? input.notes ?? null : null),
+        source: input.source ?? "web",
+        notes: input.notes ?? null,
+      })
+      .select(ITEM_SELECT)
+      .single();
+
+    if (error) throw error;
+
+    const savedItem = mapItem(data as Record<string, unknown>);
+
+    if (input.tags?.length) {
+      for (const tagName of input.tags) {
+        const { data: tag } = await supabase
+          .from("tags")
+          .upsert(
+            { board_id: input.boardId, name: tagName },
+            { onConflict: "board_id,name" },
+          )
+          .select()
+          .single();
+        const tagRow = tag as { id: string } | null;
+        if (tagRow) {
+          await supabase
+            .from("item_tags")
+            .upsert({ item_id: savedItem.id, tag_id: tagRow.id });
+        }
+      }
+    }
+
+    const firstItemImage = input.imageUrl;
+    if (firstItemImage) {
+      const { data: board } = await supabase
+        .from("boards")
+        .select("cover_url")
+        .eq("id", input.boardId)
+        .single();
+      const boardRow = board as { cover_url: string | null } | null;
+      if (boardRow && !boardRow.cover_url) {
+        await supabase
+          .from("boards")
+          .update({ cover_url: firstItemImage })
+          .eq("id", input.boardId);
+      }
+    }
+
+    await supabase.from("activity_logs").insert({
+      board_id: input.boardId,
+      user_id: user.id,
+      action: "saved an item",
+      entity: "item",
+      entity_id: savedItem.id,
+      metadata: { title: input.title },
+    });
+
+    return savedItem;
+  },
+
+  async deleteItem(itemId: string) {
+    requireSupabase();
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("items")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", itemId);
+    if (error) throw error;
+  },
+};
+
+export const commentsService = {
+  async getComments(itemId: string): Promise<Comment[]> {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("comments")
+      .select("*, profile:profiles(*)")
+      .eq("item_id", itemId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as Comment[];
+  },
+
+  async addComment(itemId: string, content: string): Promise<Comment> {
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in to comment.");
+
+    const { data: item } = await supabase
+      .from("items")
+      .select("board_id")
+      .eq("id", itemId)
+      .single();
+    const itemRow = item as { board_id: string } | null;
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        item_id: itemId,
+        user_id: user.id,
+        content,
+      })
+      .select("*, profile:profiles(*)")
+      .single();
+
+    if (error) throw error;
+
+    const comment = data as Comment;
+
+    if (itemRow?.board_id) {
+      await supabase.from("activity_logs").insert({
+        board_id: itemRow.board_id,
+        user_id: user.id,
+        action: "commented on an item",
+        entity: "comment",
+        entity_id: comment.id,
+      });
+    }
+
+    return comment;
+  },
+};
+
+export const activityService = {
+  async getBoardActivity(boardId: string) {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("activity_logs")
+      .select("*, profile:profiles(*)")
+      .eq("board_id", boardId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    return data ?? [];
+  },
+};

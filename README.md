@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Velvet
 
-## Getting Started
+**Save inspiration from anywhere. Organize it into something useful.**
 
-First, run the development server:
+Collaborative moodboards for travel, weddings, fashion, home, and life planning — aligned with the Velvet PRD MVP.
+
+## Quick fix: images & collections not showing
+
+### 1. Images broken (uploads show blank)
+
+Next.js was blocking Supabase Storage URLs (`resolved to private ip`). The app now uses `VelvetImage` with optimization bypass for `*.supabase.co`. **Restart dev server** after pulling.
+
+### 2. Collections not loading
+
+Run migrations in Supabase SQL Editor **in order**:
+
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_rls_policies.sql`
+3. **`003_fix_rls_and_storage.sql`** — fixes RLS recursion / "Failed to fetch"
+4. **`004_slug_and_item_policies.sql`** — public URLs, item delete, slugs
+
+Then hard-refresh the browser.
+
+## Supabase dashboard checklist
+
+| Setting | Value |
+|---------|--------|
+| Email auth | Enabled |
+| Confirm email | **Off** for local dev |
+| Site URL | `http://localhost:3000` |
+| Redirect URLs | `http://localhost:3000/auth/callback` |
+| Google OAuth (optional) | Same redirect URL |
+| Storage | Bucket `velvet-uploads` (from migration 003) |
+
+## MVP features (PRD)
+
+| Feature | Status |
+|---------|--------|
+| Email / Google auth | ✅ |
+| Create collection (title, description, mood, privacy) | ✅ |
+| Save link (metadata fetch) | ✅ |
+| Save image upload | ✅ |
+| Save text note | ✅ |
+| Moodboard masonry grid | ✅ |
+| Public / private toggle | ✅ |
+| Public page `/c/[slug]` (no login) | ✅ |
+| Creator profile `/u/[username]` | ✅ |
+| Edit collection (settings modal) | ✅ |
+| Delete items | ✅ |
+| Collab panel + activity | ✅ |
+| Collection duplication | Phase 2 |
+| Mobile share extension | Phase 2 |
+
+## Routes
+
+- `/` — Your collections
+- `/boards/[id]` — Collection detail
+- `/c/[slug]` — Public collection (shareable)
+- `/u/[username]` — Public creator profile
+- `/setup` — Backend setup guide
+
+## Run locally
 
 ```bash
+npm install
+cp .env.local.example .env.local   # add Supabase URL + anon key
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Health check: [http://localhost:3000/api/health](http://localhost:3000/api/health)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 · TypeScript · Tailwind v4 · Supabase · TanStack Query · Zustand · Framer Motion
