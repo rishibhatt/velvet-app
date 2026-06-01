@@ -1,4 +1,4 @@
-import { requireSupabase } from "@/lib/supabase-errors";
+import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
 import type { Comment, Item, SaveItemInput } from "@/types/board.types";
@@ -128,11 +128,31 @@ export const itemsService = {
   async deleteItem(itemId: string) {
     requireSupabase();
     const supabase = createClient();
-    const { error } = await supabase
+
+    const { error: rpcError } = await supabase.rpc("soft_delete_item", {
+      p_item_id: itemId,
+    });
+
+    if (!rpcError) return;
+
+    const rpcMessage = parseSupabaseError(rpcError);
+    const rpcMissing =
+      rpcMessage.includes("soft_delete_item") ||
+      rpcMessage.includes("Could not find the function");
+
+    if (!rpcMissing) {
+      throw new Error(rpcMessage);
+    }
+
+    const { error: updateError } = await supabase
       .from("items")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", itemId);
-    if (error) throw error;
+      .eq("id", itemId)
+      .is("deleted_at", null);
+
+    if (updateError) {
+      throw new Error(parseSupabaseError(updateError));
+    }
   },
 };
 

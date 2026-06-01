@@ -3,6 +3,7 @@ import { inter, playfair } from "@/lib/fonts";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
+import { GlobalModals } from "@/components/layouts/GlobalModals";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,7 +22,10 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-body text-on-surface antialiased">
         <QueryProvider>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              {children}
+              <GlobalModals />
+            </ToastProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

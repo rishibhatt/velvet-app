@@ -41,10 +41,10 @@ export function ErrorAlert({
         <Button
           variant="secondary"
           size="sm"
+          icon={RefreshCw}
           onClick={onRetry}
           className="w-full shrink-0 sm:w-auto"
         >
-          <RefreshCw className="h-4 w-4" />
           Try again
         </Button>
       )}

@@ -57,6 +57,8 @@ export function useDeleteItem(boardId: string) {
     meta: { errorContext: "item" },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
+      queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
       velvetToast.success("Removed from collection");
     },
   });

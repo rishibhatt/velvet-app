@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { Navbar } from "@/components/organisms/Navbar";
 import { CreateBoardModal } from "@/features/boards/components/CreateBoardModal";
 import { SaveModal } from "@/components/organisms/SaveModal";
-import { ItemDetailModal } from "@/components/organisms/ItemDetailModal";
 import { SupabaseGuard } from "@/components/layouts/SupabaseGuard";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -19,7 +18,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="relative z-10">{children}</div>
         <CreateBoardModal />
         <SaveModal />
-        <ItemDetailModal />
       </div>
     </SupabaseGuard>
   );

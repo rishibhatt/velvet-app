@@ -6,6 +6,8 @@ import { BadgeCheck, Heart, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Avatar } from "@/components/atoms/Avatar";
+import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
+import { hasMultipleCollaborators } from "@/lib/collaborators";
 import { ROUTES } from "@/constants/routes";
 import { getMoodEmoji, getMoodLabel } from "@/constants/moods";
 import { useToggleBoardLike } from "@/queries/likes/mutations";
@@ -38,6 +40,7 @@ export function ExploreCollectionCard({
     (board.mood ? `${moodLabel} moodboard` : "Curated collection");
   const likeCount = board.like_count ?? 0;
   const isLiked = board.is_liked ?? false;
+  const showCollab = hasMultipleCollaborators(board);
 
   const handleLike = (e: MouseEvent) => {
     e.preventDefault();
@@ -79,9 +82,14 @@ export function ExploreCollectionCard({
             aria-hidden
           />
 
-          <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-on-surface shadow-sm sm:top-3.5 sm:left-3.5 sm:px-3 sm:text-xs">
-            {getMoodEmoji(board.mood)} {moodLabel.toLowerCase()}
-          </span>
+          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2 sm:top-3.5 sm:left-3.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-on-surface shadow-sm sm:px-3 sm:text-xs">
+              {getMoodEmoji(board.mood)} {moodLabel.toLowerCase()}
+            </span>
+            {showCollab && (
+              <CollaboratorChips board={board} className="bg-white/95" />
+            )}
+          </div>
 
           <button
             type="button"

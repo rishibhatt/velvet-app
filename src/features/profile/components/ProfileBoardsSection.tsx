@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FolderOpen, Heart, Plus } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
+import { UI_LABELS } from "@/constants/ui-labels";
 import {
   BoardCard,
   BoardCardSkeleton,
@@ -46,7 +47,7 @@ function ProfileBoardsEmpty({
       <h3 className="font-display text-xl text-on-surface sm:text-2xl">
         {isLiked
           ? "No liked collections yet"
-          : "You haven't created any boards yet"}
+          : "You haven't created any collections yet"}
       </h3>
       <p className="mt-2 max-w-sm text-sm leading-relaxed text-on-surface-variant sm:text-base">
         {isLiked
@@ -57,11 +58,11 @@ function ProfileBoardsEmpty({
         <Button
           variant="gradient"
           size="lg"
+          icon={Plus}
           className="mt-8 w-full max-w-xs shadow-lg sm:w-auto"
           onClick={onCreateBoard}
         >
-          <Plus className="h-5 w-5" />
-          Create your first board
+          {UI_LABELS.createFirstCollection}
         </Button>
       )}
     </div>
@@ -82,8 +83,8 @@ export function ProfileBoardsSection({
 
   const tabs: { id: ProfileBoardTab; label: string; icon: typeof FolderOpen }[] =
     [
-      { id: "yours", label: "Your Boards", icon: FolderOpen },
-      { id: "liked", label: "Liked Boards", icon: Heart },
+      { id: "yours", label: UI_LABELS.yourCollections, icon: FolderOpen },
+      { id: "liked", label: UI_LABELS.likedCollections, icon: Heart },
     ];
 
   return (
@@ -118,11 +119,11 @@ export function ProfileBoardsSection({
           variant="gradient"
           size="sm"
           type="button"
+          icon={Plus}
           onClick={onCreateBoard}
           className="w-full shrink-0 shadow-md sm:w-auto"
         >
-          <Plus className="h-4 w-4" />
-          New Board
+          {UI_LABELS.newCollection}
         </Button>
       </div>
 

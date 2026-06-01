@@ -5,7 +5,8 @@ import { BadgeCheck, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Avatar } from "@/components/atoms/Avatar";
-import { AvatarStack } from "@/components/molecules/AvatarStack";
+import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
+import { getBoardCollaboratorProfiles, hasMultipleCollaborators } from "@/lib/collaborators";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { ROUTES } from "@/constants/routes";
 import { getMoodEmoji, getMoodLabel } from "@/constants/moods";
@@ -36,8 +37,8 @@ export function ShowcaseBoardCard({
   const { user, profile } = useAuth();
   const isDiscover = variant === "discover";
   const boardHref = publicHref ?? ROUTES.board(board.id);
-  const members =
-    board.members?.map((m) => m.profile).filter(Boolean) ?? [];
+  const collaboratorProfiles = getBoardCollaboratorProfiles(board);
+  const showCollab = hasMultipleCollaborators(board);
   const canLike =
     showLike && board.is_public && user?.id !== board.owner_id;
   const moodLabel = board.mood ? getMoodLabel(board.mood) : "Collection";
@@ -91,24 +92,24 @@ export function ShowcaseBoardCard({
                 className="shadow-md"
               />
             )}
-            {isDiscover && members.length > 0 && (
-              <div className="hidden items-center sm:flex">
-                <AvatarStack profiles={members} max={3} size="sm" />
-                <span
-                  className="-ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated/95 text-primary shadow-sm ring-2 ring-surface"
-                  aria-hidden
-                >
-                  <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                </span>
-              </div>
+            {showCollab && (
+              <CollaboratorChips board={board} className="shadow-md" />
             )}
-            {!isDiscover && (
+            {!isDiscover && !showCollab && (
               <Avatar
                 src={profile?.avatar_url}
                 name={profile?.full_name ?? profile?.username}
                 size="sm"
                 className="!h-9 !w-9 ring-2 ring-bg-elevated shadow-md sm:!h-10 sm:!w-10"
               />
+            )}
+            {isDiscover && !showCollab && collaboratorProfiles.length > 0 && (
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated/95 text-primary shadow-sm ring-2 ring-surface"
+                aria-hidden
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
             )}
           </div>
 

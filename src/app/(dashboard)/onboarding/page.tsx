@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { UI_LABELS } from "@/constants/ui-labels";
 import { velvetToast } from "@/lib/toast";
 import { Button } from "@/components/atoms/Button";
 import { SegmentButton } from "@/components/atoms/SegmentButton";
@@ -106,6 +107,7 @@ export default function OnboardingPage() {
             <Button
               type="button"
               size="lg"
+              icon={ArrowRight}
               className="w-full"
               onClick={async () => {
                 const valid = await trigger("title");
@@ -113,7 +115,6 @@ export default function OnboardingPage() {
               }}
             >
               Continue
-              <ArrowRight className="h-5 w-5" />
             </Button>
           </div>
         ) : (
@@ -153,7 +154,7 @@ export default function OnboardingPage() {
                 loading={createBoard.isPending}
                 className="flex-1"
               >
-                Create Board
+                {UI_LABELS.createCollection}
               </Button>
             </div>
           </div>

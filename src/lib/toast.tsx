@@ -46,10 +46,15 @@ export const velvetToast = {
 
   fromError(error: unknown, context: ErrorContext = "generic") {
     const message = getErrorMessage(error, context);
-    return velvetToast.error(
-      context === "generic" ? "Oops" : "Something went wrong",
-      message,
-    );
+    const titles: Partial<Record<ErrorContext, string>> = {
+      auth: "Sign-in issue",
+      board: "Collection error",
+      item: "Couldn't update save",
+      upload: "Upload failed",
+      profile: "Profile error",
+      generic: "Something went wrong",
+    };
+    return velvetToast.error(titles[context] ?? "Something went wrong", message);
   },
 
   promise<T>(

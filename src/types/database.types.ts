@@ -287,7 +287,24 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      soft_delete_item: {
+        Args: { p_item_id: string };
+        Returns: undefined;
+      };
+      is_board_owner: {
+        Args: { p_board_id: string };
+        Returns: boolean;
+      };
+      is_board_member: {
+        Args: { p_board_id: string };
+        Returns: boolean;
+      };
+      can_edit_board_items: {
+        Args: { p_board_id: string };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
   };
 }

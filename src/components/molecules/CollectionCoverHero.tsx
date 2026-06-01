@@ -9,6 +9,8 @@ interface CollectionCoverHeroProps {
   badge?: ReactNode;
   meta?: ReactNode;
   actions?: ReactNode;
+  /** Top bar (e.g. back) overlaid on the cover */
+  overlay?: ReactNode;
   className?: string;
   size?: "board" | "public";
 }
@@ -21,13 +23,15 @@ export function CollectionCoverHero({
   badge,
   meta,
   actions,
+  overlay,
   className,
   size = "board",
 }: CollectionCoverHeroProps) {
   const heights =
     size === "public"
-      ? "h-[min(52vh,360px)] md:h-[400px]"
+      ? "h-[min(56vh,420px)] md:h-[min(52vh,480px)]"
       : "h-[min(48vh,320px)] sm:h-[360px] md:h-[400px]";
+  const maxWidth = size === "public" ? "max-w-6xl" : "max-w-7xl";
 
   return (
     <header className={cn("relative w-full overflow-hidden", heights, className)}>
@@ -53,13 +57,16 @@ export function CollectionCoverHero({
         aria-hidden
       />
 
+      {overlay && (
+        <div className="absolute inset-x-0 top-0 z-20 px-4 pt-4 sm:px-margin-mobile sm:pt-5 md:px-margin-desktop">
+          <div className={cn("mx-auto flex w-full items-center justify-between gap-3", maxWidth)}>
+            {overlay}
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-6 sm:px-margin-mobile sm:pb-8 md:px-margin-desktop">
-        <div
-          className={cn(
-            "mx-auto w-full",
-            size === "public" ? "max-w-6xl" : "max-w-7xl",
-          )}
-        >
+        <div className={cn("mx-auto w-full", maxWidth)}>
           {badge && <div className="mb-3">{badge}</div>}
           <h1
             className={cn(

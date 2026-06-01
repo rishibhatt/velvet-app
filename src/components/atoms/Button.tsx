@@ -1,9 +1,15 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
+import { Loader2, type LucideIcon } from "lucide-react";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+
+const iconSizeClass = {
+  sm: "h-4 w-4",
+  md: "h-4 w-4",
+  lg: "h-5 w-5",
+} as const;
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px] touch-manipulation",
@@ -40,22 +46,37 @@ export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
   VariantProps<typeof buttonVariants> {
   loading?: boolean;
+  /** Leading icon — sized consistently per button size */
+  icon?: LucideIcon;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, loading, children, disabled, ...props },
+    { className, variant, size, loading, icon: Icon, children, disabled, ...props },
     ref,
-  ) => (
-    <button
-      ref={ref}
-      className={cn(buttonVariants({ variant, size, className }))}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-      {children}
-    </button>
-  ),
+  ) => {
+    const resolvedSize = size ?? "md";
+    return (
+      <button
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          Icon && (
+            <Icon
+              className={iconSizeClass[resolvedSize]}
+              strokeWidth={2}
+              aria-hidden
+            />
+          )
+        )}
+        {children}
+      </button>
+    );
+  },
 );
 Button.displayName = "Button";

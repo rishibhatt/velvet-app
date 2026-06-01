@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import { ROUTES } from "@/constants/routes";
 import { getMoodEmoji } from "@/constants/moods";
 import type { Board, Profile } from "@/types/board.types";
-import { AvatarStack } from "@/components/molecules/AvatarStack";
+import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
+import { hasMultipleCollaborators } from "@/lib/collaborators";
 import { Avatar } from "@/components/atoms/Avatar";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -35,8 +36,7 @@ export function BoardCard({
     isPublicDiscover &&
     board.is_public &&
     user?.id !== board.owner_id;
-  const members =
-    board.members?.map((m) => m.profile).filter(Boolean) ?? [];
+  const showCollab = hasMultipleCollaborators(board);
   const boardHref = publicHref ?? ROUTES.board(board.id);
 
   return (
@@ -82,9 +82,7 @@ export function BoardCard({
                 {formatCount(board.like_count ?? 0)}
               </span>
             )}
-            {members.length > 0 && (
-              <AvatarStack profiles={members} max={2} />
-            )}
+            {showCollab && <CollaboratorChips board={board} showLabel={false} />}
           </div>
 
           <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-3">

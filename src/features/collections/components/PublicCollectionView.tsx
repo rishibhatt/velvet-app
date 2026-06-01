@@ -46,12 +46,15 @@ export function PublicCollectionView({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="page-container pt-4 pb-2 sm:pt-6">
-        <PageBackButton href={ROUTES.explore} label="Explore" />
-      </div>
-
       <CollectionCoverHero
         size="public"
+        overlay={
+          <PageBackButton
+            href={ROUTES.explore}
+            label="Explore"
+            className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
+          />
+        }
         coverUrl={board.cover_url}
         title={board.title}
         description={board.description}
@@ -81,7 +84,12 @@ export function PublicCollectionView({
         </div>
 
         {items.length > 0 ? (
-          <PublicItemGrid items={items} />
+          <PublicItemGrid
+            items={items}
+            curatorLabel={
+              owner?.full_name ?? owner?.username ?? "Creator"
+            }
+          />
         ) : (
           <p className="text-center text-on-surface-variant">
             This collection is waiting for its first save.

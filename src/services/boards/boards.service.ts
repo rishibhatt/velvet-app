@@ -142,6 +142,150 @@ export const boardsService = {
     return board?.members ?? [];
   },
 
+  async inviteMember(
+    boardId: string,
+    username: string,
+    role: BoardMember["role"],
+  ): Promise<BoardMember> {
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in to invite collaborators.");
+
+    const normalized = username.trim().replace(/^@/, "").toLowerCase();
+    if (!normalized) throw new Error("Enter a username to invite.");
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at")
+      .eq("username", normalized)
+      .maybeSingle();
+
+    if (profileError) throw new Error(parseSupabaseError(profileError));
+    if (!profile) throw new Error(`No user found with username @${normalized}.`);
+
+    const { data: board, error: boardError } = await supabase
+      .from("boards")
+      .select("owner_id")
+      .eq("id", boardId)
+      .single();
+    if (boardError) throw new Error(parseSupabaseError(boardError));
+
+    const boardRow = board as { owner_id: string };
+    if (boardRow.owner_id === profile.id) {
+      throw new Error("This person already owns the collection.");
+    }
+
+    const { data: existing } = await supabase
+      .from("board_members")
+      .select("id")
+      .eq("board_id", boardId)
+      .eq("user_id", profile.id)
+      .maybeSingle();
+    if (existing) {
+      throw new Error("They are already a collaborator on this collection.");
+    }
+
+    const memberSelect = `
+      id,
+      board_id,
+      user_id,
+      role,
+      created_at,
+      profile:profiles(id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at)
+    `;
+
+    const { data: member, error: insertError } = await supabase
+      .from("board_members")
+      .insert({
+        board_id: boardId,
+        user_id: profile.id,
+        role,
+      })
+      .select(memberSelect)
+      .single();
+
+    if (insertError) throw new Error(parseSupabaseError(insertError));
+
+    await supabase.from("activity_logs").insert({
+      board_id: boardId,
+      user_id: user.id,
+      action: `invited @${profile.username} as ${role}`,
+      entity: "member",
+      entity_id: (member as { id: string }).id,
+      metadata: { username: profile.username, role },
+    });
+
+    const row = member as {
+      id: string;
+      board_id: string;
+      user_id: string;
+      role: BoardMember["role"];
+      created_at: string;
+      profile: BoardMember["profile"];
+    };
+
+    return {
+      id: row.id,
+      board_id: row.board_id,
+      user_id: row.user_id,
+      role: row.role,
+      created_at: row.created_at,
+      profile: row.profile ?? undefined,
+    };
+  },
+
+  async removeMember(boardId: string, memberId: string): Promise<void> {
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in.");
+
+    const { data: member, error: fetchError } = await supabase
+      .from("board_members")
+      .select("id, user_id, board_id, profile:profiles(username)")
+      .eq("id", memberId)
+      .eq("board_id", boardId)
+      .maybeSingle();
+    if (fetchError) throw new Error(parseSupabaseError(fetchError));
+    if (!member) throw new Error("Collaborator not found.");
+
+    const memberRow = member as {
+      user_id: string;
+      profile?: { username: string } | null;
+    };
+
+    const { data: board } = await supabase
+      .from("boards")
+      .select("owner_id")
+      .eq("id", boardId)
+      .single();
+    const ownerId = (board as { owner_id: string } | null)?.owner_id;
+    if (memberRow.user_id === ownerId) {
+      throw new Error("The collection owner cannot be removed.");
+    }
+
+    const { error } = await supabase
+      .from("board_members")
+      .delete()
+      .eq("id", memberId)
+      .eq("board_id", boardId);
+    if (error) throw new Error(parseSupabaseError(error));
+
+    const username = memberRow.profile?.username;
+    await supabase.from("activity_logs").insert({
+      board_id: boardId,
+      user_id: user.id,
+      action: username ? `removed @${username} from the collection` : "removed a collaborator",
+      entity: "member",
+      entity_id: memberId,
+    });
+  },
+
   async createBoard(input: CreateBoardInput): Promise<Board> {
     requireSupabase();
     const supabase = createClient();

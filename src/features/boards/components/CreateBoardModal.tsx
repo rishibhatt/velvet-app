@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight } from "lucide-react";
+import { UI_LABELS } from "@/constants/ui-labels";
 import { velvetToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
@@ -62,9 +62,14 @@ export function CreateBoardModal() {
       className="surface-panel max-w-lg"
       contentClassName="p-stack-lg md:p-12"
       footer={
-        <Button type="submit" form="create-board-form" size="lg" loading={createBoard.isPending} className="w-full">
-          Create Board
-          <ArrowRight className="h-5 w-5" />
+        <Button
+          type="submit"
+          form="create-board-form"
+          size="lg"
+          loading={createBoard.isPending}
+          className="w-full"
+        >
+          {UI_LABELS.createCollection}
         </Button>
       }
     >

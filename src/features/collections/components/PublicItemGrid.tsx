@@ -2,9 +2,17 @@
 
 import { ItemCard } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
+import { useModalStore } from "@/store/modal.store";
 import type { Item } from "@/types/board.types";
 
-export function PublicItemGrid({ items }: { items: Item[] }) {
+interface PublicItemGridProps {
+  items: Item[];
+  curatorLabel?: string;
+}
+
+export function PublicItemGrid({ items, curatorLabel }: PublicItemGridProps) {
+  const openItemModal = useModalStore((s) => s.openItemModal);
+
   return (
     <CollectionItemsGrid
       header={
@@ -14,7 +22,18 @@ export function PublicItemGrid({ items }: { items: Item[] }) {
       }
     >
       {items.map((item) => (
-        <ItemCard key={item.id} item={item} />
+        <ItemCard
+          key={item.id}
+          item={item}
+          onClick={() =>
+            openItemModal(item.id, {
+              snapshot: item,
+              boardId: item.board_id,
+              readOnly: true,
+              curatorLabel,
+            })
+          }
+        />
       ))}
     </CollectionItemsGrid>
   );

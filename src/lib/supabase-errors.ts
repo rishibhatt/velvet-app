@@ -14,6 +14,12 @@ export function parseSupabaseError(error: unknown): string {
     if (e.code === "42P17") {
       return "Database policy error. Run supabase/migrations/003_fix_rls_and_storage.sql in your Supabase SQL Editor.";
     }
+    if (e.code === "42501" || e.message?.includes("row-level security")) {
+      return "Permission denied. Run supabase/migrations/008_soft_delete_item_rpc.sql in your Supabase SQL Editor (Dashboard → SQL → New query → paste → Run).";
+    }
+    if (e.message?.includes("soft_delete_item") || e.message?.includes("Could not find the function")) {
+      return "Database update needed. Run supabase/migrations/008_soft_delete_item_rpc.sql in your Supabase SQL Editor.";
+    }
     if (e.message) return e.message;
   }
   if (error instanceof Error) return error.message;

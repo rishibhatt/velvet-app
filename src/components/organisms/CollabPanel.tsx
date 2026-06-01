@@ -1,27 +1,75 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
+import { Button } from "@/components/atoms/Button";
 import { slideInRight } from "@/lib/animations";
+import { formatMemberRole } from "@/lib/collaborators";
 import { formatRelativeTime } from "@/utils/format";
-import type { ActivityLog, BoardMember } from "@/types/board.types";
+import type { ActivityLog, BoardMember, BoardRole } from "@/types/board.types";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useInviteMember, useRemoveMember } from "@/queries/board/mutations";
+import { useModalStore } from "@/store/modal.store";
+import { confirmAction } from "@/lib/confirm";
+import { cn } from "@/lib/utils";
 
 interface CollabPanelProps {
   open: boolean;
   onClose: () => void;
+  boardId: string;
   members: BoardMember[];
   activities: ActivityLog[];
+  canManage?: boolean;
+  ownerId?: string;
 }
 
 export function CollabPanel({
   open,
   onClose,
+  boardId,
   members,
   activities,
+  canManage = false,
+  ownerId,
 }: CollabPanelProps) {
   useBodyScrollLock(open);
+  const { openInviteModal } = useModalStore();
+  const invite = useInviteMember(boardId);
+  const removeMember = useRemoveMember(boardId);
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState<BoardRole>("editor");
+
+  const handleInlineInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await invite.mutateAsync({ username, role });
+      setUsername("");
+    } catch {
+      /* toast */
+    }
+  };
+
+  const handleRemove = async (member: BoardMember) => {
+    if (member.user_id === ownerId) return;
+    const name = member.profile?.username
+      ? `@${member.profile.username}`
+      : "this collaborator";
+    const ok = await confirmAction({
+      title: `Remove ${name}?`,
+      description: "They will lose access to this collection.",
+      confirmLabel: "Remove",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+    if (!ok) return;
+    try {
+      await removeMember.mutateAsync(member.id);
+    } catch {
+      /* toast */
+    }
+  };
 
   if (!open) return null;
 
@@ -48,28 +96,95 @@ export function CollabPanel({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          {canManage && (
+            <section className="mb-8">
+              <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+                Invite
+              </h3>
+              <form onSubmit={handleInlineInvite} className="space-y-3">
+                <div className="flex items-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 focus-within:border-primary">
+                  <span className="text-sm text-on-surface-variant">@</span>
+                  <input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="username"
+                    className="min-w-0 flex-1 bg-transparent text-sm text-on-surface placeholder:text-outline/70 focus:outline-none"
+                    required
+                  />
+                </div>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as BoardRole)}
+                  className="w-full rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm text-on-surface focus:border-primary focus:outline-none"
+                  aria-label="Collaborator role"
+                >
+                  <option value="viewer">Viewer</option>
+                  <option value="editor">Editor</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <Button
+                  type="submit"
+                  size="sm"
+                  icon={UserPlus}
+                  className="w-full"
+                  loading={invite.isPending}
+                >
+                  Invite
+                </Button>
+              </form>
+              <button
+                type="button"
+                onClick={() => openInviteModal(boardId)}
+                className="mt-2 text-xs font-semibold text-primary hover:underline"
+              >
+                Open full invite dialog
+              </button>
+            </section>
+          )}
+
           <section className="mb-8">
             <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
-              Members
+              Members ({members.length})
             </h3>
             <ul className="space-y-3">
-              {members.map((member) => (
-                <li key={member.id} className="flex items-center gap-3">
-                  <Avatar
-                    src={member.profile?.avatar_url}
-                    name={member.profile?.full_name ?? member.profile?.username}
-                    size="md"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-on-surface">
-                      {member.profile?.full_name ?? member.profile?.username}
-                    </p>
-                    <p className="text-xs capitalize text-on-surface-variant">
-                      {member.role}
-                    </p>
-                  </div>
-                </li>
-              ))}
+              {members.map((member) => {
+                const isOwner = member.user_id === ownerId;
+                return (
+                  <li key={member.id} className="flex items-center gap-3">
+                    <Avatar
+                      src={member.profile?.avatar_url}
+                      name={member.profile?.full_name ?? member.profile?.username}
+                      size="md"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-on-surface">
+                        {member.profile?.full_name ?? member.profile?.username}
+                        {member.profile?.username && (
+                          <span className="ml-1 font-normal text-on-surface-variant">
+                            @{member.profile.username}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">
+                        {isOwner ? "Owner" : formatMemberRole(member.role)}
+                      </p>
+                    </div>
+                    {canManage && !isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(member)}
+                        disabled={removeMember.isPending}
+                        className={cn(
+                          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-error transition-colors hover:bg-error-container/40",
+                          removeMember.isPending && "opacity-50",
+                        )}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
               {members.length === 0 && (
                 <p className="text-sm text-on-surface-variant">No members yet.</p>
               )}

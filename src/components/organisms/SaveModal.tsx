@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
-import { Sparkles, FolderOpen, Edit3, Link2, Upload, StickyNote } from "lucide-react";
+import {
+  Check,
+  FolderOpen,
+  Edit3,
+  Link2,
+  Upload,
+  StickyNote,
+  Sparkles,
+} from "lucide-react";
+import { UI_LABELS } from "@/constants/ui-labels";
 import { velvetToast } from "@/lib/toast";
 import { Button } from "@/components/atoms/Button";
 import { SegmentButton } from "@/components/atoms/SegmentButton";
@@ -173,12 +182,12 @@ export function SaveModal() {
     <Button
       onClick={handleSave}
       size="lg"
+      icon={saved ? Check : undefined}
       loading={saveItem.isPending || uploading}
       disabled={boards.length === 0}
       className={cn("w-full", saved && "!bg-green-600 !text-white")}
     >
-      {saved ? "Saved!" : "Save to Board"}
-      <Sparkles className="h-5 w-5 fill-current" />
+      {saved ? "Saved!" : UI_LABELS.saveToCollection}
     </Button>
   );
 

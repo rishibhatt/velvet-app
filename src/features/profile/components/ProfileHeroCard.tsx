@@ -169,9 +169,9 @@ export function ProfileHeroCard({
                   variant="gradient"
                   size="sm"
                   type="button"
+                  icon={ExternalLink}
                   className="w-full shadow-md"
                 >
-                  <ExternalLink className="h-4 w-4" />
                   View public page
                 </Button>
               </Link>
@@ -181,10 +181,10 @@ export function ProfileHeroCard({
                 variant="outline"
                 size="sm"
                 type="button"
+                icon={Pencil}
                 onClick={onEdit}
                 className="w-full border-outline-variant/50 bg-bg-elevated"
               >
-                <Pencil className="h-4 w-4" />
                 Edit profile
               </Button>
               <Link href={ROUTES.settings} className="w-full sm:w-auto">
@@ -192,9 +192,9 @@ export function ProfileHeroCard({
                   variant="outline"
                   size="sm"
                   type="button"
+                  icon={Settings}
                   className="w-full border-outline-variant/50 bg-bg-elevated"
                 >
-                  <Settings className="h-4 w-4" />
                   Settings
                 </Button>
               </Link>
@@ -202,22 +202,22 @@ export function ProfileHeroCard({
                 variant="outline"
                 size="sm"
                 type="button"
+                icon={Share2}
                 onClick={() => void handleShare()}
                 className="col-span-1 border-outline-variant/50 bg-bg-elevated sm:aspect-square sm:w-11 sm:min-w-11 sm:px-0"
                 aria-label="Share profile"
               >
-                <Share2 className="h-4 w-4" />
                 <span className="sm:sr-only">Share</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 type="button"
+                icon={LogOut}
                 onClick={onSignOut}
                 className="col-span-1 text-on-surface-variant sm:w-auto"
               >
-                <LogOut className="h-4 w-4" />
-                <span className="sm:inline">Sign out</span>
+                Sign out
               </Button>
             </div>
           </div>

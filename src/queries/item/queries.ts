@@ -18,6 +18,7 @@ export function useItemDetail(itemId: string) {
     queryKey: itemKeys.detail(itemId),
     queryFn: () => itemsService.getItemById(itemId),
     enabled: Boolean(itemId),
+    staleTime: 0,
     meta: { skipErrorToast: true, errorContext: "item" },
   });
 }

@@ -18,6 +18,8 @@ interface ModalShellProps {
   className?: string;
   contentClassName?: string;
   overlayClassName?: string;
+  /** Stacking order — use z-[110] for dialogs above other modals */
+  stackClassName?: string;
   hideClose?: boolean;
 }
 
@@ -31,6 +33,7 @@ export function ModalShell({
   className,
   contentClassName,
   overlayClassName,
+  stackClassName = "z-[100]",
   hideClose = false,
 }: ModalShellProps) {
   useBodyScrollLock(open);
@@ -40,7 +43,8 @@ export function ModalShell({
       {open && (
         <motion.div
           className={cn(
-            "fixed inset-0 z-[100] flex items-end justify-center overflow-hidden p-0 sm:items-center sm:p-4",
+            "fixed inset-0 flex items-end justify-center overflow-hidden p-0 sm:items-center sm:p-4",
+            stackClassName,
             overlayClassName ?? "glass-overlay",
           )}
           initial={{ opacity: 0 }}

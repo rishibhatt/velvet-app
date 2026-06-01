@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
-import { UserPlus, Share2, PlusCircle, Users, Settings } from "lucide-react";
+import { UserPlus, Share2, Plus, Users, Settings } from "lucide-react";
+import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { ROUTES } from "@/constants/routes";
 import { velvetToast } from "@/lib/toast";
@@ -52,7 +53,7 @@ export default function BoardDetailPage({
   } = useItems(id);
   const { data: activities = [] } = useBoardActivity(id);
   const { user } = useAuth();
-  const { openSaveModal, openItemModal } = useModalStore();
+  const { openSaveModal, openItemModal, openInviteModal } = useModalStore();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -136,6 +137,9 @@ export default function BoardDetailPage({
   }
 
   const members = board.members ?? [];
+  const canInvite =
+    user?.id === board.owner_id ||
+    members.some((m) => m.user_id === user?.id && m.role === "admin");
 
   const handleShare = async () => {
     if (!board.is_public) {
@@ -180,14 +184,24 @@ export default function BoardDetailPage({
               />
             )}
             <AvatarStack profiles={members.map((m) => m.profile)} max={3} />
-            <Button variant="secondary" size="sm" onClick={() => setCollabPanelOpen(true)}>
-              <Users className="h-4 w-4" />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Users}
+              onClick={() => setCollabPanelOpen(true)}
+            >
               Collab
             </Button>
-            <Button variant="secondary" size="sm">
-              <UserPlus className="h-4 w-4" />
-              Invite
-            </Button>
+            {canInvite && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={UserPlus}
+                onClick={() => openInviteModal(board.id)}
+              >
+                Invite
+              </Button>
+            )}
             <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-5 w-5" />
             </IconButton>
@@ -233,18 +247,23 @@ export default function BoardDetailPage({
               <ItemCard
                 key={item.id}
                 item={item}
-                onClick={() => openItemModal(item.id)}
+                onClick={() =>
+                  openItemModal(item.id, { snapshot: item, boardId: id })
+                }
               />
             ))}
           </CollectionItemsGrid>
         ) : (
           <div className="rounded-3xl border border-dashed border-primary/30 bg-surface-container-low py-16 text-center">
             <p className="mb-4 text-on-surface-variant">
-              No saves yet. Paste a link or image to start your board.
+              No saves yet. Paste a link or image to start this collection.
             </p>
-            <Button onClick={() => openSaveModal(id)}>
-              <PlusCircle className="h-5 w-5" />
-              Save your first item
+            <Button
+              variant="gradient"
+              icon={Plus}
+              onClick={() => openSaveModal(id)}
+            >
+              {UI_LABELS.saveFirstItem}
             </Button>
           </div>
         )}
@@ -255,11 +274,11 @@ export default function BoardDetailPage({
           <Button
             size="lg"
             variant="gradient"
+            icon={Plus}
             className="w-full max-w-md"
             onClick={() => openSaveModal(id)}
           >
-            <PlusCircle className="h-5 w-5" />
-            + Save Anything
+            {UI_LABELS.saveToCollection}
           </Button>
         </div>
       </div>
@@ -267,8 +286,11 @@ export default function BoardDetailPage({
       <CollabPanel
         open={collabPanelOpen}
         onClose={() => setCollabPanelOpen(false)}
+        boardId={board.id}
         members={members}
         activities={activities as ActivityLog[]}
+        canManage={canInvite}
+        ownerId={board.owner_id}
       />
 
       <BoardSettingsModal

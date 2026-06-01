@@ -10,6 +10,8 @@ import type { Board } from "@/types/board.types";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { Copy, Trash2 } from "lucide-react";
+import { UI_LABELS } from "@/constants/ui-labels";
+import { confirmAction } from "@/lib/confirm";
 import { velvetToast } from "@/lib/toast";
 
 interface BoardSettingsModalProps {
@@ -68,7 +70,15 @@ export function BoardSettingsModal({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Delete "${board.title}"? This cannot be undone.`)) return;
+    const ok = await confirmAction({
+      title: `Delete “${board.title}”?`,
+      description:
+        "This permanently removes the collection and its saves. This cannot be undone.",
+      confirmLabel: "Delete collection",
+      cancelLabel: "Cancel",
+      variant: "destructive",
+    });
+    if (!ok) return;
     try {
       await deleteBoard.mutateAsync(board.id);
       velvetToast.success("Collection deleted");
@@ -82,24 +92,24 @@ export function BoardSettingsModal({
   const settingsFooter = (
     <div className="flex flex-col gap-2">
       <Button onClick={handleSave} loading={updateBoard.isPending} className="w-full">
-        Save changes
+        {UI_LABELS.saveChanges}
       </Button>
       <Button
         variant="secondary"
+        icon={Copy}
         onClick={handleShare}
         disabled={!board.slug}
         className="w-full"
       >
-        <Copy className="h-4 w-4" />
         Copy public link
       </Button>
       <Button
         variant="destructive"
+        icon={Trash2}
         onClick={handleDelete}
         loading={deleteBoard.isPending}
         className="w-full"
       >
-        <Trash2 className="h-4 w-4" />
         Delete collection
       </Button>
     </div>

@@ -21,6 +21,7 @@ import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
+import { UI_LABELS } from "@/constants/ui-labels";
 
 export default function HomePage() {
   const router = useRouter();
@@ -102,14 +103,16 @@ export default function HomePage() {
             <Heart className="h-5 w-5 fill-primary/25 text-primary" aria-hidden />
             Your collections
           </h2>
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
+            icon={Plus}
             onClick={openCreateBoard}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full bg-primary-fixed/55 px-5 text-sm font-semibold text-primary transition-colors hover:bg-primary-fixed sm:w-auto"
+            className="w-full sm:w-auto"
           >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            New Collection
-          </button>
+            {UI_LABELS.newCollection}
+          </Button>
         </div>
 
         {isLoading ? (
@@ -135,7 +138,7 @@ export default function HomePage() {
           <EmptyState
             title="Your velvet world starts here"
             description="Create your first board and begin curating the moments that matter."
-            actionLabel="Create your first board"
+            actionLabel={UI_LABELS.createFirstCollection}
             onAction={openCreateBoard}
             className="border-0 bg-transparent shadow-none"
           />
@@ -146,10 +149,11 @@ export default function HomePage() {
         onClick={openCreateBoard}
         variant="gradient"
         size="lg"
+        icon={Plus}
         className="fixed right-4 bottom-20 z-40 shadow-xl max-[380px]:right-3 max-[380px]:text-sm sm:right-6 md:bottom-12 md:right-12"
+        aria-label={UI_LABELS.newCollection}
       >
-        <Plus className="h-5 w-5" />
-        New Board
+        {UI_LABELS.newCollection}
       </Button>
     </main>
   );
