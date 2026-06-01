@@ -21,6 +21,14 @@ export function useBoardDetail(id: string) {
   });
 }
 
+export function useLikedBoards() {
+  return useQuery({
+    queryKey: boardKeys.liked(),
+    queryFn: () => boardsService.getLikedBoards(),
+    meta: { skipErrorToast: true, errorContext: "board" },
+  });
+}
+
 export function useBoardMembers(boardId: string) {
   return useQuery({
     queryKey: boardKeys.members(boardId),

@@ -1,4 +1,8 @@
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+
+export function formatJoinedDate(date: string | Date): string {
+  return format(new Date(date), "MMMM yyyy");
+}
 
 export function formatRelativeTime(date: string | Date): string {
   return formatDistanceToNow(new Date(date), { addSuffix: true });

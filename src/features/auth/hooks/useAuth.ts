@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/services/supabase/client";
 import { authService } from "@/services/auth/auth.service";
@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from "@/lib/utils";
 export function useAuth() {
   const queryClient = useQueryClient();
   const { user, session, setUser, setSession, clearAuth } = useAuthStore();
+  const [isAuthReady, setIsAuthReady] = useState(!isSupabaseConfigured());
 
   const profileQuery = useQuery({
     queryKey: ["profile", user?.id],
@@ -19,14 +20,20 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) {
+      setIsAuthReady(true);
+      return;
+    }
 
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+      })
+      .finally(() => setIsAuthReady(true));
 
     const {
       data: { subscription },
@@ -34,6 +41,7 @@ export function useAuth() {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (!newSession) clearAuth();
+      setIsAuthReady(true);
     });
 
     return () => subscription.unsubscribe();
@@ -51,6 +59,7 @@ export function useAuth() {
     profile: profileQuery.data ?? null,
     isLoading: profileQuery.isLoading,
     isAuthenticated: Boolean(user),
+    isAuthReady,
     signOut,
     refreshProfile: () => profileQuery.refetch(),
   };

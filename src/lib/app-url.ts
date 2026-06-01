@@ -62,6 +62,12 @@ export function getPublicShareUrl(slug: string, baseUrl?: string): string {
   return base ? `${trimSlash(base)}${path}` : path;
 }
 
+export function getCreatorProfileUrl(username: string, baseUrl?: string): string {
+  const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
+  const path = ROUTES.creator(username);
+  return base ? `${trimSlash(base)}${path}` : path;
+}
+
 /** URLs to allow in Supabase → Authentication → Redirect URLs. */
 export function getSupabaseRedirectUrlHints(baseUrl: string): string[] {
   const urls = new Set<string>();

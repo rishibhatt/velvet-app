@@ -7,6 +7,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import { velvetToast } from "@/lib/toast";
+import { ROUTES } from "@/constants/routes";
+import Link from "next/link";
 
 interface BoardLikeButtonProps {
   boardId: string;
@@ -26,12 +28,14 @@ export function BoardLikeButton({
   size = "sm",
   className,
 }: BoardLikeButtonProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthReady } = useAuth();
   const toggle = useToggleBoardLike();
 
   const handleClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthReady) return;
 
     if (!isAuthenticated) {
       velvetToast.info("Sign in to like", "Create an account to save favorites.");
@@ -45,11 +49,30 @@ export function BoardLikeButton({
   const iconSize = size === "md" ? "h-5 w-5" : "h-4 w-4";
   const pad = size === "md" ? "px-3 py-2" : "px-2.5 py-1.5";
 
+  if (isAuthReady && !isAuthenticated) {
+    return (
+      <Link
+        href={ROUTES.login}
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full bg-bg-elevated/95 font-semibold text-primary shadow-sm ring-1 ring-outline-variant/20 transition-colors hover:bg-primary-fixed/40",
+          pad,
+          className,
+        )}
+      >
+        <Heart className={iconSize} strokeWidth={2.25} />
+        <span className={cn("tabular-nums", size === "md" ? "text-sm" : "text-xs")}>
+          {formatCount(likeCount)}
+        </span>
+      </Link>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={!canLike && isAuthenticated}
+      disabled={(!canLike && isAuthenticated) || !isAuthReady}
       aria-label={isLiked ? "Unlike collection" : "Like collection"}
       aria-pressed={isLiked}
       className={cn(
@@ -57,8 +80,8 @@ export function BoardLikeButton({
         pad,
         isLiked
           ? "bg-error/15 text-error ring-1 ring-error/30"
-          : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20 hover:bg-primary/10",
-        !canLike && "opacity-70",
+          : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20 hover:bg-primary-fixed/50",
+        (!canLike || !isAuthReady) && isAuthenticated && "opacity-70",
         className,
       )}
     >

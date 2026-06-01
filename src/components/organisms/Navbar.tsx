@@ -103,12 +103,23 @@ export function Navbar() {
               key={item.label}
               href={item.href}
               className={cn(
-                "flex min-h-[52px] min-w-[64px] flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
-                active ? "text-primary" : "text-on-surface-variant",
+                "mx-0.5 flex min-h-[52px] min-w-[64px] flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors",
+                active
+                  ? "velvet-nav-pill-active text-primary"
+                  : "text-on-surface-variant hover:text-on-surface",
               )}
             >
-              <Icon className="h-5 w-5" fill={active ? "currentColor" : "none"} />
-              <span className="text-[10px] font-semibold tracking-wide uppercase">
+              <Icon
+                className="h-5 w-5"
+                strokeWidth={active ? 2.25 : 2}
+                fill="none"
+              />
+              <span
+                className={cn(
+                  "text-[10px] font-semibold tracking-wide uppercase",
+                  active && "text-primary",
+                )}
+              >
                 {item.label}
               </span>
             </Link>

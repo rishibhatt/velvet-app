@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { Compass } from "lucide-react";
+import { ExploreHero } from "@/components/organisms/ExploreHero";
+import { ExploreFiltersBar } from "@/components/organisms/ExploreFiltersBar";
 import {
-  BoardCard,
-  BoardCardSkeleton,
-} from "@/components/organisms/BoardCard";
-import { MoodFilterChips } from "@/components/molecules/MoodFilterChips";
-import { DiscoverSortToggle } from "@/components/molecules/DiscoverSortToggle";
+  ExploreCollectionCard,
+  ExploreCollectionCardSkeleton,
+} from "@/components/organisms/ExploreCollectionCard";
+import type { ExploreViewMode } from "@/components/molecules/ExploreViewToggle";
+import { ExploreBoardListRow } from "@/components/molecules/ExploreBoardListRow";
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { usePublicBoards } from "@/queries/discover/queries";
@@ -23,6 +23,7 @@ export default function ExplorePage() {
   const { user } = useAuth();
   const [mood, setMood] = useState<Mood | null>(null);
   const [sort, setSort] = useState<PublicBoardSort>("trending");
+  const [viewMode, setViewMode] = useState<ExploreViewMode>("grid");
 
   const filters = useMemo(
     () => ({
@@ -39,33 +40,15 @@ export default function ExplorePage() {
 
   return (
     <main className="page-container py-stack-lg pb-28 md:py-12 md:pb-12">
-      <motion.section className="mb-6" {...fadeUp}>
-        <div className="mb-2 flex items-center gap-2 text-primary">
-          <Compass className="h-6 w-6" aria-hidden />
-          <span className="text-sm font-semibold uppercase tracking-wide">
-            Discover
-          </span>
-        </div>
-        <h1 className="font-display text-2xl text-on-surface md:text-3xl">
-          Public collections
-        </h1>
-        <p className="mt-2 max-w-prose text-sm text-on-surface-variant md:text-base">
-          Browse inspiration from the Velvet community — filter by mood or see
-          what&apos;s trending.
-        </p>
-      </motion.section>
+      <ExploreHero sort={sort} onSortChange={setSort} />
 
-      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <DiscoverSortToggle value={sort} onChange={setSort} />
-        <Link
-          href={ROUTES.search}
-          className="text-center text-sm font-semibold text-primary hover:underline sm:text-right"
-        >
-          Search people &amp; boards →
-        </Link>
-      </div>
-
-      <MoodFilterChips value={mood} onChange={setMood} className="mb-8" />
+      <ExploreFiltersBar
+        mood={mood}
+        onMoodChange={setMood}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        resultCount={boards.length}
+      />
 
       {isError && (
         <ErrorAlert
@@ -77,34 +60,64 @@ export default function ExplorePage() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <BoardCardSkeleton key={i} />
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ExploreCollectionCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-28 rounded-2xl skeleton-shimmer" />
+            ))}
+          </div>
+        )
       ) : boards.length > 0 ? (
-        <motion.div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          variants={stagger}
-          initial="initial"
-          animate="animate"
-        >
-          {boards.map((board) => (
-            <motion.div key={board.id} variants={fadeUp}>
-              <BoardCard
-                board={board}
-                showLike
-                owner={board.owner}
-                publicHref={
-                  board.slug ? ROUTES.publicCollection(board.slug) : undefined
-                }
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        viewMode === "grid" ? (
+          <motion.div
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4"
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+          >
+            {boards.map((board) => (
+              <motion.div key={board.id} variants={fadeUp}>
+                <ExploreCollectionCard
+                  board={board}
+                  owner={board.owner}
+                  publicHref={
+                    board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                  }
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.ul
+            className="space-y-3"
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+          >
+            {boards.map((board) => (
+              <motion.li key={board.id} variants={fadeUp}>
+                <ExploreBoardListRow
+                  board={board}
+                  owner={board.owner}
+                  publicHref={
+                    board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                  }
+                />
+              </motion.li>
+            ))}
+          </motion.ul>
+        )
       ) : (
         <EmptyState
-          title={mood ? "No public collections in this mood yet" : "Nothing to explore yet"}
+          title={
+            mood ? "No public collections in this mood yet" : "Nothing to explore yet"
+          }
           description={
             mood
               ? "Try another category or check back soon as creators publish more."

@@ -39,7 +39,7 @@ export function EmptyState({
       <h3 className="font-display mb-2 text-2xl text-on-surface">{title}</h3>
       <p className="mb-6 max-w-sm text-on-surface-variant">{description}</p>
       {actionLabel && onAction && (
-        <Button onClick={onAction} size="lg">
+        <Button onClick={onAction} variant="gradient" size="lg" className="shadow-lg">
           <Plus className="h-5 w-5" />
           {actionLabel}
         </Button>

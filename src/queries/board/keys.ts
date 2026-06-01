@@ -1,6 +1,7 @@
 export const boardKeys = {
   all: ["boards"] as const,
   list: () => [...boardKeys.all, "list"] as const,
+  liked: () => [...boardKeys.all, "liked"] as const,
   detail: (id: string) => [...boardKeys.all, "detail", id] as const,
   members: (id: string) => [...boardKeys.all, "members", id] as const,
 };

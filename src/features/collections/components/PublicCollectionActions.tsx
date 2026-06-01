@@ -13,14 +13,17 @@ export function PublicCollectionActions({
   board,
   ownerId,
 }: PublicCollectionActionsProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isAuthReady } = useAuth();
+
+  const canLike =
+    isAuthReady && isAuthenticated && user != null && user.id !== ownerId;
 
   return (
     <BoardLikeButton
       boardId={board.id}
       likeCount={board.like_count ?? 0}
       isLiked={board.is_liked}
-      canLike={user?.id !== ownerId}
+      canLike={canLike}
       size="md"
     />
   );

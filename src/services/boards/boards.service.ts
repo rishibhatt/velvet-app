@@ -63,6 +63,44 @@ export const boardsService = {
     return unique.map((row) => mapBoard(row));
   },
 
+  async getLikedBoards(): Promise<Board[]> {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data: likes, error: likesError } = await supabase
+      .from("board_likes")
+      .select("board_id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (likesError) throw new Error(parseSupabaseError(likesError));
+
+    const boardIds = (likes ?? []).map((r) => r.board_id);
+    if (boardIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("boards")
+      .select(BOARD_SELECT)
+      .in("id", boardIds)
+      .is("deleted_at", null);
+
+    if (error) throw new Error(parseSupabaseError(error));
+
+    type BoardRow = Parameters<typeof mapBoard>[0];
+    const byId = new Map(
+      ((data ?? []) as BoardRow[]).map((row) => [row.id, mapBoard(row)]),
+    );
+    return boardIds
+      .map((id) => byId.get(id))
+      .filter((b): b is Board => Boolean(b))
+      .map((board) => ({ ...board, is_liked: true }));
+  },
+
   async getBoardBySlug(slug: string): Promise<Board | null> {
     if (!isSupabaseConfigured()) return null;
     requireSupabase();

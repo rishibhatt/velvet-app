@@ -30,10 +30,10 @@ export function MoodFilterChips({
         aria-selected={value === null}
         onClick={() => onChange(null)}
         className={cn(
-          "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+          "shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition-all",
           value === null
-            ? "bg-primary text-on-primary shadow-sm"
-            : "bg-surface-container-low text-on-surface ring-1 ring-outline-variant/25",
+            ? "bg-primary text-on-primary shadow-md"
+            : "bg-bg-elevated text-on-surface ring-1 ring-outline-variant/25 hover:ring-primary/20",
         )}
       >
         All
@@ -46,10 +46,10 @@ export function MoodFilterChips({
           aria-selected={value === mood.value}
           onClick={() => onChange(value === mood.value ? null : mood.value)}
           className={cn(
-            "shrink-0 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
+            "shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all",
             value === mood.value
-              ? "bg-primary text-on-primary shadow-sm"
-              : "bg-surface-container-low text-on-surface ring-1 ring-outline-variant/25",
+              ? "bg-primary text-on-primary shadow-md"
+              : "bg-bg-elevated text-on-surface ring-1 ring-outline-variant/25 hover:ring-primary/20",
           )}
         >
           {mood.emoji} {mood.label}

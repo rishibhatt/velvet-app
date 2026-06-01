@@ -2,6 +2,8 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { UserPlus, Share2, PlusCircle, Users, Settings } from "lucide-react";
+import { PageBackButton } from "@/components/molecules/PageBackButton";
+import { ROUTES } from "@/constants/routes";
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { Button } from "@/components/atoms/Button";
@@ -154,6 +156,9 @@ export default function BoardDetailPage({
 
   return (
     <>
+      <div className="mb-4">
+        <PageBackButton href={ROUTES.home} label="Collections" />
+      </div>
       <CollectionCoverHero
         coverUrl={board.cover_url}
         title={board.title}
@@ -170,7 +175,7 @@ export default function BoardDetailPage({
                 boardId={board.id}
                 likeCount={board.like_count ?? 0}
                 isLiked={board.is_liked}
-                canLike={user?.id !== board.owner_id}
+                canLike={user != null && user.id !== board.owner_id}
                 size="md"
               />
             )}
