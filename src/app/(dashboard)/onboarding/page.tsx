@@ -67,7 +67,7 @@ export default function OnboardingPage() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="glass-panel rounded-[2rem] p-8 md:p-10"
+        className="surface-panel rounded-[2rem] p-8 md:p-10"
       >
         {step === 1 ? (
           <div className="space-y-8">

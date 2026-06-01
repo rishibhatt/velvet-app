@@ -13,6 +13,7 @@ interface SupabaseBoardRow {
   created_at: string;
   updated_at: string;
   items?: { count: number }[];
+  board_likes?: { count: number }[];
   board_members?: Array<{
     id: string;
     board_id: string;
@@ -25,6 +26,7 @@ interface SupabaseBoardRow {
 
 export function mapBoard(row: SupabaseBoardRow): Board {
   const itemCount = row.items?.[0]?.count ?? 0;
+  const likeCount = row.board_likes?.[0]?.count ?? 0;
   const members: BoardMember[] = (row.board_members ?? []).map((bm) => ({
     id: bm.id,
     board_id: bm.board_id,
@@ -47,6 +49,7 @@ export function mapBoard(row: SupabaseBoardRow): Board {
     created_at: row.created_at,
     updated_at: row.updated_at,
     item_count: itemCount,
+    like_count: likeCount,
     members,
   };
 }
@@ -54,12 +57,13 @@ export function mapBoard(row: SupabaseBoardRow): Board {
 export const BOARD_SELECT = `
   *,
   items(count),
+  board_likes(count),
   board_members(
     id,
     board_id,
     user_id,
     role,
     created_at,
-    profile:profiles(id, username, full_name, avatar_url, bio, website, created_at, updated_at)
+    profile:profiles(id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at)
   )
 `;

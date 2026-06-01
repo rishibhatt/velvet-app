@@ -1,12 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { getAppBaseUrlFromHeaders } from "@/lib/app-url";
 import type { Database } from "@/types/database.types";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/onboarding";
+
+  const headerStore = await headers();
+  const origin =
+    getAppBaseUrlFromHeaders(headerStore) || new URL(request.url).origin;
 
   if (code) {
     const cookieStore = await cookies();

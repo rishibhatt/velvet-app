@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/services/supabase/client";
 import { authService } from "@/services/auth/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export function useAuth() {
+  const queryClient = useQueryClient();
   const { user, session, setUser, setSession, clearAuth } = useAuthStore();
 
   const profileQuery = useQuery({
@@ -38,12 +39,19 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [setUser, setSession, clearAuth]);
 
+  const signOut = useCallback(async () => {
+    await authService.signOut();
+    clearAuth();
+    queryClient.clear();
+  }, [clearAuth, queryClient]);
+
   return {
     user,
     session,
     profile: profileQuery.data ?? null,
     isLoading: profileQuery.isLoading,
     isAuthenticated: Boolean(user),
-    signOut: authService.signOut,
+    signOut,
+    refreshProfile: () => profileQuery.refetch(),
   };
 }

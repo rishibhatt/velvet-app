@@ -7,7 +7,8 @@ import { Button } from "@/components/atoms/Button";
 import { SegmentButton } from "@/components/atoms/SegmentButton";
 import { authService } from "@/services/auth/auth.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-const tabs = ["Account", "Notifications", "Privacy"] as const;
+import { ROUTES } from "@/constants/routes";
+const tabs = ["Account", "Privacy"] as const;
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Account");
@@ -43,7 +44,14 @@ export default function SettingsPage() {
       />
 
       {activeTab === "Account" && (
-        <div className="space-y-6 rounded-3xl border border-outline-variant/25 bg-white p-6 shadow-sm md:p-8">
+        <div className="space-y-6 rounded-3xl border border-outline-variant/25 bg-bg-elevated p-6 shadow-sm md:p-8">
+          <p className="text-sm text-on-surface-variant">
+            For profile photo, banner, and bio, use{" "}
+            <a href={ROUTES.profile} className="font-medium text-primary hover:underline">
+              Edit profile
+            </a>{" "}
+            on your profile page.
+          </p>
           <div>
             <label className="mb-2 block text-sm font-semibold text-on-surface">
               Full Name
@@ -71,14 +79,6 @@ export default function SettingsPage() {
               Sign Out
             </Button>
           </div>
-        </div>
-      )}
-
-      {activeTab === "Notifications" && (
-        <div className="rounded-3xl border border-outline-variant/25 bg-white p-6 md:p-8">
-          <p className="text-on-surface-variant">
-            Notification preferences will appear here.
-          </p>
         </div>
       )}
 

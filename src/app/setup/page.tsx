@@ -1,7 +1,13 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { Button } from "@/components/atoms/Button";
+import { SetupUrlBlock } from "@/components/molecules/SetupUrlBlock";
+import { getAppBaseUrlFromHeaders } from "@/lib/app-url";
 
-export default function SetupPage() {
+export default async function SetupPage() {
+  const headerStore = await headers();
+  const appBaseUrl = getAppBaseUrlFromHeaders(headerStore);
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="font-display mb-2 text-4xl text-primary">Velvet Setup</h1>
@@ -37,62 +43,86 @@ export default function SetupPage() {
           </p>
           <ul className="list-inside list-disc space-y-1 text-sm text-on-surface">
             <li>
-              <code className="rounded bg-white px-2 py-0.5">
+              <code className="rounded bg-bg-elevated px-2 py-0.5">
                 supabase/migrations/001_initial_schema.sql
               </code>
             </li>
             <li>
-              <code className="rounded bg-white px-2 py-0.5">
+              <code className="rounded bg-bg-elevated px-2 py-0.5">
                 supabase/migrations/002_rls_policies.sql
               </code>
             </li>
             <li>
-              <strong className="text-error">
+              <code className="rounded bg-bg-elevated px-2 py-0.5">
+                supabase/migrations/002_profile_banner.sql
+              </code>{" "}
+              (profile banner column)
+            </li>
+            <li>
+              <code className="rounded bg-bg-elevated px-2 py-0.5">
                 supabase/migrations/003_fix_rls_and_storage.sql
-              </strong>{" "}
-              (required — fixes &quot;Failed to fetch&quot; / boards not loading)
+              </code>{" "}
+              (required — fixes boards / storage)
+            </li>
+            <li>
+              <code className="rounded bg-bg-elevated px-2 py-0.5">
+                supabase/migrations/004_slug_and_item_policies.sql
+              </code>{" "}
+              (public share URLs)
             </li>
             <li>
               <code className="rounded bg-white px-2 py-0.5">
-                supabase/migrations/004_slug_and_item_policies.sql
+                supabase/migrations/005_board_likes.sql
               </code>{" "}
-              (public share URLs + item delete)
+              (likes + trending sort)
             </li>
           </ul>
         </li>
 
         <li className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
-          <h2 className="font-display mb-2 text-xl text-on-surface">
-            2b. Supabase Dashboard settings
+          <h2 className="font-display mb-3 text-xl text-on-surface">
+            2b. Supabase Dashboard — auth URLs
           </h2>
-          <ul className="list-inside list-disc space-y-2 text-on-surface-variant">
+          <ul className="mb-4 list-inside list-disc space-y-2 text-sm text-on-surface-variant">
             <li>
               Authentication → Providers → Email: enable email sign-in. For dev,
               disable &quot;Confirm email&quot; so signup works instantly.
             </li>
             <li>
-              Authentication → URL Configuration: Site URL{" "}
-              <code className="rounded bg-white px-2 py-0.5">http://localhost:3000</code>
-              , Redirect URLs:{" "}
-              <code className="rounded bg-white px-2 py-0.5">http://localhost:3000/auth/callback</code>
+              Storage: bucket{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">velvet-uploads</code>{" "}
+              is created by migration 003.
             </li>
-            <li>Storage: bucket <code className="rounded bg-white px-2 py-0.5">velvet-uploads</code> is created by migration 003.</li>
           </ul>
+          <SetupUrlBlock initialBaseUrl={appBaseUrl} />
         </li>
 
         <li className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-6">
           <h2 className="font-display mb-2 text-xl text-on-surface">
-            3. Add environment variables
+            3. Environment variables
           </h2>
           <p className="mb-3 text-on-surface-variant">
-            Create <code className="rounded bg-white px-2 py-0.5">.env.local</code>{" "}
-            in the <code className="rounded bg-white px-2 py-0.5">velvet-app</code>{" "}
-            folder:
+            Copy{" "}
+            <code className="rounded bg-bg-elevated px-2 py-0.5">.env.example</code> to{" "}
+            <code className="rounded bg-bg-elevated px-2 py-0.5">.env.local</code> in the{" "}
+            <code className="rounded bg-bg-elevated px-2 py-0.5">velvet-app</code> folder,
+            then fill in your Supabase keys:
           </p>
           <pre className="overflow-x-auto rounded-xl bg-inverse-surface p-4 text-left text-sm text-text-inverse">
-{`NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key`}
+{`copy .env.example .env.local   # Windows
+# cp .env.example .env.local    # macOS / Linux`}
           </pre>
+          <p className="mt-3 text-sm text-on-surface-variant">
+            See <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">.env.example</code>{" "}
+            for every variable (required vs optional) and short descriptions.
+          </p>
+          <p className="mt-3 text-sm text-on-surface-variant">
+            For ngrok, either open the app via your ngrok link (URLs below will match), or set{" "}
+            <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">
+              NEXT_PUBLIC_APP_URL=https://YOUR-SUBDOMAIN.ngrok-free.app
+            </code>{" "}
+            and restart <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">npm run dev</code>.
+          </p>
         </li>
 
         <li className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-6">
@@ -100,17 +130,30 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key`}
             4. Enable Google OAuth (optional)
           </h2>
           <p className="text-on-surface-variant">
-            In Supabase → Authentication → Providers, enable Google. Add redirect
-            URL:{" "}
-            <code className="rounded bg-white px-2 py-0.5">
-              http://localhost:3000/auth/callback
-            </code>
+            In Supabase → Authentication → Providers, enable Google. Use the same{" "}
+            <strong>Redirect URL</strong> shown in step 2b (your app&apos;s{" "}
+            <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">/auth/callback</code>
+            ). Google Cloud should use Supabase&apos;s callback URL from the provider settings,
+            not your ngrok URL directly.
           </p>
         </li>
 
         <li className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-6">
           <h2 className="font-display mb-2 text-xl text-on-surface">
-            5. Restart the dev server
+            5. ngrok + Next.js 16
+          </h2>
+          <p className="text-sm text-on-surface-variant">
+            This project allows ngrok origins in{" "}
+            <code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">next.config.ts</code>{" "}
+            (<code className="rounded bg-bg-elevated px-1.5 py-0.5 text-xs">allowedDevOrigins</code>
+            ). After changing config or env, restart the dev server. Always open the app via your
+            ngrok HTTPS URL — not localhost — when testing auth through the tunnel.
+          </p>
+        </li>
+
+        <li className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-6">
+          <h2 className="font-display mb-2 text-xl text-on-surface">
+            6. Restart the dev server
           </h2>
           <pre className="rounded-xl bg-inverse-surface p-4 text-sm text-text-inverse">
             npm run dev

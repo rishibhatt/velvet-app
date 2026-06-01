@@ -1,3 +1,4 @@
+import { getAuthCallbackUrl, getLoginUrl, getOnboardingUrl } from "@/lib/app-url";
 import { requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
@@ -30,7 +31,7 @@ export const authService = {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/onboarding`,
+        emailRedirectTo: getOnboardingUrl(),
       },
     });
     if (error) throw error;
@@ -43,7 +44,7 @@ export const authService = {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: getAuthCallbackUrl(),
       },
     });
     if (error) throw error;
@@ -60,7 +61,7 @@ export const authService = {
     requireSupabase();
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
+      redirectTo: getLoginUrl(),
     });
     if (error) throw error;
   },

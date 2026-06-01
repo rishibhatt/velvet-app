@@ -60,7 +60,7 @@ export async function getPublicProfile(username: string) {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, avatar_url, bio, website")
+    .select("id, username, full_name, avatar_url, banner_url, bio, website")
     .eq("username", username)
     .single();
 

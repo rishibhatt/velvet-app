@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Button } from "@/components/atoms/Button";
+import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { getPublicCollectionBySlug } from "@/lib/public-collection";
 import { getMoodEmoji } from "@/constants/moods";
 import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
+import { PublicCollectionActions } from "@/features/collections/components/PublicCollectionActions";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -39,33 +40,19 @@ export default async function PublicCollectionPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="relative h-[320px] w-full overflow-hidden md:h-[400px]">
-        {board.cover_url ? (
-          <VelvetImage
-            src={board.cover_url}
-            alt=""
-            fill
-            className="object-cover blur-sm scale-110"
-            priority
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary-container/50 to-secondary-container/50" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-6 pb-10">
-          <span className="mb-3 inline-block rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-primary">
+      <CollectionCoverHero
+        size="public"
+        coverUrl={board.cover_url}
+        title={board.title}
+        description={board.description}
+        badge={
+          <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
             {getMoodEmoji(board.mood)} Public collection
           </span>
-          <h1 className="font-display text-4xl text-on-surface md:text-5xl">
-            {board.title}
-          </h1>
-          {board.description && (
-            <p className="mt-3 max-w-2xl text-lg text-on-surface-variant">
-              {board.description}
-            </p>
-          )}
-          {owner && (
-            <p className="mt-4 text-sm text-on-surface-variant">
+        }
+        meta={
+          owner ? (
+            <p className="text-sm text-on-surface">
               Curated by{" "}
               <Link
                 href={`/u/${owner.username}`}
@@ -74,11 +61,14 @@ export default async function PublicCollectionPage({ params }: PageProps) {
                 {owner.full_name ?? owner.username}
               </Link>
             </p>
-          )}
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-8">
+          <PublicCollectionActions board={board} ownerId={board.owner_id} />
+        </div>
         {items.length > 0 ? (
           <PublicItemGrid items={items} />
         ) : (
@@ -87,7 +77,7 @@ export default async function PublicCollectionPage({ params }: PageProps) {
           </p>
         )}
 
-        <div className="mt-16 flex flex-col items-center gap-4 rounded-3xl border border-primary/20 bg-primary/5 p-10 text-center">
+        <div className="mt-16 flex flex-col items-center gap-4 rounded-3xl border border-primary/20 bg-primary-fixed/30 p-10 text-center">
           <h2 className="font-display text-2xl text-on-surface">
             Love this collection?
           </h2>

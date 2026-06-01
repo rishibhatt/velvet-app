@@ -15,6 +15,7 @@ export interface Database {
           username: string;
           full_name: string | null;
           avatar_url: string | null;
+          banner_url: string | null;
           bio: string | null;
           website: string | null;
           created_at: string;
@@ -25,6 +26,7 @@ export interface Database {
           username: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           bio?: string | null;
           website?: string | null;
           created_at?: string;
@@ -35,6 +37,7 @@ export interface Database {
           username?: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           bio?: string | null;
           website?: string | null;
           created_at?: string;
@@ -62,6 +65,24 @@ export interface Database {
           board_id?: string;
           user_id?: string;
           role?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      board_likes: {
+        Row: {
+          board_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          board_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          board_id?: string;
+          user_id?: string;
           created_at?: string;
         };
         Relationships: [];

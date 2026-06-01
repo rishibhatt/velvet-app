@@ -4,7 +4,7 @@ const BUCKET = "velvet-uploads";
 
 export async function uploadImage(
   file: File,
-  folder: "items" | "avatars" | "covers" = "items",
+  folder: "items" | "avatars" | "covers" | "banners" = "items",
 ): Promise<string> {
   const supabase = createClient();
   const {

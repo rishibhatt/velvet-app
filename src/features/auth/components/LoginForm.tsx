@@ -34,7 +34,10 @@ export function LoginForm() {
     try {
       await authService.signIn(data.email, data.password);
       velvetToast.success("Welcome back!", "Your velvet world awaits.");
-      router.push(ROUTES.home);
+      router.refresh();
+      // Full navigation so middleware receives fresh auth cookies (needed for ngrok)
+      window.location.assign(ROUTES.home);
+      return;
     } catch (err) {
       velvetToast.error("Sign in failed", getErrorMessage(err, "auth"));
     } finally {

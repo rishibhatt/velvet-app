@@ -57,18 +57,18 @@ export function CreateBoardModal() {
     <ModalShell
       open={createBoardModal}
       onClose={closeCreateBoard}
-      className="glass-panel p-stack-lg md:p-12"
+      title="New collection"
+      subtitle="Gather your inspirations in one curated space"
+      className="surface-panel max-w-lg"
+      contentClassName="p-stack-lg md:p-12"
+      footer={
+        <Button type="submit" form="create-board-form" size="lg" loading={createBoard.isPending} className="w-full">
+          Create Board
+          <ArrowRight className="h-5 w-5" />
+        </Button>
+      }
     >
-      <div className="mb-stack-lg text-center">
-        <h2 className="font-display mb-2 text-2xl text-on-surface md:text-3xl">
-          New Collection
-        </h2>
-        <p className="text-on-surface-variant">
-          Gather your inspirations in one curated space.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      <form id="create-board-form" onSubmit={handleSubmit(onSubmit)} className="space-y-10">
         <div className="space-y-4">
           <input
             {...register("title")}
@@ -83,7 +83,7 @@ export function CreateBoardModal() {
             {...register("description")}
             placeholder="What is this collection for? (optional)"
             rows={2}
-            className="w-full resize-none rounded-xl border border-outline-variant/40 bg-white/80 px-4 py-3 text-sm focus:border-primary focus:outline-none"
+            className="w-full resize-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 text-sm focus:border-primary focus:outline-none"
             aria-label="Description"
           />
         </div>
@@ -126,10 +126,6 @@ export function CreateBoardModal() {
           />
         </section>
 
-        <Button type="submit" size="lg" loading={createBoard.isPending} className="w-full">
-          Create Board
-          <ArrowRight className="h-5 w-5" />
-        </Button>
       </form>
     </ModalShell>
   );

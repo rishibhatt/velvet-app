@@ -1,4 +1,5 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
+import { likesService } from "@/services/likes/likes.service";
 import { slugifyTitle, uniqueSlug } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
@@ -74,7 +75,9 @@ export const boardsService = {
       .is("deleted_at", null)
       .single();
     if (error) return null;
-    return mapBoard(data as never);
+    const board = mapBoard(data as never);
+    const liked = await likesService.getLikedBoardIds([board.id]);
+    return { ...board, is_liked: liked.has(board.id) };
   },
 
   async getBoardById(id: string): Promise<Board | null> {
@@ -88,7 +91,12 @@ export const boardsService = {
       .is("deleted_at", null)
       .single();
     if (error) return null;
-    return mapBoard(data as never);
+    const board = mapBoard(data as never);
+    if (board.is_public) {
+      const liked = await likesService.getLikedBoardIds([board.id]);
+      return { ...board, is_liked: liked.has(board.id) };
+    }
+    return board;
   },
 
   async getBoardMembers(boardId: string): Promise<BoardMember[]> {

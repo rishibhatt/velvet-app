@@ -1,0 +1,159 @@
+import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
+import { likesService } from "@/services/likes/likes.service";
+import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
+import { isSupabaseConfigured } from "@/lib/utils";
+import { createClient } from "@/services/supabase/client";
+import type { Board, Mood, Profile } from "@/types/board.types";
+
+export type PublicBoardSort = "trending" | "new" | "most_items";
+
+export interface PublicBoard extends Board {
+  owner?: Pick<Profile, "id" | "username" | "full_name" | "avatar_url">;
+}
+
+export interface DiscoverFilters {
+  mood?: Mood | null;
+  sort?: PublicBoardSort;
+  limit?: number;
+  excludeOwnerId?: string;
+  query?: string;
+}
+
+const PUBLIC_BOARD_SELECT = `
+  ${BOARD_SELECT},
+  owner:profiles!owner_id(id, username, full_name, avatar_url)
+`;
+
+type PublicBoardRow = Parameters<typeof mapBoard>[0] & {
+  owner?: Pick<Profile, "id" | "username" | "full_name" | "avatar_url"> | null;
+};
+
+function mapPublicBoard(
+  row: PublicBoardRow,
+  likedIds: Set<string>,
+): PublicBoard {
+  const board = mapBoard(row);
+  return {
+    ...board,
+    owner: row.owner ?? undefined,
+    is_liked: likedIds.has(board.id),
+  };
+}
+
+function sanitizeIlike(term: string): string {
+  return term.replace(/[%_\\]/g, "").trim();
+}
+
+function sortBoards(boards: PublicBoard[], sort: PublicBoardSort): PublicBoard[] {
+  const copy = [...boards];
+  if (sort === "new") {
+    return copy.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }
+  if (sort === "most_items") {
+    return copy.sort((a, b) => {
+      const itemsA = a.item_count ?? 0;
+      const itemsB = b.item_count ?? 0;
+      if (itemsB !== itemsA) return itemsB - itemsA;
+      return (b.like_count ?? 0) - (a.like_count ?? 0);
+    });
+  }
+  // trending = most likes
+  return copy.sort((a, b) => {
+    const likesA = a.like_count ?? 0;
+    const likesB = b.like_count ?? 0;
+    if (likesB !== likesA) return likesB - likesA;
+    const itemsA = a.item_count ?? 0;
+    const itemsB = b.item_count ?? 0;
+    if (itemsB !== itemsA) return itemsB - itemsA;
+    return (
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+  });
+}
+
+export const discoverService = {
+  async getPublicBoards(filters: DiscoverFilters = {}): Promise<PublicBoard[]> {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+
+    const {
+      mood = null,
+      sort = "trending",
+      limit = 48,
+      excludeOwnerId,
+      query,
+    } = filters;
+
+    const supabase = createClient();
+    let request = supabase
+      .from("boards")
+      .select(PUBLIC_BOARD_SELECT)
+      .eq("is_public", true)
+      .is("deleted_at", null);
+
+    if (mood) {
+      request = request.eq("mood", mood);
+    }
+
+    if (excludeOwnerId) {
+      request = request.neq("owner_id", excludeOwnerId);
+    }
+
+    const { data, error } = await request.order("created_at", {
+      ascending: false,
+    });
+
+    if (error) throw new Error(parseSupabaseError(error));
+
+    const rows = (data ?? []) as PublicBoardRow[];
+    const boardIds = rows.map((r) => r.id);
+    const likedIds = await likesService.getLikedBoardIds(boardIds);
+
+    let mapped = rows.map((row) => mapPublicBoard(row, likedIds));
+
+    const normalizedQuery = query ? sanitizeIlike(query).toLowerCase() : "";
+    if (normalizedQuery) {
+      mapped = mapped.filter((b) => {
+        const inTitle = b.title.toLowerCase().includes(normalizedQuery);
+        const inDesc = (b.description ?? "")
+          .toLowerCase()
+          .includes(normalizedQuery);
+        const inMood = (b.mood ?? "").toLowerCase().includes(normalizedQuery);
+        const inOwner = (b.owner?.username ?? "")
+          .toLowerCase()
+          .includes(normalizedQuery);
+        return inTitle || inDesc || inMood || inOwner;
+      });
+    }
+
+    return sortBoards(mapped, sort).slice(0, limit);
+  },
+
+  async searchProfiles(
+    query: string,
+    limit = 20,
+  ): Promise<
+    Pick<Profile, "id" | "username" | "full_name" | "avatar_url" | "bio">[]
+  > {
+    if (!isSupabaseConfigured()) return [];
+    requireSupabase();
+
+    const term = sanitizeIlike(query);
+    if (!term) return [];
+
+    const supabase = createClient();
+    const pattern = `%${term}%`;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url, bio")
+      .or(`username.ilike.${pattern},full_name.ilike.${pattern}`)
+      .order("username", { ascending: true })
+      .limit(limit);
+
+    if (error) throw new Error(parseSupabaseError(error));
+    return data ?? [];
+  },
+};

@@ -37,6 +37,7 @@ export function SaveModal() {
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tagsSectionRef = useRef<HTMLDivElement>(null);
 
   const debouncedUrl = useDebounce(url, 500);
   const saveItem = useSaveItem(boardId || boards[0]?.id || "");
@@ -61,6 +62,12 @@ export function SaveModal() {
         velvetToast.info("Couldn't fetch preview", "You can still save with a custom title.");
       });
   }, [debouncedUrl, mode]);
+
+  useEffect(() => {
+    if (tags.length > 0 && tagsSectionRef.current) {
+      tagsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [tags.length]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -151,6 +158,7 @@ export function SaveModal() {
     setImageUrl(null);
     setLocalPreview(null);
     setSelectedTags([]);
+    setTags([]);
     setMode("link");
   };
 
@@ -161,6 +169,19 @@ export function SaveModal() {
     "bg-primary-fixed text-on-primary-fixed-variant",
   ];
 
+  const saveFooter = (
+    <Button
+      onClick={handleSave}
+      size="lg"
+      loading={saveItem.isPending || uploading}
+      disabled={boards.length === 0}
+      className={cn("w-full", saved && "!bg-green-600 !text-white")}
+    >
+      {saved ? "Saved!" : "Save to Board"}
+      <Sparkles className="h-5 w-5 fill-current" />
+    </Button>
+  );
+
   return (
     <ModalShell
       open={saveModal.open}
@@ -168,9 +189,13 @@ export function SaveModal() {
         closeSaveModal();
         resetForm();
       }}
-      className="max-w-[520px] overflow-hidden p-0 sm:mx-auto"
+      title="Save to collection"
+      subtitle="Paste a link, upload an image, or write a note"
+      className="max-w-[520px] sm:mx-auto"
+      contentClassName="p-0"
+      footer={saveFooter}
     >
-      <div className="p-4 bg-surface-container-lowest sm:p-6">
+      <div className="border-b border-outline-variant/15 bg-surface-container-low/40 p-4 sm:p-6">
         <SegmentButton
           options={[
             { value: "link", label: "Link" },
@@ -183,7 +208,7 @@ export function SaveModal() {
         />
 
         {mode === "note" ? (
-          <div className="rounded-xl border border-outline-variant/40 bg-white p-4">
+          <div className="rounded-xl border border-outline-variant/40 bg-bg-elevated p-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
               <StickyNote className="h-4 w-4" />
               Text note
@@ -208,7 +233,7 @@ export function SaveModal() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://instagram.com/..."
-              className="w-full rounded-xl border border-outline-variant/40 bg-white py-3 pr-4 pl-11 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-outline-variant/40 bg-bg-elevated py-3 pr-4 pl-11 text-sm focus:border-primary focus:outline-none"
               aria-label="URL to save"
             />
           </div>
@@ -225,7 +250,7 @@ export function SaveModal() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-white py-8 transition-colors hover:border-primary hover:bg-primary/5"
+              className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-bg-elevated py-8 transition-colors hover:border-primary hover:bg-primary/5"
             >
               <Upload className="h-8 w-8 text-primary" />
               <span className="text-sm font-semibold text-primary">
@@ -252,7 +277,7 @@ export function SaveModal() {
               </div>
             )}
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <span className="mb-1 block text-xs font-bold tracking-widest text-primary uppercase">
               {mode === "upload" ? "Upload" : "New Save"}
             </span>
@@ -264,7 +289,7 @@ export function SaveModal() {
               aria-label="Item title"
             />
             {url && mode === "link" && (
-              <p className="mt-1 text-sm text-on-surface-variant">
+              <p className="mt-1 truncate text-sm text-on-surface-variant">
                 via {getDomain(url)}
               </p>
             )}
@@ -272,7 +297,7 @@ export function SaveModal() {
         </div>
       </div>
 
-      <div className="space-y-5 p-4 pt-2 sm:space-y-6 sm:p-6">
+      <div className="space-y-5 p-4 sm:space-y-6 sm:p-6 sm:pt-2">
         {boardsError && (
           <p className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">
             Could not load boards. Run migration 003 in Supabase SQL Editor (see /setup).
@@ -287,7 +312,7 @@ export function SaveModal() {
           <select
             value={boardId}
             onChange={(e) => setBoardId(e.target.value)}
-            className="w-full rounded-xl border border-outline-variant/40 bg-white px-4 py-3 font-medium text-on-surface focus:border-primary focus:outline-none"
+            className="w-full rounded-xl border border-outline-variant/40 bg-bg-elevated px-4 py-3 font-medium text-on-surface focus:border-primary focus:outline-none"
             aria-label="Select board"
           >
             {boards.length === 0 && (
@@ -301,23 +326,25 @@ export function SaveModal() {
           </select>
         </div>
 
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-on-surface">
-            <Edit3 className="h-4 w-4 text-primary" />
-            Notes
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add a few words about why you saved this..."
-            rows={3}
-            className="w-full resize-none rounded-xl border border-outline-variant/40 bg-white px-4 py-3 focus:border-primary focus:outline-none"
-            aria-label="Notes"
-          />
-        </div>
+        {mode !== "note" && (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+              <Edit3 className="h-4 w-4 text-primary" />
+              Notes
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add a few words about why you saved this..."
+              rows={3}
+              className="w-full resize-none rounded-xl border border-outline-variant/40 bg-bg-elevated px-4 py-3 focus:border-primary focus:outline-none"
+              aria-label="Notes"
+            />
+          </div>
+        )}
 
         {tags.length > 0 && (
-          <div className="space-y-3">
+          <div ref={tagsSectionRef} className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-semibold text-on-surface">
               <Sparkles className="h-4 w-4 text-primary" />
               AI Suggestions
@@ -332,7 +359,7 @@ export function SaveModal() {
                     "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
                     selectedTags.includes(tag)
                       ? tagColors[i % tagColors.length]
-                      : "border border-outline-variant/40 bg-white text-on-surface hover:border-primary",
+                      : "border border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary",
                   )}
                 >
                   #{tag}
@@ -341,17 +368,6 @@ export function SaveModal() {
             </div>
           </div>
         )}
-
-        <Button
-          onClick={handleSave}
-          size="lg"
-          loading={saveItem.isPending || uploading}
-          disabled={boards.length === 0}
-          className={cn("w-full", saved && "!bg-green-600 !text-white")}
-        >
-          {saved ? "Saved!" : "Save to Board"}
-          <Sparkles className="h-5 w-5 fill-current" />
-        </Button>
       </div>
     </ModalShell>
   );

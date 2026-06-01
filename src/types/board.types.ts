@@ -24,6 +24,7 @@ export interface Profile {
   username: string;
   full_name: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   bio: string | null;
   website: string | null;
   created_at: string;
@@ -43,6 +44,8 @@ export interface Board {
   created_at: string;
   updated_at: string;
   item_count?: number;
+  like_count?: number;
+  is_liked?: boolean;
   members?: BoardMember[];
 }
 

@@ -42,7 +42,9 @@ export function SignupForm() {
     try {
       await authService.signUp(data.email, data.password, data.fullName);
       velvetToast.success("Welcome to Velvet!", "Let's create your first collection.");
-      router.push("/onboarding");
+      router.refresh();
+      window.location.assign("/onboarding");
+      return;
     } catch (err) {
       velvetToast.error("Sign up failed", getErrorMessage(err, "auth"));
     } finally {

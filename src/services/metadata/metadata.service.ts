@@ -1,18 +1,7 @@
-import type { ItemSource, UrlMetadata } from "@/types/board.types";
+import type { UrlMetadata } from "@/types/board.types";
+import { detectSourceFromUrl } from "@/lib/link-metadata";
 
-export function detectSource(url: string): ItemSource {
-  try {
-    const hostname = new URL(url).hostname.replace("www.", "");
-    if (hostname.includes("instagram")) return "instagram";
-    if (hostname.includes("youtube") || hostname.includes("youtu.be"))
-      return "youtube";
-    if (hostname.includes("amazon")) return "amazon";
-    if (hostname.includes("pinterest")) return "pinterest";
-    return "web";
-  } catch {
-    return "web";
-  }
-}
+export { detectSourceFromUrl as detectSource } from "@/lib/link-metadata";
 
 export async function fetchUrlMetadata(url: string): Promise<UrlMetadata> {
   const response = await fetch("/api/metadata", {
@@ -26,7 +15,7 @@ export async function fetchUrlMetadata(url: string): Promise<UrlMetadata> {
       title: url,
       imageUrl: null,
       description: null,
-      source: detectSource(url),
+      source: detectSourceFromUrl(url),
     };
   }
 

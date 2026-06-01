@@ -1,0 +1,92 @@
+import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
+import { isSupabaseConfigured } from "@/lib/utils";
+import { createClient } from "@/services/supabase/client";
+
+export const likesService = {
+  async getLikedBoardIds(boardIds: string[]): Promise<Set<string>> {
+    if (!isSupabaseConfigured() || boardIds.length === 0) return new Set();
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return new Set();
+
+    const { data, error } = await supabase
+      .from("board_likes")
+      .select("board_id")
+      .eq("user_id", user.id)
+      .in("board_id", boardIds);
+
+    if (error) throw new Error(parseSupabaseError(error));
+    return new Set((data ?? []).map((r) => r.board_id));
+  },
+
+  async toggleBoardLike(
+    boardId: string,
+  ): Promise<{ liked: boolean; likeCount: number }> {
+    requireSupabase();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in to like collections.");
+
+    const { data: board } = await supabase
+      .from("boards")
+      .select("id, is_public, owner_id, deleted_at")
+      .eq("id", boardId)
+      .single();
+
+    const boardRow = board as {
+      id: string;
+      is_public: boolean;
+      owner_id: string;
+      deleted_at: string | null;
+    } | null;
+
+    if (!boardRow || boardRow.deleted_at) {
+      throw new Error("Collection not found.");
+    }
+    if (!boardRow.is_public) {
+      throw new Error("Only public collections can be liked.");
+    }
+    if (boardRow.owner_id === user.id) {
+      throw new Error("You cannot like your own collection.");
+    }
+
+    const { data: existing } = await supabase
+      .from("board_likes")
+      .select("board_id")
+      .eq("board_id", boardId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("board_likes")
+        .delete()
+        .eq("board_id", boardId)
+        .eq("user_id", user.id);
+      if (error) throw new Error(parseSupabaseError(error));
+    } else {
+      const { error } = await supabase.from("board_likes").insert({
+        board_id: boardId,
+        user_id: user.id,
+      });
+      if (error) throw new Error(parseSupabaseError(error));
+    }
+
+    const { count, error: countError } = await supabase
+      .from("board_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("board_id", boardId);
+
+    if (countError) throw new Error(parseSupabaseError(countError));
+
+    return {
+      liked: !existing,
+      likeCount: count ?? 0,
+    };
+  },
+};

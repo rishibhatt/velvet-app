@@ -1,17 +1,14 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { UserPlus, Share2, PlusCircle, Users, Settings } from "lucide-react";
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Button } from "@/components/atoms/Button";
 import { IconButton } from "@/components/atoms/IconButton";
 import { AvatarStack } from "@/components/molecules/AvatarStack";
-import {
-  ItemCard,
-  ItemCardSkeleton,
-} from "@/components/organisms/ItemCard";
+import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
+import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
 import { CollabPanel } from "@/components/organisms/CollabPanel";
 import { useBoardDetail } from "@/queries/board/queries";
 import { useItems } from "@/queries/item/queries";
@@ -26,7 +23,10 @@ import { activityKeys } from "@/queries/activity/queries";
 import { isSupabaseConfigured } from "@/lib/utils";
 import type { ActivityLog } from "@/types/board.types";
 import { BoardSettingsModal } from "@/features/boards/components/BoardSettingsModal";
+import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { getPublicShareUrl } from "@/constants/routes";
+import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function BoardDetailPage({
   params,
@@ -49,10 +49,13 @@ export default function BoardDetailPage({
     refetch: refetchItems,
   } = useItems(id);
   const { data: activities = [] } = useBoardActivity(id);
+  const { user } = useAuth();
   const { openSaveModal, openItemModal } = useModalStore();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const itemsSectionRef = useRef<HTMLElement>(null);
+  const prevItemCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -84,6 +87,16 @@ export default function BoardDetailPage({
       if (channel) supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
+
+  useEffect(() => {
+    const count = items?.length ?? 0;
+    if (prevItemCountRef.current !== null && count > prevItemCountRef.current) {
+      requestAnimationFrame(() => {
+        itemsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+    prevItemCountRef.current = count;
+  }, [items?.length]);
 
   if (boardLoading) {
     return (
@@ -141,61 +154,49 @@ export default function BoardDetailPage({
 
   return (
     <>
-      <section className="relative h-[min(50vh,320px)] w-full overflow-hidden sm:h-[380px] md:h-[442px]">
-        {board.cover_url ? (
-          <VelvetImage
-            src={board.cover_url}
-            alt=""
-            fill
-            className="scale-110 object-cover blur-sm"
-            priority
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary-container/40 to-secondary-container/40" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full px-4 pb-6 sm:px-margin-mobile sm:pb-stack-lg md:px-margin-desktop">
-          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 lg:flex-row lg:items-end">
-            <div className="flex-1">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="rounded-full border border-white/50 bg-white/90 px-3 py-1 text-xs font-bold text-primary shadow-sm backdrop-blur-md">
-                  {getMoodEmoji(board.mood)}{" "}
-                  {board.item_count ?? items?.length ?? 0} Items
-                </span>
-              </div>
-              <h1 className="font-display text-2xl leading-tight text-on-surface sm:text-3xl md:text-5xl">
-                {board.title}
-              </h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <AvatarStack
-                profiles={members.map((m) => m.profile)}
-                max={3}
+      <CollectionCoverHero
+        coverUrl={board.cover_url}
+        title={board.title}
+        description={board.description}
+        badge={
+          <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
+            {getMoodEmoji(board.mood)} {board.item_count ?? items?.length ?? 0} items
+          </span>
+        }
+        actions={
+          <>
+            {board.is_public && (
+              <BoardLikeButton
+                boardId={board.id}
+                likeCount={board.like_count ?? 0}
+                isLiked={board.is_liked}
+                canLike={user?.id !== board.owner_id}
+                size="md"
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCollabPanelOpen(true)}
-              >
-                <Users className="h-4 w-4" />
-                Collab
-              </Button>
-              <Button variant="secondary" size="sm">
-                <UserPlus className="h-4 w-4" />
-                Invite
-              </Button>
-              <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-              </IconButton>
-              <IconButton label="Share board" onClick={handleShare}>
-                <Share2 className="h-5 w-5" />
-              </IconButton>
-            </div>
-          </div>
-        </div>
-      </section>
+            )}
+            <AvatarStack profiles={members.map((m) => m.profile)} max={3} />
+            <Button variant="secondary" size="sm" onClick={() => setCollabPanelOpen(true)}>
+              <Users className="h-4 w-4" />
+              Collab
+            </Button>
+            <Button variant="secondary" size="sm">
+              <UserPlus className="h-4 w-4" />
+              Invite
+            </Button>
+            <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
+              <Settings className="h-5 w-5" />
+            </IconButton>
+            <IconButton label="Share board" onClick={handleShare}>
+              <Share2 className="h-5 w-5" />
+            </IconButton>
+          </>
+        }
+      />
 
-      <section className="page-container mt-stack-lg pb-36 md:pb-32">
+      <section
+        ref={itemsSectionRef}
+        className="page-container mt-stack-lg scroll-mt-24 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] md:scroll-mt-8 md:pb-32"
+      >
         {itemsError && (
           <ErrorAlert
             className="mb-6"
@@ -205,11 +206,24 @@ export default function BoardDetailPage({
           />
         )}
         {itemsLoading ? (
-          <div className="masonry-grid">
-            <ItemCardSkeleton />
-          </div>
+          <CollectionItemsGrid>
+            <ItemCardSkeleton count={6} />
+          </CollectionItemsGrid>
         ) : items && items.length > 0 ? (
-          <div className="masonry-grid">
+          <CollectionItemsGrid
+            header={
+              <div className="mb-5 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-xl text-on-surface md:text-2xl">
+                    Your saves
+                  </h2>
+                  <p className="mt-1 text-sm text-on-surface-variant">
+                    {items.length} {items.length === 1 ? "item" : "items"} in this collection
+                  </p>
+                </div>
+              </div>
+            }
+          >
             {items.map((item) => (
               <ItemCard
                 key={item.id}
@@ -217,9 +231,9 @@ export default function BoardDetailPage({
                 onClick={() => openItemModal(item.id)}
               />
             ))}
-          </div>
+          </CollectionItemsGrid>
         ) : (
-          <div className="rounded-3xl border border-dashed border-primary/30 bg-white/60 py-16 text-center">
+          <div className="rounded-3xl border border-dashed border-primary/30 bg-surface-container-low py-16 text-center">
             <p className="mb-4 text-on-surface-variant">
               No saves yet. Paste a link or image to start your board.
             </p>
@@ -231,8 +245,8 @@ export default function BoardDetailPage({
         )}
       </section>
 
-      <div className="fixed bottom-16 left-0 z-50 flex w-full flex-col items-center pb-safe md:bottom-0">
-        <div className="flex min-h-[72px] w-full items-center justify-center border-t border-white/40 bg-surface/95 px-4 backdrop-blur-xl sm:px-margin-mobile">
+      <div className="fixed bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] left-0 z-40 flex w-full flex-col items-center md:bottom-0">
+        <div className="flex min-h-[72px] w-full items-center justify-center border-t border-outline-variant/20 bg-bg-elevated/98 px-4 shadow-[0_-4px_24px_rgba(46,42,39,0.06)] sm:px-margin-mobile md:pb-safe">
           <Button
             size="lg"
             variant="gradient"

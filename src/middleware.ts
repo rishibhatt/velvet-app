@@ -1,5 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 const protectedRoutes = [
   "/",
@@ -7,10 +7,25 @@ const protectedRoutes = [
   "/profile",
   "/settings",
   "/search",
+  "/explore",
   "/onboarding",
 ];
 const authRoutes = ["/login", "/signup", "/forgot-password"];
 const publicRoutes = ["/setup", "/auth/callback", "/c", "/u"];
+
+function redirectWithCookies(
+  request: NextRequest,
+  pathname: string,
+  supabaseResponse: NextResponse,
+) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const redirect = NextResponse.redirect(url);
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie);
+  });
+  return redirect;
+}
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -54,28 +69,24 @@ export async function middleware(request: NextRequest) {
       },
     });
 
+    // Validates JWT and refreshes session cookies (required for SSR + ngrok)
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const isProtected = protectedRoutes.some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
     const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-    if (!session && isProtected) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
+    if (!user && isProtected) {
+      return redirectWithCookies(request, "/login", supabaseResponse);
     }
 
-    if (session && isAuthRoute) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
+    if (user && isAuthRoute) {
+      return redirectWithCookies(request, "/", supabaseResponse);
     }
   } catch {
-    // If Supabase is unreachable, allow request through (client will show errors)
     return supabaseResponse;
   }
 

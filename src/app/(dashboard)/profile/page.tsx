@@ -1,14 +1,24 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
+import { Pencil, LogOut, Settings, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/atoms/Avatar";
+import { Button } from "@/components/atoms/Button";
+import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { BoardCard, BoardCardSkeleton } from "@/components/organisms/BoardCard";
+import { ProfileEditor } from "@/features/profile/components/ProfileEditor";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBoards } from "@/queries/board/queries";
 import { Skeleton } from "@/components/atoms/Skeleton";
+import { ROUTES } from "@/constants/routes";
 
 export default function ProfilePage() {
-  const { profile, isLoading: profileLoading } = useAuth();
+  const router = useRouter();
+  const { profile, isLoading: profileLoading, signOut } = useAuth();
   const { data: boards = [], isLoading: boardsLoading } = useBoards();
+  const [editing, setEditing] = useState(false);
 
   const publicBoards = boards.filter((b) => b.is_public);
   const displayBoards = publicBoards.length > 0 ? publicBoards : boards;
@@ -17,6 +27,12 @@ export default function ProfilePage() {
     (acc, b) => acc + (b.members?.length ?? 0),
     0,
   );
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push(ROUTES.login);
+    router.refresh();
+  };
 
   if (profileLoading) {
     return (
@@ -27,40 +43,71 @@ export default function ProfilePage() {
     );
   }
 
+  if (!profile) {
+    return (
+      <main className="page-container py-12 text-center text-on-surface-variant">
+        Could not load your profile.
+      </main>
+    );
+  }
+
+  if (editing) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-margin-mobile py-stack-lg md:px-margin-desktop md:py-12">
+        <h1 className="font-display mb-8 text-3xl text-on-surface">Edit profile</h1>
+        <ProfileEditor
+          profile={profile}
+          onCancel={() => setEditing(false)}
+          onSaved={() => setEditing(false)}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-5xl px-margin-mobile py-stack-lg md:px-margin-desktop md:py-12">
-      {/* Cover */}
-      <div
-        className="h-40 w-full overflow-hidden rounded-3xl bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender md:h-52"
-        aria-hidden
-      />
+      <div className="relative h-40 w-full overflow-hidden rounded-3xl md:h-52">
+        {profile.banner_url ? (
+          <VelvetImage
+            src={profile.banner_url}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 896px"
+          />
+        ) : (
+          <div
+            className="h-full w-full bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender"
+            aria-hidden
+          />
+        )}
+      </div>
 
-      {/* Profile header — constrained width, no stretch */}
       <div className="relative px-2 md:px-4">
         <div className="-mt-14 flex flex-col items-center gap-5 border-b border-outline-variant/20 pb-8 md:-mt-16 md:flex-row md:items-end md:gap-8">
           <div className="shrink-0">
             <Avatar
-              src={profile?.avatar_url}
-              name={profile?.full_name ?? profile?.username}
+              src={profile.avatar_url}
+              name={profile.full_name ?? profile.username}
               size="lg"
               className="!h-24 !w-24 md:!h-28 md:!w-28 ring-4 ring-surface shadow-md"
             />
           </div>
           <div className="min-w-0 flex-1 text-center md:text-left">
             <h1 className="font-display truncate text-2xl text-on-surface md:text-3xl">
-              {profile?.full_name ?? "Your Profile"}
+              {profile.full_name ?? "Your Profile"}
             </h1>
-            {profile?.username && (
+            {profile.username && (
               <p className="text-on-surface-variant">@{profile.username}</p>
             )}
-            {profile?.bio && (
+            {profile.bio && (
               <p className="mx-auto mt-3 max-w-prose text-on-surface-variant md:mx-0">
                 {profile.bio}
               </p>
             )}
-            {profile?.website && (
+            {profile.website && (
               <a
-                href={profile.website}
+                href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
@@ -69,10 +116,33 @@ export default function ProfilePage() {
               </a>
             )}
           </div>
+          <div className="flex flex-wrap justify-center gap-2 md:justify-end">
+            {profile.username && (
+              <Link href={ROUTES.creator(profile.username)}>
+                <Button variant="secondary" size="sm" type="button">
+                  <ExternalLink className="h-4 w-4" />
+                  Public page
+                </Button>
+              </Link>
+            )}
+            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+              <Pencil className="h-4 w-4" />
+              Edit profile
+            </Button>
+            <Link href={ROUTES.settings}>
+              <Button variant="secondary" size="sm">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
+            <Button variant="secondary" size="sm" onClick={() => void handleSignOut()}>
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="mx-auto mt-8 grid max-w-lg grid-cols-3 gap-3 md:max-w-none md:gap-6">
         {[
           { label: "Boards", value: boards.length },
@@ -81,11 +151,9 @@ export default function ProfilePage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="rounded-2xl border border-outline-variant/25 bg-white px-4 py-5 text-center shadow-sm"
+            className="rounded-2xl border border-outline-variant/25 bg-bg-elevated px-4 py-5 text-center shadow-sm"
           >
-            <p className="font-display text-2xl text-primary md:text-3xl">
-              {stat.value}
-            </p>
+            <p className="font-display text-2xl text-primary md:text-3xl">{stat.value}</p>
             <p className="mt-1 text-xs font-medium text-on-surface-variant md:text-sm">
               {stat.label}
             </p>
@@ -93,7 +161,6 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Boards */}
       <section className="mt-12">
         <h2 className="font-display mb-6 text-xl text-primary md:text-2xl">
           {publicBoards.length > 0 ? "Public Boards" : "Your Boards"}

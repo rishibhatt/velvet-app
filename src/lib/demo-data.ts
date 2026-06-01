@@ -14,6 +14,7 @@ export const DEMO_PROFILE: Profile = {
   full_name: "Aanya Sharma",
   avatar_url:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuABDSwVhg51UV7eWPiyQn2GNl5qyywGpS8-XVvezSXqR7sdKHUlOKQQCUmP9oQXQQLAa7jDZiDKcoogm1tRCQQIUc6kIKpkhdGI3eyyw8zlYntxLOWy9mNFnFmPoIB3V-4DYpxfWYyAEkGSEQpyy4kteYc0JneGusahtvqyiAKeSQG2SK7_n8RB4LXS58XKSXTrlJbufwtmUham-xx7RQ_EAm3CgykxhwRHaQs4XFDV4nTxUXjIL5bJCluQehp4yJmNskcrKgBDNBSb",
+  banner_url: null,
   bio: "Creative director & visual curator. Planning life's beautiful moments.",
   website: "https://velvet.app",
   created_at: new Date().toISOString(),
@@ -33,6 +34,7 @@ export const DEMO_MEMBERS: BoardMember[] = [
       full_name: "Julian S.",
       avatar_url:
         "https://lh3.googleusercontent.com/aida-public/AB6AXuBy258q2TAFioeFOe8SQwiN-HvemX0DcedghkBz6zMAGmSlOOM9vgsxOVf2r6B0-y0Dj0v7EsQ0KpWUDqOasXbgi7eXMdC8loxeRunNVF9KEbYkuLbmGjaA3b6KKDqix6PGWos3412wlViQf_dM6irj5xOXGBV0L75-28S6IPaeG9586LJnjh9O0f6M-lshlNZ2vSYzoiajRuAMqGOobS5ycq5xITo_3ztgw6RECrSmdjGpkNU1NAYbKYmMRQ6VuuqUjJjU3ihCelRT",
+      banner_url: null,
       bio: null,
       website: null,
       created_at: new Date().toISOString(),
@@ -51,6 +53,7 @@ export const DEMO_MEMBERS: BoardMember[] = [
       full_name: "Elena L.",
       avatar_url:
         "https://lh3.googleusercontent.com/aida-public/AB6AXuCIL_ttjtw0ny_6jD0DQ_peaJNhD-OxzyOmMLhlUNP1gMY-UYVUWVFxUKc1KFjB7Fr_BKCM2yxER-MPjN0jOYPjdh5_WetOcRtkD2-2OlrOrfCm1icfefryXjRaG6hGK2rPez9TH1lztb1QKeNLnBLH3kVNUWmuSA37sD0hczS-e3YL0igUIU8JX4T5FaNm1sqORSEYMoJkqQ8icXFIxa8932Ms30XOeUeg87LE9K_jTsPzDA5ypCrk6t-8qSMQp1V7OaqfLPdMxvm8",
+      banner_url: null,
       bio: null,
       website: null,
       created_at: new Date().toISOString(),

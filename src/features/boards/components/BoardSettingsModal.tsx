@@ -79,13 +79,42 @@ export function BoardSettingsModal({
     }
   };
 
-  return (
-    <ModalShell open={open} onClose={onClose} className="max-w-md p-4 sm:p-6">
-      <h2 className="font-display mb-6 text-xl text-on-surface sm:text-2xl">
-        Collection settings
-      </h2>
+  const settingsFooter = (
+    <div className="flex flex-col gap-2">
+      <Button onClick={handleSave} loading={updateBoard.isPending} className="w-full">
+        Save changes
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={handleShare}
+        disabled={!board.slug}
+        className="w-full"
+      >
+        <Copy className="h-4 w-4" />
+        Copy public link
+      </Button>
+      <Button
+        variant="destructive"
+        onClick={handleDelete}
+        loading={deleteBoard.isPending}
+        className="w-full"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete collection
+      </Button>
+    </div>
+  );
 
-      <div className="space-y-5">
+  return (
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      title="Collection settings"
+      className="max-w-md"
+      contentClassName="p-4 sm:p-6"
+      footer={settingsFooter}
+    >
+      <div className="space-y-5 pb-2">
         <div>
           <label className="mb-1 block text-sm font-semibold">Title</label>
           <input
@@ -123,29 +152,6 @@ export function BoardSettingsModal({
           </p>
         )}
 
-        <div className="flex flex-col gap-2 pt-2">
-          <Button onClick={handleSave} loading={updateBoard.isPending} className="w-full">
-            Save changes
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleShare}
-            disabled={!board.slug}
-            className="w-full"
-          >
-            <Copy className="h-4 w-4" />
-            Copy public link
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            loading={deleteBoard.isPending}
-            className="w-full"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete collection
-          </Button>
-        </div>
       </div>
     </ModalShell>
   );

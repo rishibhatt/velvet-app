@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/atoms/Button";
 import {
@@ -12,17 +13,25 @@ import {
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { useBoards } from "@/queries/board/queries";
+import { usePublicBoards } from "@/queries/discover/queries";
 import { useModalStore } from "@/store/modal.store";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
 import { isSupabaseConfigured } from "@/lib/utils";
+import { ROUTES } from "@/constants/routes";
 
 export default function HomePage() {
   const router = useRouter();
   const { data: boards, isLoading, isError, error, refetch } = useBoards();
   const { openCreateBoard } = useModalStore();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const { data: discoverPreview = [], isLoading: discoverLoading } =
+    usePublicBoards({
+      sort: "trending",
+      limit: 4,
+      excludeOwnerId: user?.id,
+    });
 
   useEffect(() => {
     if (!isSupabaseConfigured() || isLoading || isError) return;
@@ -54,9 +63,60 @@ export default function HomePage() {
         </p>
       </motion.section>
 
+      {(discoverLoading || discoverPreview.length > 0) && (
+        <section className="mb-12">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl text-primary md:text-2xl">
+                Discover
+              </h3>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Trending public collections from the community
+              </p>
+            </div>
+            <Link
+              href={ROUTES.explore}
+              className="flex shrink-0 items-center gap-0.5 text-sm font-semibold text-primary hover:underline"
+            >
+              See all
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          {discoverLoading ? (
+            <div className="-mx-margin-mobile flex gap-4 overflow-x-auto px-margin-mobile pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="w-[min(85vw,320px)] shrink-0 md:w-auto">
+                  <BoardCardSkeleton />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="-mx-margin-mobile flex gap-4 overflow-x-auto px-margin-mobile pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              {discoverPreview.map((board) => (
+                <div
+                  key={board.id}
+                  className="w-[min(85vw,320px)] shrink-0 md:w-auto"
+                >
+                  <BoardCard
+                    board={board}
+                    showLike
+                    owner={board.owner}
+                    publicHref={
+                      board.slug
+                        ? ROUTES.publicCollection(board.slug)
+                        : undefined
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="mb-8 flex items-end justify-between">
         <h3 className="font-display text-xl text-primary md:text-2xl">
-          Your Boards
+          Your collections
         </h3>
         <button
           onClick={openCreateBoard}

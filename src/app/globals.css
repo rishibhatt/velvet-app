@@ -137,18 +137,23 @@ body {
   font-family: var(--font-inter), system-ui, sans-serif;
 }
 
+/* Solid surfaces for forms and modals — avoids see-through cards over busy backgrounds */
+.surface-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
 .glass-panel {
-  background: rgba(255, 252, 248, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-card);
 }
 
 .glass-overlay {
-  background: rgba(255, 252, 248, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(46, 42, 39, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .peach-gradient {
@@ -219,6 +224,7 @@ body {
   border-radius: 10px;
 }
 
+/* Legacy masonry — prefer .collection-grid for board items */
 .masonry-grid {
   columns: 1;
   column-gap: 12px;
@@ -239,6 +245,32 @@ body {
 .masonry-item {
   break-inside: avoid;
   margin-bottom: 12px;
+}
+
+/* Board / collection saves — even cards, mobile-first */
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .collection-grid {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .board-grid {

@@ -6,6 +6,7 @@ import { Avatar } from "@/components/atoms/Avatar";
 import { slideInRight } from "@/lib/animations";
 import { formatRelativeTime } from "@/utils/format";
 import type { ActivityLog, BoardMember } from "@/types/board.types";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface CollabPanelProps {
   open: boolean;
@@ -20,6 +21,8 @@ export function CollabPanel({
   members,
   activities,
 }: CollabPanelProps) {
+  useBodyScrollLock(open);
+
   if (!open) return null;
 
   return (
@@ -31,7 +34,7 @@ export function CollabPanel({
       />
       <motion.aside
         {...slideInRight}
-        className="fixed top-0 right-0 z-[95] flex h-full w-full max-w-full flex-col border-l border-outline-variant/30 bg-bg-elevated shadow-modal sm:max-w-[min(100%,360px)]"
+        className="fixed top-0 right-0 z-[95] flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col overflow-hidden border-l border-outline-variant/30 bg-bg-elevated shadow-modal sm:max-w-[min(100%,360px)]"
       >
         <div className="flex items-center justify-between border-b border-outline-variant/20 px-5 py-4">
           <h2 className="font-display text-lg text-on-surface">Collaboration</h2>
@@ -44,7 +47,7 @@ export function CollabPanel({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <section className="mb-8">
             <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
               Members
