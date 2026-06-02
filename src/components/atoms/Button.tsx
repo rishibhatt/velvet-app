@@ -26,6 +26,10 @@ const buttonVariants = cva(
           "text-on-surface hover:bg-surface-container-high hover:text-primary",
         destructive:
           "bg-error text-white shadow-md hover:bg-[#9a1515] hover:shadow-lg",
+        danger:
+          "border border-[#8b4545]/30 bg-[#f8ecec] text-[#7a3434] shadow-sm hover:border-[#8b4545]/45 hover:bg-[#f3dede]",
+        dangerSolid:
+          "bg-[#9e4a4a] text-white shadow-md ring-1 ring-[#7a3434]/25 hover:bg-[#873f3f] hover:shadow-lg",
         outline:
           "border-2 border-primary/50 bg-white text-primary shadow-sm hover:border-primary hover:bg-primary/5",
       },

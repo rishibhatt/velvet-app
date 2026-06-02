@@ -1,8 +1,5 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
-import {
-  fetchBoardPreviewImages,
-  resolveBoardPreviewImages,
-} from "@/lib/collection-previews";
+import { attachBoardPreviews } from "@/lib/collection-previews";
 import { likesService } from "@/services/likes/likes.service";
 import { slugifyTitle, uniqueSlug } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
@@ -67,14 +64,8 @@ export const boardsService = {
     const unique = Array.from(
       new Map(merged.map((b) => [b.id, b])).values(),
     );
-    const previews = await fetchBoardPreviewImages(unique.map((b) => b.id));
-    return unique.map((row) => {
-      const board = mapBoard(row);
-      return {
-        ...board,
-        preview_images: resolveBoardPreviewImages(board, previews),
-      };
-    });
+    const boards = unique.map((row) => mapBoard(row));
+    return attachBoardPreviews(boards);
   },
 
   async getLikedBoards(): Promise<Board[]> {
@@ -112,10 +103,11 @@ export const boardsService = {
         mapBoard(row),
       ]),
     );
-    return boardIds
+    const liked = boardIds
       .map((id) => byId.get(id))
       .filter((b): b is Board => Boolean(b))
       .map((board) => ({ ...board, is_liked: true }));
+    return attachBoardPreviews(liked);
   },
 
   async getBoardBySlug(slug: string): Promise<Board | null> {
@@ -321,6 +313,7 @@ export const boardsService = {
         title: input.title,
         slug,
         mood: input.mood,
+        mood_label: input.moodLabel?.trim() || null,
         is_public: input.isPublic,
         description: input.description ?? null,
       })
@@ -387,11 +380,27 @@ export const boardsService = {
   async deleteBoard(id: string) {
     requireSupabase();
     const supabase = createClient();
+
+    const { error: rpcError } = await supabase.rpc("soft_delete_board", {
+      p_board_id: id,
+    });
+
+    if (!rpcError) return;
+
+    const rpcMessage = rpcError.message ?? "";
+    const rpcMissing =
+      rpcMessage.includes("soft_delete_board") ||
+      rpcMessage.includes("Could not find the function");
+
+    if (!rpcMissing) {
+      throw new Error(parseSupabaseError(rpcError));
+    }
+
     const { error } = await supabase
       .from("boards")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
-    if (error) throw error;
+    if (error) throw new Error(parseSupabaseError(error));
   },
 
   async hasAnyBoard(): Promise<boolean> {

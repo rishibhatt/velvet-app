@@ -281,15 +281,36 @@ body {
 }
 
 .velvet-field {
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  background-color: var(--surface-container-high);
+  color: var(--on-surface);
   transition:
     border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.velvet-field::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 0.75;
 }
 
 .velvet-field:focus {
   outline: none;
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--outline-variant));
-  box-shadow: none;
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--outline-variant));
+  background-color: var(--bg-elevated);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.velvet-modal-danger-zone {
+  border-top: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.glass-overlay-strong {
+  background: color-mix(in srgb, var(--inverse-surface) 42%, transparent);
+  backdrop-filter: blur(6px);
 }
 
 .velvet-input-title {
@@ -413,6 +434,24 @@ body {
   .collection-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+/* Empty collection — one full-width add card on mobile */
+.collection-grid--empty {
+  grid-template-columns: 1fr;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .collection-grid--empty {
+    max-width: 22rem;
+  }
+}
+
+.collection-grid-empty-card {
+  width: 100%;
 }
 
 .board-grid {

@@ -6,7 +6,7 @@ import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Avatar } from "@/components/atoms/Avatar";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { ROUTES } from "@/constants/routes";
-import { getMoodEmoji, getMoodLabel } from "@/constants/moods";
+import { getMoodDisplayLabel, getMoodEmoji } from "@/constants/moods";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { Board, Profile } from "@/types/board.types";
 import type { PublicBoard } from "@/services/discover/discover.service";
@@ -46,7 +46,8 @@ export function ExploreBoardListRow({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <span className="text-[11px] font-semibold text-primary">
-              {getMoodEmoji(board.mood)} {getMoodLabel(board.mood).toLowerCase()}
+              {getMoodEmoji(board.mood)}{" "}
+              {getMoodDisplayLabel(board.mood, board.mood_label).toLowerCase()}
             </span>
             <Link href={href}>
               <h3 className="font-display truncate text-lg text-on-surface">
@@ -64,6 +65,7 @@ export function ExploreBoardListRow({
             likeCount={board.like_count ?? 0}
             isLiked={board.is_liked}
             canLike={canLike}
+            appearance="footer"
           />
         </div>
 

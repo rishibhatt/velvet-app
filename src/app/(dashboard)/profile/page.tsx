@@ -24,7 +24,7 @@ function ProfilePageSkeleton() {
       <Skeleton className="mt-10 h-10 w-64 rounded-full" />
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-[4/3] rounded-2xl" />
+          <Skeleton key={i} className="aspect-[4/5] rounded-3xl sm:aspect-[5/6]" />
         ))}
       </div>
     </main>

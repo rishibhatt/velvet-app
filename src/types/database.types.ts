@@ -96,6 +96,7 @@ export interface Database {
           description: string | null;
           cover_url: string | null;
           mood: string | null;
+          mood_label: string | null;
           is_public: boolean;
           deleted_at: string | null;
           created_at: string;
@@ -109,6 +110,7 @@ export interface Database {
           description?: string | null;
           cover_url?: string | null;
           mood?: string | null;
+          mood_label?: string | null;
           is_public?: boolean;
           deleted_at?: string | null;
           created_at?: string;
@@ -122,6 +124,7 @@ export interface Database {
           description?: string | null;
           cover_url?: string | null;
           mood?: string | null;
+          mood_label?: string | null;
           is_public?: boolean;
           deleted_at?: string | null;
           created_at?: string;
@@ -290,6 +293,10 @@ export interface Database {
     Functions: {
       soft_delete_item: {
         Args: { p_item_id: string };
+        Returns: undefined;
+      };
+      soft_delete_board: {
+        Args: { p_board_id: string };
         Returns: undefined;
       };
       is_board_owner: {

@@ -14,9 +14,10 @@ interface BoardLikeButtonProps {
   boardId: string;
   likeCount: number;
   isLiked?: boolean;
-  /** Must be public and not owned by viewer */
   canLike?: boolean;
   size?: "sm" | "md";
+  /** footer = light bar below card; overlay = on top of poster image */
+  appearance?: "overlay" | "footer";
   className?: string;
 }
 
@@ -26,10 +27,12 @@ export function BoardLikeButton({
   isLiked = false,
   canLike = true,
   size = "sm",
+  appearance = "overlay",
   className,
 }: BoardLikeButtonProps) {
   const { isAuthenticated, isAuthReady } = useAuth();
   const toggle = useToggleBoardLike();
+  const isFooter = appearance === "footer";
 
   const handleClick = (e: MouseEvent) => {
     e.preventDefault();
@@ -47,7 +50,29 @@ export function BoardLikeButton({
   };
 
   const iconSize = size === "md" ? "h-5 w-5" : "h-4 w-4";
-  const pad = size === "md" ? "px-3 py-2" : "px-2.5 py-1.5";
+  const pad = isFooter
+    ? "min-h-[36px] gap-1.5 px-3 py-1.5"
+    : size === "md"
+      ? "px-3 py-2"
+      : "px-2.5 py-1.5";
+
+  const baseStyles = cn(
+    "inline-flex items-center rounded-full font-semibold transition-all active:scale-95",
+    pad,
+  );
+
+  const toneStyles = isFooter
+    ? isLiked
+      ? "bg-primary text-on-primary shadow-sm ring-1 ring-primary/20 hover:bg-[#5a3228]"
+      : "bg-bg-elevated text-primary shadow-sm ring-1 ring-outline-variant/25 hover:bg-primary-fixed/45"
+    : isLiked
+      ? "bg-bg-elevated/95 text-error ring-1 ring-error/35 shadow-md"
+      : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20 hover:bg-primary-fixed/50";
+
+  const countClass = cn(
+    "tabular-nums",
+    isFooter ? "text-sm font-bold" : size === "md" ? "text-sm" : "text-xs",
+  );
 
   if (isAuthReady && !isAuthenticated) {
     return (
@@ -55,15 +80,16 @@ export function BoardLikeButton({
         href={ROUTES.login}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full bg-bg-elevated/95 font-semibold text-primary shadow-sm ring-1 ring-outline-variant/20 transition-colors hover:bg-primary-fixed/40",
-          pad,
+          baseStyles,
+          isFooter
+            ? "bg-bg-elevated text-primary ring-1 ring-outline-variant/25 hover:bg-primary-fixed/40"
+            : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20",
           className,
         )}
+        aria-label="Sign in to like collections"
       >
         <Heart className={iconSize} strokeWidth={2.25} />
-        <span className={cn("tabular-nums", size === "md" ? "text-sm" : "text-xs")}>
-          {formatCount(likeCount)}
-        </span>
+        <span className={countClass}>{formatCount(likeCount)}</span>
       </Link>
     );
   }
@@ -76,11 +102,8 @@ export function BoardLikeButton({
       aria-label={isLiked ? "Unlike collection" : "Like collection"}
       aria-pressed={isLiked}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full font-semibold transition-all active:scale-95",
-        pad,
-        isLiked
-          ? "bg-error/15 text-error ring-1 ring-error/30"
-          : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20 hover:bg-primary-fixed/50",
+        baseStyles,
+        toneStyles,
         (!canLike || !isAuthReady) && isAuthenticated && "opacity-70",
         className,
       )}
@@ -89,9 +112,7 @@ export function BoardLikeButton({
         className={cn(iconSize, isLiked && "fill-current")}
         strokeWidth={2.25}
       />
-      <span className={cn("tabular-nums", size === "md" ? "text-sm" : "text-xs")}>
-        {formatCount(likeCount)}
-      </span>
+      <span className={countClass}>{formatCount(likeCount)}</span>
     </button>
   );
 }

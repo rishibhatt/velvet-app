@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Home, Compass, User } from "lucide-react";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { ProfileMenu } from "@/components/molecules/ProfileMenu";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -20,6 +21,22 @@ const mobileNav = [
   { href: ROUTES.search, label: "Search", icon: Search },
   { href: ROUTES.profile, label: "Profile", icon: User },
 ];
+
+function isNavLinkActive(pathname: string, href: string) {
+  if (href === ROUTES.home) return pathname === ROUTES.home;
+  if (href === ROUTES.explore) return pathname.startsWith("/explore");
+  if (href === ROUTES.search) return pathname.startsWith("/search");
+  if (href === ROUTES.profile) return pathname.startsWith("/profile");
+  return pathname === href;
+}
+
+const desktopNavLinkClass = (active: boolean) =>
+  cn(
+    "rounded-xl px-4 py-2 text-sm transition-all",
+    active
+      ? "velvet-nav-pill-active font-bold text-primary shadow-sm"
+      : "font-medium text-on-surface hover:bg-surface-container-low hover:text-primary",
+  );
 
 export function Navbar() {
   const pathname = usePathname();
@@ -41,29 +58,21 @@ export function Navbar() {
       <header className="sticky top-0 z-50 border-b border-outline-variant/20 bg-bg-elevated/95 shadow-sm backdrop-blur-md">
         <div className="page-container flex h-14 min-h-14 items-center justify-between sm:h-16">
           <div className="flex items-center gap-3 md:gap-10">
-            <Link
-              href={ROUTES.home}
-              className="font-display text-xl tracking-tight text-primary sm:text-2xl md:text-3xl"
-            >
-              Velvet
-            </Link>
-            <nav className="hidden items-center gap-8 md:flex">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={cn(
-                    "font-medium transition-colors hover:text-primary",
-                    pathname === link.href ||
-                      (link.href === ROUTES.explore &&
-                        pathname.startsWith("/explore"))
-                      ? "font-bold text-primary"
-                      : "text-on-surface",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <VelvetLogo variant="nav" priority />
+            <nav className="hidden items-center gap-1 md:flex">
+              {navLinks.map((link) => {
+                const active = isNavLinkActive(pathname, link.href);
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    className={desktopNavLinkClass(active)}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -94,10 +103,7 @@ export function Navbar() {
       <nav className="fixed bottom-0 left-0 z-50 flex w-full items-stretch justify-around border-t border-outline-variant/20 bg-bg-elevated/98 px-1 py-1 pb-safe backdrop-blur-md md:hidden">
         {mobileNav.map((item) => {
           const Icon = item.icon;
-          const active =
-            pathname === item.href ||
-            (item.href === ROUTES.search && pathname.startsWith("/search")) ||
-            (item.href === ROUTES.explore && pathname.startsWith("/explore"));
+          const active = isNavLinkActive(pathname, item.href);
           return (
             <Link
               key={item.label}

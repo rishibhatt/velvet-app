@@ -103,15 +103,17 @@ export function BoardSettingsModal({
       >
         Copy public link
       </Button>
-      <Button
-        variant="destructive"
-        icon={Trash2}
-        onClick={handleDelete}
-        loading={deleteBoard.isPending}
-        className="w-full"
-      >
-        Delete collection
-      </Button>
+      <div className="velvet-modal-danger-zone">
+        <Button
+          variant="danger"
+          icon={Trash2}
+          onClick={handleDelete}
+          loading={deleteBoard.isPending}
+          className="w-full"
+        >
+          Delete collection
+        </Button>
+      </div>
     </div>
   );
 
@@ -120,32 +122,41 @@ export function BoardSettingsModal({
       open={open}
       onClose={onClose}
       title="Collection settings"
-      className="max-w-md"
-      contentClassName="p-4 sm:p-6"
+      className="w-full sm:max-w-md"
+      contentClassName="px-4 py-4 sm:px-6 sm:py-5"
       footer={settingsFooter}
+      responsive
     >
-      <div className="space-y-5 pb-2">
-        <div>
-          <label className="mb-1 block text-sm font-semibold">Title</label>
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <label htmlFor="board-title" className="block text-sm font-semibold text-on-surface">
+            Title
+          </label>
           <input
+            id="board-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border border-outline-variant/40 bg-white px-4 py-3 text-sm focus:border-primary focus:outline-none"
+            className="velvet-field w-full rounded-xl px-4 py-3 text-base sm:text-sm"
+            autoComplete="off"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-semibold">Description</label>
+        <div className="space-y-1.5">
+          <label htmlFor="board-desc" className="block text-sm font-semibold text-on-surface">
+            Description
+          </label>
           <textarea
+            id="board-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full resize-none rounded-xl border border-outline-variant/40 bg-white px-4 py-3 text-sm focus:border-primary focus:outline-none"
+            placeholder="Optional — what is this collection about?"
+            className="velvet-field w-full resize-none rounded-xl px-4 py-3 text-base sm:text-sm"
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold">Visibility</label>
+        <div className="space-y-2">
+          <span className="block text-sm font-semibold text-on-surface">Visibility</span>
           <SegmentButton
             options={[
               { value: "private", label: "Private" },
@@ -157,11 +168,15 @@ export function BoardSettingsModal({
         </div>
 
         {isPublic && board.slug && (
-          <p className="rounded-xl bg-surface-container px-4 py-3 text-xs text-on-surface-variant break-all">
-            {getPublicShareUrl(board.slug)}
-          </p>
+          <div className="space-y-1.5">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              Public link
+            </span>
+            <p className="break-all rounded-xl border border-outline-variant/30 bg-surface-container px-3 py-2.5 font-mono text-[11px] leading-relaxed text-on-surface sm:px-4 sm:text-xs">
+              {getPublicShareUrl(board.slug)}
+            </p>
+          </div>
         )}
-
       </div>
     </ModalShell>
   );

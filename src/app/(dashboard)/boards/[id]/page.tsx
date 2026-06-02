@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
+import { resolveHeroCoverUrl } from "@/lib/collection-previews";
 import { UserPlus, Share2, Plus, Users, Settings } from "lucide-react";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
@@ -101,6 +102,11 @@ export default function BoardDetailPage({
     prevItemCountRef.current = count;
   }, [items?.length]);
 
+  const heroCoverUrl = useMemo(
+    () => resolveHeroCoverUrl(items, board?.cover_url),
+    [items, board?.cover_url],
+  );
+
   if (boardLoading) {
     return (
       <div className="pb-32">
@@ -168,7 +174,7 @@ export default function BoardDetailPage({
             className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
           />
         }
-        coverUrl={board.cover_url}
+        coverUrl={heroCoverUrl}
         title={board.title}
         description={board.description}
         badge={
@@ -258,8 +264,11 @@ export default function BoardDetailPage({
             ))}
           </CollectionItemsGrid>
         ) : (
-          <CollectionItemsGrid>
-            <CollectionAddCard onClick={() => openSaveModal(id)} />
+          <CollectionItemsGrid emptyState>
+            <CollectionAddCard
+              className="collection-grid-empty-card"
+              onClick={() => openSaveModal(id)}
+            />
           </CollectionItemsGrid>
         )}
       </section>

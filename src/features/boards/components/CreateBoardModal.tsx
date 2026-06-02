@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
 import { SegmentButton } from "@/components/atoms/SegmentButton";
 import { ModalShell } from "@/components/organisms/ModalShell";
-import { MOODS } from "@/constants/moods";
+import { CUSTOM_MOOD_VALUE, MOODS, type MoodValue } from "@/constants/moods";
 import { useCreateBoard } from "@/queries/board/mutations";
 import { useModalStore } from "@/store/modal.store";
 import {
@@ -19,12 +19,14 @@ import {
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 
+type MoodSelection = MoodValue | typeof CUSTOM_MOOD_VALUE;
+
 export function CreateBoardModal() {
   const router = useRouter();
   const { createBoardModal, closeCreateBoard } = useModalStore();
   const createBoard = useCreateBoard();
-  const [selectedMood, setSelectedMood] =
-    useState<CreateBoardInput["mood"]>("wedding");
+  const [moodSelection, setMoodSelection] = useState<MoodSelection>("wedding");
+  const [customMoodLabel, setCustomMoodLabel] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
   const {
@@ -38,14 +40,25 @@ export function CreateBoardModal() {
   });
 
   const onSubmit = async (data: CreateBoardInput) => {
+    const isCustom = moodSelection === CUSTOM_MOOD_VALUE;
+    const trimmedCustom = customMoodLabel.trim();
+
+    if (isCustom && !trimmedCustom) {
+      velvetToast.error("Name your mood", "Enter a custom mood or pick a preset.");
+      return;
+    }
+
     try {
       const board = await createBoard.mutateAsync({
         ...data,
-        mood: selectedMood,
+        mood: isCustom ? "other" : moodSelection,
+        moodLabel: isCustom ? trimmedCustom : undefined,
         isPublic,
       });
       velvetToast.success("Collection created!", "Start saving inspiration.");
       reset();
+      setMoodSelection("wedding");
+      setCustomMoodLabel("");
       closeCreateBoard();
       router.push(ROUTES.board(board.id));
     } catch {
@@ -59,8 +72,8 @@ export function CreateBoardModal() {
       onClose={closeCreateBoard}
       title="New collection"
       subtitle="Gather your inspirations in one curated space"
-      className="surface-panel max-w-lg"
-      contentClassName="p-stack-lg md:p-12"
+      className="surface-panel w-full sm:max-w-lg"
+      contentClassName="p-4 sm:p-stack-lg md:p-12"
       footer={
         <Button
           type="submit"
@@ -73,7 +86,7 @@ export function CreateBoardModal() {
         </Button>
       }
     >
-      <form id="create-board-form" onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      <form id="create-board-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8 sm:space-y-10">
         <div className="space-y-4">
           <input
             {...register("title")}
@@ -88,46 +101,74 @@ export function CreateBoardModal() {
             {...register("description")}
             placeholder="What is this collection for? (optional)"
             rows={2}
-            className="velvet-field w-full resize-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 text-sm"
+            className="velvet-field w-full resize-none rounded-xl px-4 py-3 text-sm"
             aria-label="Description"
           />
         </div>
 
-        <section>
-          <label className="mb-4 block text-sm font-bold tracking-widest text-on-surface uppercase">
-            Choose a Mood
-          </label>
-          <div className="flex gap-stack-md overflow-x-auto pb-2 hide-scrollbar -mx-2 px-2">
-            {MOODS.slice(0, 5).map((mood) => {
-              const Icon = mood.Icon;
-              const selected = selectedMood === mood.value;
+        <section className="space-y-3">
+          <div>
+            <label className="block text-sm font-bold tracking-widest text-on-surface uppercase">
+              Choose a mood
+            </label>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Pick a preset or name your own vibe below.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {MOODS.map((mood) => {
+              const selected = moodSelection === mood.value;
               return (
                 <button
                   key={mood.value}
                   type="button"
-                  onClick={() => setSelectedMood(mood.value)}
+                  onClick={() => setMoodSelection(mood.value)}
                   className={cn(
-                    "flex flex-shrink-0 items-center gap-2.5 rounded-full border-2 px-5 py-2.5 transition-all duration-200 active:scale-[0.98]",
+                    "inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.98]",
                     selected
-                      ? "border-primary bg-primary-fixed/50 text-primary shadow-sm"
-                      : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/20",
+                      ? "border-primary bg-primary-fixed/55 text-primary shadow-sm"
+                      : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
-                      selected
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container-low text-primary",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  <span className="text-lg leading-none" aria-hidden>
+                    {mood.emoji}
                   </span>
-                  <span className="text-sm font-semibold">{mood.label}</span>
+                  {mood.label}
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => setMoodSelection(CUSTOM_MOOD_VALUE)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.98]",
+                moodSelection === CUSTOM_MOOD_VALUE
+                  ? "border-primary bg-primary-fixed/55 text-primary shadow-sm"
+                  : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
+              )}
+            >
+              <span className="text-lg leading-none" aria-hidden>
+                ✏️
+              </span>
+              Custom
+            </button>
           </div>
+
+          {moodSelection === CUSTOM_MOOD_VALUE && (
+            <div className="space-y-1.5 pt-1">
+              <label htmlFor="custom-mood" className="text-sm font-semibold text-on-surface">
+                Your mood name
+              </label>
+              <input
+                id="custom-mood"
+                value={customMoodLabel}
+                onChange={(e) => setCustomMoodLabel(e.target.value)}
+                placeholder="e.g. Nursery, Recipes, Fitness, Date night..."
+                maxLength={48}
+                className="velvet-field w-full rounded-xl px-4 py-3 text-base sm:text-sm"
+              />
+            </div>
+          )}
         </section>
 
         <section className="space-y-3">
@@ -143,7 +184,6 @@ export function CreateBoardModal() {
             onChange={(v) => setIsPublic(v === "shared")}
           />
         </section>
-
       </form>
     </ModalShell>
   );

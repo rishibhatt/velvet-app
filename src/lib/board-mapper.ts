@@ -8,6 +8,7 @@ interface SupabaseBoardRow {
   description: string | null;
   cover_url: string | null;
   mood: string | null;
+  mood_label?: string | null;
   is_public: boolean;
   deleted_at: string | null;
   created_at: string;
@@ -44,6 +45,7 @@ export function mapBoard(row: SupabaseBoardRow): Board {
     description: row.description,
     cover_url: row.cover_url,
     mood: row.mood as Board["mood"],
+    mood_label: row.mood_label ?? null,
     is_public: row.is_public,
     deleted_at: row.deleted_at,
     created_at: row.created_at,

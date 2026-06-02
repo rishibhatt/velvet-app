@@ -141,6 +141,7 @@ export function ProfileBoardsSection({
                 key={board.id}
                 board={board}
                 showLike={tab === "liked"}
+                emptyVariant={tab === "yours" ? "own" : "other"}
               />
             ))}
           </div>

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { stagger, fadeUp } from "@/lib/animations";
 
 const collageImages = [
@@ -47,6 +48,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           initial="initial"
           animate="animate"
         >
+          <div className="mb-8 flex justify-center sm:mb-10">
+            <VelvetLogo variant="auth" priority />
+          </div>
           {children}
         </motion.div>
       </div>

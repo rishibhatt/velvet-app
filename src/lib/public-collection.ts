@@ -1,3 +1,4 @@
+import { attachBoardPreviews } from "@/lib/collection-previews";
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
 import { createClient } from "@/services/supabase/server";
 import type { Board, Item } from "@/types/board.types";
@@ -74,8 +75,11 @@ export async function getPublicProfile(username: string) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
+  const mapped = (boards ?? []).map((row) => mapBoard(row as never));
+  const boardsWithPreviews = await attachBoardPreviews(mapped, supabase);
+
   return {
     profile,
-    boards: (boards ?? []).map((row) => mapBoard(row as never)),
+    boards: boardsWithPreviews,
   };
 }

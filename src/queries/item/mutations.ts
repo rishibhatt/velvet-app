@@ -1,11 +1,21 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { previewImagesFromItems } from "@/lib/collection-previews";
 import { itemsService } from "@/services/items/items.service";
-import type { Item, SaveItemInput } from "@/types/board.types";
+import type { Board, Item, SaveItemInput } from "@/types/board.types";
 import { boardKeys, itemKeys } from "../board/keys";
 import { getErrorMessage } from "@/lib/errors";
 import { velvetToast } from "@/lib/toast";
+
+function patchBoardInList(
+  boards: Board[] | undefined,
+  boardId: string,
+  patch: Partial<Board>,
+): Board[] | undefined {
+  if (!boards) return boards;
+  return boards.map((b) => (b.id === boardId ? { ...b, ...patch } : b));
+}
 
 export function useSaveItem(boardId: string) {
   const queryClient = useQueryClient();
@@ -55,10 +65,57 @@ export function useDeleteItem(boardId: string) {
   return useMutation({
     mutationFn: (itemId: string) => itemsService.deleteItem(itemId),
     meta: { errorContext: "item" },
-    onSuccess: () => {
+    onMutate: async (itemId) => {
+      await queryClient.cancelQueries({ queryKey: itemKeys.list(boardId) });
+      await queryClient.cancelQueries({ queryKey: boardKeys.list() });
+
+      const previousItems = queryClient.getQueryData<Item[]>(
+        itemKeys.list(boardId),
+      );
+      const previousBoards = queryClient.getQueryData<Board[]>(boardKeys.list());
+      const previousDetail = queryClient.getQueryData<Board>(
+        boardKeys.detail(boardId),
+      );
+
+      const remaining =
+        previousItems?.filter((i) => i.id !== itemId) ?? [];
+      const preview_images = previewImagesFromItems(remaining);
+      const cover_url = preview_images[0] ?? null;
+      const item_count = remaining.length;
+
+      queryClient.setQueryData(itemKeys.list(boardId), remaining);
+      queryClient.setQueryData<Board[]>(boardKeys.list(), (old) =>
+        patchBoardInList(old, boardId, {
+          preview_images,
+          cover_url,
+          item_count,
+        }),
+      );
+      queryClient.setQueryData<Board>(boardKeys.detail(boardId), (old) =>
+        old
+          ? { ...old, preview_images, cover_url, item_count }
+          : old,
+      );
+
+      return { previousItems, previousBoards, previousDetail };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previousItems) {
+        queryClient.setQueryData(itemKeys.list(boardId), ctx.previousItems);
+      }
+      if (ctx?.previousBoards) {
+        queryClient.setQueryData(boardKeys.list(), ctx.previousBoards);
+      }
+      if (ctx?.previousDetail) {
+        queryClient.setQueryData(boardKeys.detail(boardId), ctx.previousDetail);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
       queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
+    },
+    onSuccess: () => {
       velvetToast.success("Removed from collection");
     },
   });

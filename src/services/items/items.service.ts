@@ -1,3 +1,4 @@
+import { syncBoardCoverFromItems } from "@/lib/collection-previews";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
@@ -129,29 +130,42 @@ export const itemsService = {
     requireSupabase();
     const supabase = createClient();
 
+    const { data: existing } = await supabase
+      .from("items")
+      .select("board_id")
+      .eq("id", itemId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    const boardId = (existing as { board_id: string } | null)?.board_id;
+
     const { error: rpcError } = await supabase.rpc("soft_delete_item", {
       p_item_id: itemId,
     });
 
-    if (!rpcError) return;
+    if (rpcError) {
+      const rpcMessage = parseSupabaseError(rpcError);
+      const rpcMissing =
+        rpcMessage.includes("soft_delete_item") ||
+        rpcMessage.includes("Could not find the function");
 
-    const rpcMessage = parseSupabaseError(rpcError);
-    const rpcMissing =
-      rpcMessage.includes("soft_delete_item") ||
-      rpcMessage.includes("Could not find the function");
+      if (!rpcMissing) {
+        throw new Error(rpcMessage);
+      }
 
-    if (!rpcMissing) {
-      throw new Error(rpcMessage);
+      const { error: updateError } = await supabase
+        .from("items")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", itemId)
+        .is("deleted_at", null);
+
+      if (updateError) {
+        throw new Error(parseSupabaseError(updateError));
+      }
     }
 
-    const { error: updateError } = await supabase
-      .from("items")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", itemId)
-      .is("deleted_at", null);
-
-    if (updateError) {
-      throw new Error(parseSupabaseError(updateError));
+    if (boardId) {
+      await syncBoardCoverFromItems(boardId);
     }
   },
 };

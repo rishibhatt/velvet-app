@@ -3,24 +3,25 @@
 import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { scaleIn } from "@/lib/animations";
+import { scaleIn, slideInBottom } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useConfirmStore } from "@/store/confirm.store";
 
 interface ModalShellProps {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
-  /** Sticky footer (e.g. primary action) — always visible without scrolling */
   footer?: ReactNode;
   title?: string;
   subtitle?: string;
   className?: string;
   contentClassName?: string;
   overlayClassName?: string;
-  /** Stacking order — use z-[110] for dialogs above other modals */
   stackClassName?: string;
   hideClose?: boolean;
+  responsive?: boolean;
 }
 
 export function ModalShell({
@@ -35,37 +36,52 @@ export function ModalShell({
   overlayClassName,
   stackClassName = "z-[100]",
   hideClose = false,
+  responsive = true,
 }: ModalShellProps) {
   useBodyScrollLock(open);
+  const isDesktop = useMediaQuery("(min-width: 640px)");
+  const useSheet = responsive && !isDesktop;
+  const confirmOpen = useConfirmStore((s) => s.open);
+  const dimForConfirm = confirmOpen && stackClassName === "z-[100]";
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           className={cn(
-            "fixed inset-0 flex items-end justify-center overflow-hidden p-0 sm:items-center sm:p-4",
+            "fixed inset-0 flex justify-center",
+            useSheet ? "items-end" : "items-center p-4",
             stackClassName,
             overlayClassName ?? "glass-overlay",
+            dimForConfirm && "opacity-0 pointer-events-none",
           )}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: dimForConfirm ? 0 : 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          aria-hidden={dimForConfirm}
         >
           <motion.div
-            {...scaleIn}
+            {...(useSheet ? slideInBottom : scaleIn)}
             className={cn(
-              "relative flex w-full max-w-2xl flex-col",
-              "max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom,0px)))]",
-              "rounded-t-[2rem] border border-outline-variant/20 bg-bg-elevated shadow-[var(--shadow-modal)] sm:max-h-[min(90vh,calc(100dvh-2rem))] sm:rounded-[2rem]",
+              "relative flex w-full flex-col overflow-hidden border border-outline-variant/20 bg-bg-elevated shadow-[var(--shadow-modal)]",
+              useSheet
+                ? "max-h-[min(78dvh,calc(100dvh-env(safe-area-inset-bottom,0px)-5.5rem))] rounded-t-[1.75rem]"
+                : "max-h-[min(90vh,calc(100dvh-2rem))] rounded-[1.75rem] sm:rounded-[2rem]",
               className,
             )}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
+            {useSheet && (
+              <div className="flex shrink-0 justify-center pt-2.5 pb-1" aria-hidden>
+                <span className="h-1 w-10 rounded-full bg-outline-variant/50" />
+              </div>
+            )}
+
             {(title || !hideClose) && (
-              <div className="relative shrink-0 border-b border-outline-variant/20 px-5 py-4 pr-14 sm:px-6">
+              <header className="relative shrink-0 border-b border-outline-variant/20 px-4 py-3.5 pr-12 sm:px-6 sm:py-4 sm:pr-14">
                 {title && (
                   <div>
                     <h2 className="font-display text-xl text-on-surface sm:text-2xl">
@@ -80,19 +96,19 @@ export function ModalShell({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="absolute top-3 right-3 rounded-full bg-surface-container-low p-2.5 text-on-surface-variant ring-1 ring-outline-variant/25 transition hover:bg-primary/10 hover:text-primary"
+                    className="absolute top-3 right-3 rounded-full bg-surface-container-low p-2.5 text-on-surface-variant ring-1 ring-outline-variant/25 transition hover:bg-primary/10 hover:text-primary sm:top-4 sm:right-4"
                     aria-label="Close modal"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 )}
-              </div>
+              </header>
             )}
 
             <div
               className={cn(
                 "min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar",
-                footer ? "pb-2" : "pb-[max(1rem,env(safe-area-inset-bottom))]",
+                !footer && "pb-[max(1rem,env(safe-area-inset-bottom))]",
                 !title && !hideClose && "pt-12",
                 contentClassName,
               )}
@@ -101,9 +117,16 @@ export function ModalShell({
             </div>
 
             {footer && (
-              <div className="shrink-0 border-t border-outline-variant/20 bg-bg-elevated px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+              <footer
+                className={cn(
+                  "shrink-0 border-t border-outline-variant/20 bg-bg-elevated px-4 py-3 shadow-[0_-10px_28px_rgba(46,42,39,0.08)] sm:px-6 sm:py-4",
+                  useSheet
+                    ? "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]"
+                    : "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+                )}
+              >
                 {footer}
-              </div>
+              </footer>
             )}
           </motion.div>
         </motion.div>

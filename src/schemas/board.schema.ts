@@ -13,6 +13,7 @@ export const createBoardSchema = z.object({
   ]),
   isPublic: z.boolean(),
   description: z.string().max(500).optional(),
+  moodLabel: z.string().max(48).optional(),
 });
 
 export type CreateBoardInput = z.infer<typeof createBoardSchema>;

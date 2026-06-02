@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/atoms/Button";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { ROUTES } from "@/constants/routes";
 
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <VelvetLogo variant="auth" className="mb-8" href={ROUTES.home} />
       <h1 className="font-display mb-4 text-4xl text-on-surface">
         This board has drifted away...
       </h1>

@@ -23,6 +23,14 @@ export const slideInRight = {
   transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
 };
 
+/** Bottom sheet (mobile modals) */
+export const slideInBottom = {
+  initial: { y: "100%" },
+  animate: { y: 0 },
+  exit: { y: "100%" },
+  transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+};
+
 export const saveFlyAnimation = {
   initial: { scale: 1 },
   animate: { scale: [1, 1.05, 0.95, 1] },

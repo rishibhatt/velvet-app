@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/atoms/Avatar";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
@@ -102,6 +103,7 @@ export default async function CreatorProfilePage({ params }: PageProps) {
               <BoardCard
                 key={board.id}
                 board={board}
+                emptyVariant="other"
                 publicHref={
                   board.slug ? ROUTES.publicCollection(board.slug) : undefined
                 }
@@ -114,12 +116,10 @@ export default async function CreatorProfilePage({ params }: PageProps) {
           </p>
         )}
 
-        <p className="mt-12 text-center text-sm text-on-surface-variant">
-          Curated on{" "}
-          <Link href={ROUTES.login} className="font-semibold text-primary">
-            Velvet
-          </Link>
-        </p>
+        <div className="mt-12 flex flex-col items-center gap-2 text-sm text-on-surface-variant">
+          <span>Curated on</span>
+          <VelvetLogo variant="footer" href={ROUTES.login} />
+        </div>
       </main>
     </div>
   );

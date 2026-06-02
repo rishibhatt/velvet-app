@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { Button } from "@/components/atoms/Button";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { SetupUrlBlock } from "@/components/molecules/SetupUrlBlock";
 import { getAppBaseUrlFromHeaders } from "@/lib/app-url";
 
@@ -10,7 +11,10 @@ export default async function SetupPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-display mb-2 text-4xl text-primary">Velvet Setup</h1>
+      <div className="mb-6">
+        <VelvetLogo variant="auth" href={null} />
+      </div>
+      <h1 className="font-display mb-2 text-4xl text-primary">Setup</h1>
       <p className="mb-10 text-on-surface-variant">
         Follow these steps to connect your Supabase backend and use live data.
       </p>

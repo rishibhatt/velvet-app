@@ -39,6 +39,8 @@ export interface Board {
   description: string | null;
   cover_url: string | null;
   mood: Mood | null;
+  /** Custom display name (e.g. "Nursery"); mood stays a preset slug */
+  mood_label?: string | null;
   is_public: boolean;
   deleted_at: string | null;
   created_at: string;
@@ -115,6 +117,7 @@ export interface ActivityLog {
 export interface CreateBoardInput {
   title: string;
   mood: Mood;
+  moodLabel?: string | null;
   isPublic: boolean;
   description?: string;
 }

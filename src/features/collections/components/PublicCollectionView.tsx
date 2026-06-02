@@ -7,11 +7,13 @@ import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { getMoodEmoji } from "@/constants/moods";
 import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { Navbar } from "@/components/organisms/Navbar";
 import { PublicCollectionActions } from "@/features/collections/components/PublicCollectionActions";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { likesService } from "@/services/likes/likes.service";
 import { ROUTES } from "@/constants/routes";
+import { resolveHeroCoverUrl } from "@/lib/collection-previews";
 import type { Board, Item } from "@/types/board.types";
 
 interface PublicCollectionViewProps {
@@ -45,6 +47,8 @@ export function PublicCollectionView({
       ? { ...initialBoard, is_liked: isLiked }
       : initialBoard;
 
+  const heroCoverUrl = resolveHeroCoverUrl(items, board.cover_url);
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Navbar />
@@ -57,7 +61,7 @@ export function PublicCollectionView({
             className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
           />
         }
-        coverUrl={board.cover_url}
+        coverUrl={heroCoverUrl}
         title={board.title}
         description={board.description}
         badge={
@@ -121,11 +125,9 @@ export function PublicCollectionView({
         )}
       </main>
 
-      <footer className="border-t border-outline-variant/20 py-8 text-center text-sm text-on-surface-variant">
-        <Link href={ROUTES.home} className="font-display text-primary hover:underline">
-          Velvet
-        </Link>
-        {" · "}Your velvet world.
+      <footer className="flex flex-col items-center gap-3 border-t border-outline-variant/20 py-8 text-center text-sm text-on-surface-variant">
+        <VelvetLogo variant="footer" href={ROUTES.home} />
+        <p>Your velvet world.</p>
       </footer>
     </div>
   );
