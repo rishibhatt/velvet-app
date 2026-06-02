@@ -18,16 +18,20 @@ interface CollectionPosterGridProps {
   compactEmpty?: boolean;
   /** When > 0 but no preview images, show “N saves” instead of empty */
   itemCount?: number;
+  /** Passed to VelvetImage `sizes` (e.g. hero uses `100vw`) */
+  imageSizes?: string;
 }
 
 function PosterImage({
   src,
   title,
   className,
+  sizes = "(max-width: 640px) 45vw, 200px",
 }: {
   src: string;
   title: string;
   className?: string;
+  sizes?: string;
 }) {
   return (
     <div className={cn("relative min-h-0 overflow-hidden bg-surface-container-low", className)}>
@@ -36,7 +40,7 @@ function PosterImage({
         alt=""
         fill
         className="object-cover"
-        sizes="(max-width: 640px) 45vw, 200px"
+        sizes={sizes}
       />
       <span className="sr-only">{title}</span>
     </div>
@@ -50,6 +54,7 @@ export function CollectionPosterGrid({
   emptyVariant = "other",
   compactEmpty = false,
   itemCount = 0,
+  imageSizes,
 }: CollectionPosterGridProps) {
   const urls = images.filter(Boolean).slice(0, 4);
   const count = urls.length;
@@ -75,9 +80,16 @@ export function CollectionPosterGrid({
     );
   }
 
+  const posterSizes = imageSizes;
+
   if (count === 1) {
     return (
-      <PosterImage src={urls[0]!} title={title} className={cn("h-full w-full", className)} />
+      <PosterImage
+        src={urls[0]!}
+        title={title}
+        sizes={posterSizes}
+        className={cn("h-full w-full", className)}
+      />
     );
   }
 
@@ -90,7 +102,13 @@ export function CollectionPosterGrid({
         )}
       >
         {urls.map((src, i) => (
-          <PosterImage key={i} src={src} title={title} className="h-full min-h-[80px]" />
+          <PosterImage
+            key={i}
+            src={src}
+            title={title}
+            sizes={posterSizes}
+            className="h-full min-h-[80px]"
+          />
         ))}
       </div>
     );
@@ -104,9 +122,14 @@ export function CollectionPosterGrid({
           className,
         )}
       >
-        <PosterImage src={urls[0]!} title={title} className="row-span-1" />
-        <PosterImage src={urls[1]!} title={title} className="row-span-1" />
-        <PosterImage src={urls[2]!} title={title} className="col-span-2 row-span-1" />
+        <PosterImage src={urls[0]!} title={title} sizes={posterSizes} className="row-span-1" />
+        <PosterImage src={urls[1]!} title={title} sizes={posterSizes} className="row-span-1" />
+        <PosterImage
+          src={urls[2]!}
+          title={title}
+          sizes={posterSizes}
+          className="col-span-2 row-span-1"
+        />
       </div>
     );
   }
@@ -119,7 +142,13 @@ export function CollectionPosterGrid({
       )}
     >
       {urls.map((src, i) => (
-        <PosterImage key={i} src={src} title={title} className="min-h-[72px]" />
+        <PosterImage
+          key={i}
+          src={src}
+          title={title}
+          sizes={posterSizes}
+          className="min-h-[72px]"
+        />
       ))}
     </div>
   );

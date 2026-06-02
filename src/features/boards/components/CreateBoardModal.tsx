@@ -130,7 +130,10 @@ export function CreateBoardModal() {
                       : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
                   )}
                 >
-                  <span className="text-lg leading-none" aria-hidden>
+                  <span
+                    className="velvet-icon-chip h-8 w-8 text-base leading-none"
+                    aria-hidden
+                  >
                     {mood.emoji}
                   </span>
                   {mood.label}
@@ -147,7 +150,7 @@ export function CreateBoardModal() {
                   : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
               )}
             >
-              <span className="text-lg leading-none" aria-hidden>
+              <span className="velvet-icon-chip h-8 w-8 text-base leading-none" aria-hidden>
                 ✏️
               </span>
               Custom

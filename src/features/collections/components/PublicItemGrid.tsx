@@ -16,8 +16,9 @@ export function PublicItemGrid({ items, curatorLabel }: PublicItemGridProps) {
   return (
     <CollectionItemsGrid
       header={
-        <p className="mb-5 text-sm text-on-surface-variant">
-          {items.length} {items.length === 1 ? "save" : "saves"}
+        <p className="mb-4 text-sm font-medium text-on-surface-variant">
+          <span className="font-semibold text-on-surface">{items.length}</span>{" "}
+          {items.length === 1 ? "save" : "saves"}
         </p>
       }
     >

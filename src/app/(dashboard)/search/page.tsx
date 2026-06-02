@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, Suspense } from "react";
-import { Search } from "lucide-react";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
+import { Search, Sparkles } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useBoards } from "@/queries/board/queries";
@@ -10,12 +9,15 @@ import { usePublicBoards, useProfileSearch } from "@/queries/discover/queries";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ProfileSearchCard } from "@/components/molecules/ProfileSearchCard";
+import { VelvetGradientTabs } from "@/components/molecules/VelvetGradientTabs";
 import {
   BoardCard,
   BoardCardSkeleton,
 } from "@/components/organisms/BoardCard";
+import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGrid";
+import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
+import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 
 type SearchTab = "mine" | "public" | "people";
 
@@ -90,6 +92,13 @@ function SearchContent() {
     return inTitle || inDescription || inMood;
   });
 
+  const { visible: visibleMine, sentinelRef: mineSentinel } = useInfiniteSlice(
+    filteredMine,
+    12,
+  );
+  const { visible: visiblePublic, sentinelRef: publicSentinel } =
+    useInfiniteSlice(publicBoards, 12);
+
   const placeholders: Record<SearchTab, string> = {
     mine: "Search your collections…",
     public: "Search public collections…",
@@ -98,96 +107,90 @@ function SearchContent() {
 
   return (
     <main className="page-container py-stack-lg pb-28 md:py-12 md:pb-12">
-      <h1 className="font-display mb-4 text-2xl text-on-surface md:text-3xl">
-        Search
-      </h1>
+      <div className="velvet-panel mb-6 p-4 sm:p-6">
+        <h1 className="font-display flex items-center gap-2 text-2xl text-on-surface md:text-3xl">
+          <Sparkles className="h-6 w-6 text-primary" aria-hidden />
+          Search
+        </h1>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Find your boards, public inspiration, and creators
+        </p>
 
-      <div
-        className="mb-4 flex gap-1 overflow-x-auto rounded-2xl bg-surface-container-low p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-      >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => handleTabChange(t.id)}
-            className={cn(
-              "min-h-[44px] flex-1 shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-              tab === t.id
-                ? "bg-bg-elevated text-primary shadow-sm"
-                : "text-on-surface-variant",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="relative mb-6">
-        <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-on-surface-variant" />
-        <input
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            syncUrl(tab, e.target.value);
-          }}
-          placeholder={placeholders[tab]}
-          className="w-full rounded-full border border-outline-variant/30 bg-surface-container-lowest py-4 pr-4 pl-12 text-base text-on-surface shadow-sm focus:border-primary focus:outline-none"
-          aria-label="Search"
+        <VelvetGradientTabs
+          className="mt-5"
+          tabs={TABS}
+          value={tab}
+          onChange={handleTabChange}
+          aria-label="Search categories"
         />
+
+        <div className="relative mt-4">
+          <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-primary/70" />
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              syncUrl(tab, e.target.value);
+            }}
+            placeholder={placeholders[tab]}
+            className="w-full rounded-full border border-outline-variant/30 bg-bg-elevated py-4 pr-4 pl-12 text-base text-on-surface shadow-sm transition-shadow focus:border-primary focus:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/20"
+            aria-label="Search"
+          />
+        </div>
       </div>
 
       {tab === "mine" && (
         <section>
           <h2 className="font-display mb-4 text-lg text-primary md:text-xl">
-            {normalized ? `Your results` : "All your collections"}
+            {normalized ? "Your results" : "All your collections"}
           </h2>
-          <div className="space-y-3">
-            {filteredMine.map((board) => (
-              <Link
-                key={board.id}
-                href={ROUTES.board(board.id)}
-                className="flex items-center gap-4 rounded-2xl border border-outline-variant/20 bg-bg-elevated p-4 transition-all active:scale-[0.99] hover:border-primary/30"
-              >
-                {board.cover_url ? (
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
-                    <VelvetImage
-                      src={board.cover_url}
-                      alt=""
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-surface-container text-2xl">
-                    📌
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-on-surface">
-                    {board.title}
-                  </p>
-                  <p className="text-sm text-on-surface-variant">
-                    {board.item_count ?? 0} items
-                    {board.mood ? ` · ${board.mood}` : ""}
-                    {!board.is_public && " · Private"}
-                  </p>
+          {filteredMine.length > 0 ? (
+            <>
+              <div className="space-y-3">
+                {visibleMine.map((board) => (
+                  <Link
+                    key={board.id}
+                    href={ROUTES.board(board.id)}
+                    className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-bg-elevated p-3 transition-all active:scale-[0.99] hover:border-primary/30 sm:gap-4 sm:p-4"
+                  >
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl sm:h-[72px] sm:w-[72px]">
+                      <CollectionPosterGrid
+                        images={board.preview_images ?? []}
+                        title={board.title}
+                        itemCount={board.item_count ?? 0}
+                        emptyVariant="own"
+                        compactEmpty
+                        className="h-full w-full"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-base text-on-surface">
+                        {board.title}
+                      </p>
+                      <p className="text-sm text-on-surface-variant">
+                        {board.item_count ?? 0} items
+                        {board.mood ? ` · ${board.mood}` : ""}
+                        {!board.is_public && " · Private"}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              {visibleMine.length < filteredMine.length && (
+                <div ref={mineSentinel} className="py-4 text-center text-sm text-on-surface-variant">
+                  Loading more…
                 </div>
-              </Link>
-            ))}
-            {filteredMine.length === 0 && normalized && (
-              <p className="py-8 text-center text-on-surface-variant">
-                No collections match your search.
-              </p>
-            )}
-            {boards.length === 0 && (
-              <p className="py-8 text-center text-on-surface-variant">
-                Create a collection to start searching yours.
-              </p>
-            )}
-          </div>
+              )}
+            </>
+          ) : normalized ? (
+            <p className="py-8 text-center text-on-surface-variant">
+              No collections match your search.
+            </p>
+          ) : (
+            <p className="py-8 text-center text-on-surface-variant">
+              Create a collection to start searching yours.
+            </p>
+          )}
         </section>
       )}
 
@@ -199,33 +202,44 @@ function SearchContent() {
             </h2>
             <Link
               href={ROUTES.explore}
-              className="shrink-0 text-sm font-semibold text-primary hover:underline"
+              className="shrink-0 rounded-full px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary-fixed/40"
             >
-              Explore all
+              Explore all →
             </Link>
           </div>
           {publicLoading ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className={COLLECTION_CARD_GRID}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <BoardCardSkeleton key={i} />
               ))}
             </div>
           ) : publicBoards.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {publicBoards.map((board) => (
-                <BoardCard
-                  key={board.id}
-                  board={board}
-                  showLike
-                  owner={board.owner}
-                  publicHref={
-                    board.slug
-                      ? ROUTES.publicCollection(board.slug)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
+            <>
+              <div className={COLLECTION_CARD_GRID}>
+                {visiblePublic.map((board) => (
+                  <BoardCard
+                    key={board.id}
+                    board={board}
+                    showLike
+                    owner={board.owner}
+                    publicHref={
+                      board.slug
+                        ? ROUTES.publicCollection(board.slug)
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+              {visiblePublic.length < publicBoards.length && (
+                <div
+                  ref={publicSentinel}
+                  className={`${COLLECTION_CARD_GRID} mt-3`}
+                >
+                  <BoardCardSkeleton />
+                  <BoardCardSkeleton />
+                </div>
+              )}
+            </>
           ) : (
             <p className="py-8 text-center text-on-surface-variant">
               {normalized
@@ -237,7 +251,7 @@ function SearchContent() {
       )}
 
       {tab === "people" && (
-        <section>
+        <section className="velvet-panel p-4 sm:p-6">
           <h2 className="font-display mb-4 text-lg text-primary md:text-xl">
             Creators
           </h2>

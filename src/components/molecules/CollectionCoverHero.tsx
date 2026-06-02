@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
+import {
+  CollectionPosterGrid,
+  type CollectionPosterEmptyVariant,
+} from "@/components/molecules/CollectionPosterGrid";
 import { cn } from "@/lib/utils";
 
 interface CollectionCoverHeroProps {
-  coverUrl?: string | null;
+  /** Up to 4 live item image URLs (same layout as collection cards) */
+  images?: string[];
   title: string;
   description?: string | null;
   badge?: ReactNode;
@@ -13,11 +17,14 @@ interface CollectionCoverHeroProps {
   overlay?: ReactNode;
   className?: string;
   size?: "board" | "public";
+  emptyVariant?: CollectionPosterEmptyVariant;
+  /** For text-only saves when images is empty */
+  itemCount?: number;
 }
 
-/** Readable collection header — sharp cover image + strong bottom scrim (no blur). */
+/** Readable collection header — multi-image poster + strong bottom scrim. */
 export function CollectionCoverHero({
-  coverUrl,
+  images = [],
   title,
   description,
   badge,
@@ -26,6 +33,8 @@ export function CollectionCoverHero({
   overlay,
   className,
   size = "board",
+  emptyVariant = "own",
+  itemCount = 0,
 }: CollectionCoverHeroProps) {
   const heights =
     size === "public"
@@ -35,21 +44,16 @@ export function CollectionCoverHero({
 
   return (
     <header className={cn("relative w-full overflow-hidden", heights, className)}>
-      {coverUrl ? (
-        <VelvetImage
-          src={coverUrl}
-          alt=""
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
+      <div className="absolute inset-0">
+        <CollectionPosterGrid
+          images={images}
+          title={title}
+          itemCount={itemCount}
+          emptyVariant={emptyVariant}
+          imageSizes="100vw"
+          className="h-full w-full"
         />
-      ) : (
-        <div
-          className="h-full w-full bg-gradient-to-br from-primary-container via-secondary-container/80 to-tertiary-container/60"
-          aria-hidden
-        />
-      )}
+      </div>
 
       {/* Scrim: solid readable band at bottom, light tint at top */}
       <div

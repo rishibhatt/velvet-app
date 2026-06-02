@@ -52,6 +52,16 @@
   /* Matches hero-lifestyle.png warm cream backdrop */
   --hero-surface: #f8f5f0;
   --hero-surface-soft: #faf8f4;
+  --velvet-accent-gradient: linear-gradient(
+    135deg,
+    var(--primary-fixed) 0%,
+    color-mix(in srgb, var(--secondary-container) 85%, var(--primary-fixed)) 100%
+  );
+  --velvet-accent-gradient-strong: linear-gradient(
+    135deg,
+    #b86a52 0%,
+    #9d5a5e 100%
+  );
 }
 
 @theme inline {
@@ -173,6 +183,20 @@ body {
     rgba(255, 218, 210, 0.95) 0%,
     rgba(253, 199, 203, 0.9) 100%
   );
+  color: var(--primary);
+}
+
+.velvet-tab-gradient-active {
+  background: var(--velvet-accent-gradient);
+  color: var(--primary);
+}
+
+.velvet-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--primary-fixed) 80%, transparent);
   color: var(--primary);
 }
 
@@ -410,28 +434,24 @@ body {
   margin-bottom: 12px;
 }
 
-/* Board / collection saves — even cards, mobile-first */
+/* Board / collection saves — 2 → 3 → 4 columns */
 .collection-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 @media (min-width: 640px) {
   .collection-grid {
-    gap: 16px;
-  }
-}
-
-@media (min-width: 768px) {
-  .collection-grid {
+    gap: 12px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 900px) {
   .collection-grid {
+    gap: 14px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

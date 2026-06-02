@@ -51,6 +51,8 @@ export interface Board {
   members?: BoardMember[];
   /** Up to 4 item images for poster-style cards */
   preview_images?: string[];
+  /** Populated on discover / public search results */
+  owner?: Pick<Profile, "id" | "username" | "full_name" | "avatar_url">;
 }
 
 export interface BoardMember {

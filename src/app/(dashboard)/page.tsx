@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Button } from "@/components/atoms/Button";
 import {
@@ -20,8 +21,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
 import { isSupabaseConfigured } from "@/lib/utils";
+import {
+  COLLECTION_CARD_RAIL,
+  COLLECTION_CARD_RAIL_ITEM,
+} from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { UI_LABELS } from "@/constants/ui-labels";
+import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 
 export default function HomePage() {
   const router = useRouter();
@@ -34,6 +40,12 @@ export default function HomePage() {
       limit: 4,
       excludeOwnerId: user?.id,
     });
+
+  const {
+    visible: visibleBoards,
+    sentinelRef: boardsSentinelRef,
+    hasMore: hasMoreBoards,
+  } = useInfiniteSlice(boards ?? [], 8);
 
   useEffect(() => {
     if (!isSupabaseConfigured() || isLoading || isError) return;
@@ -62,23 +74,17 @@ export default function HomePage() {
         <section className="velvet-panel mb-6 p-4 sm:p-6 md:mb-8">
           <DiscoverSectionHeader />
           {discoverLoading ? (
-            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 hide-scrollbar sm:grid sm:grid-cols-2 sm:overflow-visible md:grid-cols-2 lg:grid-cols-4">
+            <div className={COLLECTION_CARD_RAIL}>
               {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-[min(82vw,300px)] shrink-0 sm:w-auto"
-                >
+                <div key={i} className={COLLECTION_CARD_RAIL_ITEM}>
                   <ShowcaseBoardCardSkeleton />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1 hide-scrollbar sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible md:gap-6 lg:grid-cols-4">
+            <div className={COLLECTION_CARD_RAIL}>
               {discoverPreview.map((board) => (
-                <div
-                  key={board.id}
-                  className="w-[min(82vw,300px)] shrink-0 sm:w-auto"
-                >
+                <div key={board.id} className={COLLECTION_CARD_RAIL_ITEM}>
                   <ShowcaseBoardCard
                     board={board}
                     variant="discover"
@@ -98,42 +104,41 @@ export default function HomePage() {
       )}
 
       <section className="velvet-panel p-4 sm:p-6">
-        <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-display flex items-center gap-2 text-xl text-on-surface sm:text-2xl">
-            <Heart className="h-5 w-5 fill-primary/25 text-primary" aria-hidden />
-            Your collections
-          </h2>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            icon={Plus}
-            onClick={openCreateBoard}
-            className="w-full sm:w-auto"
-          >
-            {UI_LABELS.newCollection}
-          </Button>
-        </div>
+        <DiscoverSectionHeader
+          title="Your collections"
+          subtitle="Collections you own and curate"
+          showSeeAll={false}
+        />
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={COLLECTION_CARD_RAIL}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <ShowcaseBoardCardSkeleton key={i} />
+              <div key={i} className={COLLECTION_CARD_RAIL_ITEM}>
+                <ShowcaseBoardCardSkeleton />
+              </div>
             ))}
           </div>
         ) : boards && boards.length > 0 ? (
-          <motion.div
-            className="grid grid-cols-1 gap-5 pb-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            {boards.map((board) => (
-              <motion.div key={board.id} variants={fadeUp}>
-                <ShowcaseBoardCard board={board} variant="owned" />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              className={cn(COLLECTION_CARD_RAIL, "pb-2")}
+              variants={stagger}
+              initial="initial"
+              animate="animate"
+            >
+              {visibleBoards.map((board) => (
+                <motion.div key={board.id} variants={fadeUp} className={COLLECTION_CARD_RAIL_ITEM}>
+                  <ShowcaseBoardCard board={board} variant="owned" />
+                </motion.div>
+              ))}
+            </motion.div>
+            {hasMoreBoards && (
+              <div ref={boardsSentinelRef} className={cn(COLLECTION_CARD_RAIL, "mt-2")}>
+                <ShowcaseBoardCardSkeleton className={COLLECTION_CARD_RAIL_ITEM} />
+                <ShowcaseBoardCardSkeleton className={COLLECTION_CARD_RAIL_ITEM} />
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState
             title="Your velvet world starts here"

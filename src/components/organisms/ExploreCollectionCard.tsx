@@ -9,7 +9,12 @@ import { hasMultipleCollaborators } from "@/lib/collaborators";
 import { ROUTES } from "@/constants/routes";
 import { getMoodDisplayLabel, getMoodEmoji } from "@/constants/moods";
 import type { Board, Profile } from "@/types/board.types";
-import { COLLECTION_CARD_MEDIA, COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
+import {
+  COLLECTION_CARD_MEDIA,
+  COLLECTION_CARD_SHELL,
+  COLLECTION_CARD_SUBTITLE,
+  COLLECTION_CARD_TITLE,
+} from "@/constants/collection-ui";
 import { cn } from "@/lib/utils";
 
 interface ExploreCollectionCardProps {
@@ -54,22 +59,16 @@ export function ExploreCollectionCard({
             aria-hidden
           />
 
-          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2 sm:top-3.5 sm:left-3.5">
-            <span className="velvet-chip-mood inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-primary shadow-sm sm:px-3 sm:text-xs">
+          <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1.5 sm:top-2.5 sm:left-2.5">
+            <span className="velvet-chip-mood inline-flex items-center gap-0.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm sm:px-2.5 sm:text-[11px]">
               {getMoodEmoji(board.mood)} {moodChip}
             </span>
-            {showCollab && (
-              <CollaboratorChips board={board} className="bg-white/95 shadow-sm" />
-            )}
+            {showCollab && <CollaboratorChips board={board} />}
           </div>
 
-          <div className="absolute right-3 bottom-3 left-3 z-10 sm:right-4 sm:bottom-4 sm:left-4">
-            <h3 className="font-display text-[1.35rem] leading-[1.15] text-white drop-shadow-md sm:text-2xl">
-              {board.title}
-            </h3>
-            <p className="mt-1 line-clamp-2 text-xs font-medium leading-snug text-white/90 sm:text-sm">
-              {subtitle}
-            </p>
+          <div className="absolute right-2 bottom-2 left-2 z-10 sm:right-2.5 sm:bottom-2.5 sm:left-2.5">
+            <h3 className={cn(COLLECTION_CARD_TITLE, "text-white")}>{board.title}</h3>
+            <p className={cn(COLLECTION_CARD_SUBTITLE, "text-white/90")}>{subtitle}</p>
           </div>
         </div>
       </Link>

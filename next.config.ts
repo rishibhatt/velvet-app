@@ -37,6 +37,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.redd.it" },
       { protocol: "https", hostname: "*.amazon.com" },
       { protocol: "https", hostname: "*.media-amazon.com" },
+      { protocol: "https", hostname: "www.google.com" },
     ],
   },
 };

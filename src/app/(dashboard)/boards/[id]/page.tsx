@@ -1,11 +1,12 @@
 "use client";
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
-import { resolveHeroCoverUrl } from "@/lib/collection-previews";
+import { resolveHeroPreviewImages } from "@/lib/collection-previews";
 import { UserPlus, Share2, Plus, Users, Settings } from "lucide-react";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES, getPublicShareUrl } from "@/constants/routes";
+import { shareOrCopy } from "@/lib/share";
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { Button } from "@/components/atoms/Button";
@@ -28,7 +29,6 @@ import { isSupabaseConfigured } from "@/lib/utils";
 import { BoardSettingsModal } from "@/features/boards/components/BoardSettingsModal";
 import { CollectionAddCard } from "@/components/molecules/CollectionAddCard";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
-import { getPublicShareUrl } from "@/constants/routes";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -102,9 +102,9 @@ export default function BoardDetailPage({
     prevItemCountRef.current = count;
   }, [items?.length]);
 
-  const heroCoverUrl = useMemo(
-    () => resolveHeroCoverUrl(items, board?.cover_url),
-    [items, board?.cover_url],
+  const heroImages = useMemo(
+    () => resolveHeroPreviewImages(items, board),
+    [items, board],
   );
 
   if (boardLoading) {
@@ -156,12 +156,11 @@ export default function BoardDetailPage({
       velvetToast.error("Migration needed", "Run migration 004 in Supabase (see /setup).");
       return;
     }
-    try {
-      await navigator.clipboard.writeText(getPublicShareUrl(board.slug));
-      velvetToast.success("Link copied!");
-    } catch {
-      velvetToast.error("Couldn't copy link");
-    }
+    await shareOrCopy({
+      url: getPublicShareUrl(board.slug),
+      title: board.title,
+      text: board.description ?? undefined,
+    });
   };
 
   return (
@@ -174,7 +173,9 @@ export default function BoardDetailPage({
             className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
           />
         }
-        coverUrl={heroCoverUrl}
+        images={heroImages}
+        itemCount={board.item_count ?? items?.length ?? 0}
+        emptyVariant="own"
         title={board.title}
         description={board.description}
         badge={
@@ -215,7 +216,7 @@ export default function BoardDetailPage({
             <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-5 w-5" />
             </IconButton>
-            <IconButton label="Share board" onClick={handleShare}>
+            <IconButton label="Share collection" onClick={() => void handleShare()}>
               <Share2 className="h-5 w-5" />
             </IconButton>
           </>
@@ -236,7 +237,7 @@ export default function BoardDetailPage({
         )}
         {itemsLoading ? (
           <CollectionItemsGrid>
-            <ItemCardSkeleton count={6} />
+            <ItemCardSkeleton count={8} />
           </CollectionItemsGrid>
         ) : items && items.length > 0 ? (
           <CollectionItemsGrid

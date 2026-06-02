@@ -85,17 +85,31 @@ export function previewImagesFromItems(
     .slice(0, PREVIEW_LIMIT);
 }
 
+type HeroPreviewFallback = {
+  preview_images?: string[] | null;
+  cover_url?: string | null;
+};
+
 /**
- * Hero/banner cover from live saves only.
- * When items have loaded and none have images, returns null (no stale board.cover_url).
+ * Hero poster grid from live saves (1–4 images). When items are loaded, ignores stale cover_url.
  */
+export function resolveHeroPreviewImages(
+  items: Array<{ image_url?: string | null; deleted_at?: string | null }> | undefined,
+  fallback?: HeroPreviewFallback | null,
+): string[] {
+  if (items !== undefined) {
+    return previewImagesFromItems(items);
+  }
+  const previews = fallback?.preview_images?.filter(Boolean);
+  if (previews?.length) return previews.slice(0, PREVIEW_LIMIT);
+  if (fallback?.cover_url) return [fallback.cover_url];
+  return [];
+}
+
+/** @deprecated Use resolveHeroPreviewImages — first image only */
 export function resolveHeroCoverUrl(
   items: Array<{ image_url?: string | null; deleted_at?: string | null }> | undefined,
   fallbackCoverUrl?: string | null,
 ): string | null {
-  if (items !== undefined) {
-    const fromItems = previewImagesFromItems(items);
-    return fromItems[0] ?? null;
-  }
-  return fallbackCoverUrl ?? null;
+  return resolveHeroPreviewImages(items, { cover_url: fallbackCoverUrl })[0] ?? null;
 }

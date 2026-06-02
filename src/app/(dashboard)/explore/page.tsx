@@ -16,6 +16,8 @@ import { usePublicBoards } from "@/queries/discover/queries";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { PublicBoardSort } from "@/services/discover/discover.service";
 import type { Mood } from "@/types/board.types";
+import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
+import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 import { ROUTES } from "@/constants/routes";
 import { fadeUp, stagger } from "@/lib/animations";
 
@@ -37,6 +39,8 @@ export default function ExplorePage() {
 
   const { data: boards = [], isLoading, isError, error, refetch } =
     usePublicBoards(filters);
+
+  const { visible, sentinelRef, hasMore } = useInfiniteSlice(boards, 12);
 
   return (
     <main className="page-container py-stack-lg pb-28 md:py-12 md:pb-12">
@@ -61,7 +65,7 @@ export default function ExplorePage() {
 
       {isLoading ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={COLLECTION_CARD_GRID}>
             {Array.from({ length: 8 }).map((_, i) => (
               <ExploreCollectionCardSkeleton key={i} />
             ))}
@@ -75,24 +79,32 @@ export default function ExplorePage() {
         )
       ) : boards.length > 0 ? (
         viewMode === "grid" ? (
-          <motion.div
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            {boards.map((board) => (
-              <motion.div key={board.id} variants={fadeUp}>
-                <ExploreCollectionCard
-                  board={board}
-                  owner={board.owner}
-                  publicHref={
-                    board.slug ? ROUTES.publicCollection(board.slug) : undefined
-                  }
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              className={COLLECTION_CARD_GRID}
+              variants={stagger}
+              initial="initial"
+              animate="animate"
+            >
+              {visible.map((board) => (
+                <motion.div key={board.id} variants={fadeUp}>
+                  <ExploreCollectionCard
+                    board={board}
+                    owner={board.owner}
+                    publicHref={
+                      board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                    }
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+            {hasMore && (
+              <div ref={sentinelRef} className={`${COLLECTION_CARD_GRID} mt-3`}>
+                <ExploreCollectionCardSkeleton />
+                <ExploreCollectionCardSkeleton />
+              </div>
+            )}
+          </>
         ) : (
           <motion.ul
             className="space-y-3"

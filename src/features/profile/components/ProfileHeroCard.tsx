@@ -9,14 +9,13 @@ import {
   LogOut,
   Pencil,
   Settings,
-  Share2,
 } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import { Button } from "@/components/atoms/Button";
+import { ShareButton } from "@/components/molecules/ShareButton";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { ROUTES } from "@/constants/routes";
 import { getCreatorProfileUrl } from "@/lib/app-url";
-import { velvetToast } from "@/lib/toast";
 import { formatJoinedDate } from "@/utils/format";
 import type { Profile } from "@/types/board.types";
 import { cn } from "@/lib/utils";
@@ -37,30 +36,9 @@ export function ProfileHeroCard({
     ? profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")
     : null;
 
-  const handleShare = async () => {
-    if (!profile.username) {
-      velvetToast.error("Set a username first", "Add a username to share your public page.");
-      return;
-    }
-    const url = getCreatorProfileUrl(profile.username);
-    const shareData = {
-      title: `${displayName} on Velvet`,
-      text: profile.bio ?? `Collections by @${profile.username}`,
-      url,
-    };
-
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share(shareData);
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      velvetToast.success("Link copied", "Your public profile link is ready to share.");
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      velvetToast.error("Could not share", "Try copying your profile link manually.");
-    }
-  };
+  const profileShareUrl = profile.username
+    ? getCreatorProfileUrl(profile.username)
+    : null;
 
   return (
     <section className="overflow-hidden rounded-3xl border border-outline-variant/25 bg-bg-elevated shadow-[var(--shadow-card)]">
@@ -198,17 +176,15 @@ export function ProfileHeroCard({
                   Settings
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                icon={Share2}
-                onClick={() => void handleShare()}
-                className="col-span-1 border-outline-variant/50 bg-bg-elevated sm:aspect-square sm:w-11 sm:min-w-11 sm:px-0"
-                aria-label="Share profile"
-              >
-                <span className="sm:sr-only">Share</span>
-              </Button>
+              {profileShareUrl && (
+                <ShareButton
+                  url={profileShareUrl}
+                  title={`${displayName} on Velvet`}
+                  text={profile.bio ?? undefined}
+                  label="Share"
+                  className="col-span-2 sm:col-span-1"
+                />
+              )}
               <Button
                 variant="ghost"
                 size="sm"

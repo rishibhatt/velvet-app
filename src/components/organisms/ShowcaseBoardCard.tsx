@@ -13,7 +13,12 @@ import { getMoodDisplayLabel, getMoodEmoji } from "@/constants/moods";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import type { Board, Profile } from "@/types/board.types";
-import { COLLECTION_CARD_MEDIA, COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
+import {
+  COLLECTION_CARD_MEDIA,
+  COLLECTION_CARD_SHELL,
+  COLLECTION_CARD_SUBTITLE,
+  COLLECTION_CARD_TITLE,
+} from "@/constants/collection-ui";
 import { cn } from "@/lib/utils";
 
 export type ShowcaseBoardVariant = "discover" | "owned";
@@ -63,13 +68,13 @@ export function ShowcaseBoardCard({
           />
           <div className="velvet-card-scrim absolute inset-0" aria-hidden />
 
-          <div className="absolute top-3 left-3 z-10 sm:top-4 sm:left-4">
-            <span className="velvet-chip-mood inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-primary shadow-sm ring-1 ring-outline-variant/15 sm:px-3 sm:text-xs">
+          <div className="absolute top-2 left-2 z-10 sm:top-2.5 sm:left-2.5">
+            <span className="velvet-chip-mood inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm ring-1 ring-outline-variant/15 sm:px-2.5 sm:text-[11px]">
               {getMoodEmoji(board.mood)} {moodChip.toLowerCase()}
             </span>
           </div>
 
-          <div className="absolute top-3 right-3 z-10 flex items-start gap-2 sm:top-4 sm:right-4">
+          <div className="absolute top-2 right-2 z-10 flex items-start gap-2 sm:top-2.5 sm:right-2.5">
             {showCollab && (
               <CollaboratorChips board={board} className="shadow-md" />
             )}
@@ -91,28 +96,20 @@ export function ShowcaseBoardCard({
             )}
           </div>
 
-          <div className="absolute right-3 bottom-3 left-3 z-10 sm:right-4 sm:bottom-4 sm:left-4">
+          <div className="absolute right-2 bottom-2 left-2 z-10 sm:right-2.5 sm:bottom-2.5 sm:left-2.5">
             {isDiscover ? (
               <div className="min-w-0">
-                <h3 className="font-display text-xl leading-tight text-bg-elevated drop-shadow-md sm:text-2xl">
-                  {board.title}
-                </h3>
-                <p className="mt-1 line-clamp-2 text-xs font-medium text-bg-elevated/90 sm:text-sm">
-                  {subtitle}
-                </p>
+                <h3 className={COLLECTION_CARD_TITLE}>{board.title}</h3>
+                <p className={COLLECTION_CARD_SUBTITLE}>{subtitle}</p>
               </div>
             ) : (
-              <div className="flex items-end justify-between gap-2">
+              <div className="flex items-end justify-between gap-1.5">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-xl leading-tight text-bg-elevated drop-shadow-md sm:text-2xl">
-                    {board.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs font-medium text-bg-elevated/90 sm:text-sm">
-                    {subtitle}
-                  </p>
+                  <h3 className={COLLECTION_CARD_TITLE}>{board.title}</h3>
+                  <p className={COLLECTION_CARD_SUBTITLE}>{subtitle}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-bg-elevated/95 px-2.5 py-1 text-[11px] font-bold tabular-nums text-primary shadow-sm ring-1 ring-outline-variant/20 sm:text-xs">
-                  {board.item_count ?? 0} items
+                <span className="shrink-0 rounded-full bg-bg-elevated/95 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary shadow-sm ring-1 ring-outline-variant/20">
+                  {board.item_count ?? 0}
                 </span>
               </div>
             )}
