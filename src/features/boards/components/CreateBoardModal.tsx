@@ -78,7 +78,7 @@ export function CreateBoardModal() {
           <input
             {...register("title")}
             placeholder="Name your collection..."
-            className="w-full border-0 border-b-2 border-outline-variant bg-transparent py-4 font-display text-xl text-on-surface placeholder:text-outline/70 transition-colors focus:border-primary focus:ring-0 focus:outline-none md:text-2xl"
+            className="velvet-input-title w-full border-0 border-b-2 border-outline-variant/50 bg-transparent py-4 font-display text-xl text-on-surface placeholder:text-outline/70 md:text-2xl"
             aria-label="Collection name"
           />
           {errors.title && (
@@ -88,7 +88,7 @@ export function CreateBoardModal() {
             {...register("description")}
             placeholder="What is this collection for? (optional)"
             rows={2}
-            className="w-full resize-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 text-sm focus:border-primary focus:outline-none"
+            className="velvet-field w-full resize-none rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 text-sm"
             aria-label="Description"
           />
         </div>
@@ -98,22 +98,35 @@ export function CreateBoardModal() {
             Choose a Mood
           </label>
           <div className="flex gap-stack-md overflow-x-auto pb-2 hide-scrollbar -mx-2 px-2">
-            {MOODS.slice(0, 5).map((mood) => (
-              <button
-                key={mood.value}
-                type="button"
-                onClick={() => setSelectedMood(mood.value)}
-                className={cn(
-                  "flex flex-shrink-0 items-center gap-2 rounded-full border-2 px-6 py-3 transition-all duration-200 active:scale-95",
-                  selectedMood === mood.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-outline-variant/50 bg-white text-on-surface hover:border-primary/40",
-                )}
-              >
-                <span className="text-xl">{mood.emoji}</span>
-                <span className="text-sm font-semibold">{mood.label}</span>
-              </button>
-            ))}
+            {MOODS.slice(0, 5).map((mood) => {
+              const Icon = mood.Icon;
+              const selected = selectedMood === mood.value;
+              return (
+                <button
+                  key={mood.value}
+                  type="button"
+                  onClick={() => setSelectedMood(mood.value)}
+                  className={cn(
+                    "flex flex-shrink-0 items-center gap-2.5 rounded-full border-2 px-5 py-2.5 transition-all duration-200 active:scale-[0.98]",
+                    selected
+                      ? "border-primary bg-primary-fixed/50 text-primary shadow-sm"
+                      : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/20",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+                      selected
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container-low text-primary",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="text-sm font-semibold">{mood.label}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 

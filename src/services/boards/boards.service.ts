@@ -1,4 +1,8 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
+import {
+  fetchBoardPreviewImages,
+  resolveBoardPreviewImages,
+} from "@/lib/collection-previews";
 import { likesService } from "@/services/likes/likes.service";
 import { slugifyTitle, uniqueSlug } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
@@ -53,14 +57,24 @@ export const boardsService = {
         .neq("owner_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw new Error(parseSupabaseError(error));
-      memberBoards = (data ?? []) as BoardRow[];
+      memberBoards = (data ?? []) as unknown as BoardRow[];
     }
 
-    const merged = [...((owned ?? []) as BoardRow[]), ...memberBoards];
+    const merged = [
+      ...((owned ?? []) as unknown as BoardRow[]),
+      ...memberBoards,
+    ];
     const unique = Array.from(
       new Map(merged.map((b) => [b.id, b])).values(),
     );
-    return unique.map((row) => mapBoard(row));
+    const previews = await fetchBoardPreviewImages(unique.map((b) => b.id));
+    return unique.map((row) => {
+      const board = mapBoard(row);
+      return {
+        ...board,
+        preview_images: resolveBoardPreviewImages(board, previews),
+      };
+    });
   },
 
   async getLikedBoards(): Promise<Board[]> {
@@ -93,7 +107,10 @@ export const boardsService = {
 
     type BoardRow = Parameters<typeof mapBoard>[0];
     const byId = new Map(
-      ((data ?? []) as BoardRow[]).map((row) => [row.id, mapBoard(row)]),
+      ((data ?? []) as unknown as BoardRow[]).map((row) => [
+        row.id,
+        mapBoard(row),
+      ]),
     );
     return boardIds
       .map((id) => byId.get(id))
@@ -218,7 +235,7 @@ export const boardsService = {
       metadata: { username: profile.username, role },
     });
 
-    const row = member as {
+    const row = member as unknown as {
       id: string;
       board_id: string;
       user_id: string;
@@ -254,7 +271,7 @@ export const boardsService = {
     if (fetchError) throw new Error(parseSupabaseError(fetchError));
     if (!member) throw new Error("Collaborator not found.");
 
-    const memberRow = member as {
+    const memberRow = member as unknown as {
       user_id: string;
       profile?: { username: string } | null;
     };

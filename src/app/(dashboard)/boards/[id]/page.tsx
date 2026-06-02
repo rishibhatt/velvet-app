@@ -24,8 +24,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { itemKeys } from "@/queries/board/keys";
 import { activityKeys } from "@/queries/activity/queries";
 import { isSupabaseConfigured } from "@/lib/utils";
-import type { ActivityLog } from "@/types/board.types";
 import { BoardSettingsModal } from "@/features/boards/components/BoardSettingsModal";
+import { CollectionAddCard } from "@/components/molecules/CollectionAddCard";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { getPublicShareUrl } from "@/constants/routes";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
@@ -160,10 +160,14 @@ export default function BoardDetailPage({
 
   return (
     <>
-      <div className="mb-4">
-        <PageBackButton href={ROUTES.home} label="Collections" />
-      </div>
       <CollectionCoverHero
+        overlay={
+          <PageBackButton
+            href={ROUTES.home}
+            label="Collections"
+            className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
+          />
+        }
         coverUrl={board.cover_url}
         title={board.title}
         description={board.description}
@@ -254,18 +258,9 @@ export default function BoardDetailPage({
             ))}
           </CollectionItemsGrid>
         ) : (
-          <div className="rounded-3xl border border-dashed border-primary/30 bg-surface-container-low py-16 text-center">
-            <p className="mb-4 text-on-surface-variant">
-              No saves yet. Paste a link or image to start this collection.
-            </p>
-            <Button
-              variant="gradient"
-              icon={Plus}
-              onClick={() => openSaveModal(id)}
-            >
-              {UI_LABELS.saveFirstItem}
-            </Button>
-          </div>
+          <CollectionItemsGrid>
+            <CollectionAddCard onClick={() => openSaveModal(id)} />
+          </CollectionItemsGrid>
         )}
       </section>
 
@@ -288,7 +283,7 @@ export default function BoardDetailPage({
         onClose={() => setCollabPanelOpen(false)}
         boardId={board.id}
         members={members}
-        activities={activities as ActivityLog[]}
+        activities={activities}
         canManage={canInvite}
         ownerId={board.owner_id}
       />

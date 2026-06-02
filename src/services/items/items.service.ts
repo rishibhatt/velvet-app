@@ -168,7 +168,7 @@ export const commentsService = {
       .is("deleted_at", null)
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return (data ?? []) as Comment[];
+    return (data ?? []) as unknown as Comment[];
   },
 
   async addComment(itemId: string, content: string): Promise<Comment> {
@@ -198,7 +198,7 @@ export const commentsService = {
 
     if (error) throw error;
 
-    const comment = data as Comment;
+    const comment = data as unknown as Comment;
 
     if (itemRow?.board_id) {
       await supabase.from("activity_logs").insert({
@@ -215,17 +215,35 @@ export const commentsService = {
 };
 
 export const activityService = {
-  async getBoardActivity(boardId: string) {
+  async getBoardActivity(boardId: string): Promise<import("@/types/board.types").ActivityLog[]> {
     if (!isSupabaseConfigured()) return [];
     requireSupabase();
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data: rows, error } = await supabase
       .from("activity_logs")
-      .select("*, profile:profiles(*)")
+      .select("*")
       .eq("board_id", boardId)
       .order("created_at", { ascending: false })
       .limit(30);
     if (error) throw error;
-    return data ?? [];
+    if (!rows?.length) return [];
+
+    const userIds = [...new Set(rows.map((r) => r.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select(
+        "id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at",
+      )
+      .in("id", userIds);
+
+    const profileById = new Map(
+      (profiles ?? []).map((p) => [p.id, p]),
+    );
+
+    return rows.map((row) => ({
+      ...row,
+      metadata: row.metadata as Record<string, unknown> | null,
+      profile: profileById.get(row.user_id),
+    }));
   },
 };

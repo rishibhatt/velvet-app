@@ -7,6 +7,7 @@ import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { getMoodEmoji } from "@/constants/moods";
 import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
+import { Navbar } from "@/components/organisms/Navbar";
 import { PublicCollectionActions } from "@/features/collections/components/PublicCollectionActions";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { likesService } from "@/services/likes/likes.service";
@@ -45,7 +46,8 @@ export function PublicCollectionView({
       : initialBoard;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
+      <Navbar />
       <CollectionCoverHero
         size="public"
         overlay={

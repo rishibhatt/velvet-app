@@ -4,12 +4,12 @@ import type { MouseEvent } from "react";
 import Link from "next/link";
 import { BadgeCheck, Heart, Layers } from "lucide-react";
 import { motion } from "framer-motion";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Avatar } from "@/components/atoms/Avatar";
 import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
+import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGrid";
 import { hasMultipleCollaborators } from "@/lib/collaborators";
 import { ROUTES } from "@/constants/routes";
-import { getMoodEmoji, getMoodLabel } from "@/constants/moods";
+import { getMoodLabel } from "@/constants/moods";
 import { useToggleBoardLike } from "@/queries/likes/mutations";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
@@ -41,6 +41,9 @@ export function ExploreCollectionCard({
   const likeCount = board.like_count ?? 0;
   const isLiked = board.is_liked ?? false;
   const showCollab = hasMultipleCollaborators(board);
+  const previewImages =
+    board.preview_images ??
+    (board.cover_url ? [board.cover_url] : []);
 
   const handleLike = (e: MouseEvent) => {
     e.preventDefault();
@@ -65,26 +68,20 @@ export function ExploreCollectionCard({
     >
       <Link href={boardHref} className="relative block">
         <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[5/6]">
-          {board.cover_url ? (
-            <VelvetImage
-              src={board.cover_url}
-              alt={board.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-              sizes="(max-width: 640px) 100vw, 280px"
-            />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-primary-fixed/80 via-secondary-fixed/50 to-tertiary-fixed/40" />
-          )}
+          <CollectionPosterGrid
+            images={previewImages}
+            title={board.title}
+            className="h-full transition-transform duration-700 group-hover:scale-[1.02]"
+          />
 
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 via-40% to-transparent"
             aria-hidden
           />
 
           <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2 sm:top-3.5 sm:left-3.5">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-on-surface shadow-sm sm:px-3 sm:text-xs">
-              {getMoodEmoji(board.mood)} {moodLabel.toLowerCase()}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-on-surface shadow-sm sm:px-3 sm:text-xs">
+              {moodLabel}
             </span>
             {showCollab && (
               <CollaboratorChips board={board} className="bg-white/95" />

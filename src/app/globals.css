@@ -280,6 +280,28 @@ body {
   }
 }
 
+.velvet-field {
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.velvet-field:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--outline-variant));
+  box-shadow: none;
+}
+
+.velvet-input-title {
+  transition: border-color 0.2s ease;
+}
+
+.velvet-input-title:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
 .velvet-toast-host {
   animation: velvet-toast-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }

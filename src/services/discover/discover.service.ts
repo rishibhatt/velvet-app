@@ -1,4 +1,8 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
+import {
+  fetchBoardPreviewImages,
+  resolveBoardPreviewImages,
+} from "@/lib/collection-previews";
 import { likesService } from "@/services/likes/likes.service";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
@@ -108,11 +112,18 @@ export const discoverService = {
 
     if (error) throw new Error(parseSupabaseError(error));
 
-    const rows = (data ?? []) as PublicBoardRow[];
+    const rows = (data ?? []) as unknown as PublicBoardRow[];
     const boardIds = rows.map((r) => r.id);
     const likedIds = await likesService.getLikedBoardIds(boardIds);
 
-    let mapped = rows.map((row) => mapPublicBoard(row, likedIds));
+    const previewsByBoard = await fetchBoardPreviewImages(boardIds);
+    let mapped = rows.map((row) => {
+      const board = mapPublicBoard(row, likedIds);
+      return {
+        ...board,
+        preview_images: resolveBoardPreviewImages(board, previewsByBoard),
+      };
+    });
 
     const normalizedQuery = query ? sanitizeIlike(query).toLowerCase() : "";
     if (normalizedQuery) {

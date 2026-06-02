@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { BadgeCheck, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { Avatar } from "@/components/atoms/Avatar";
 import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
 import { getBoardCollaboratorProfiles, hasMultipleCollaborators } from "@/lib/collaborators";
+import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGrid";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { ROUTES } from "@/constants/routes";
 import { getMoodEmoji, getMoodLabel } from "@/constants/moods";
@@ -39,6 +39,9 @@ export function ShowcaseBoardCard({
   const boardHref = publicHref ?? ROUTES.board(board.id);
   const collaboratorProfiles = getBoardCollaboratorProfiles(board);
   const showCollab = hasMultipleCollaborators(board);
+  const previewImages =
+    board.preview_images ??
+    (board.cover_url ? [board.cover_url] : []);
   const canLike =
     showLike && board.is_public && user?.id !== board.owner_id;
   const moodLabel = board.mood ? getMoodLabel(board.mood) : "Collection";
@@ -62,17 +65,11 @@ export function ShowcaseBoardCard({
             isDiscover ? "aspect-[4/5] sm:aspect-[3/4]" : "aspect-[4/5] sm:aspect-[5/6]",
           )}
         >
-          {board.cover_url ? (
-            <VelvetImage
-              src={board.cover_url}
-              alt={board.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-              sizes="(max-width: 640px) 85vw, 320px"
-            />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-primary-fixed/70 via-secondary-fixed/50 to-tertiary-fixed/40" />
-          )}
+          <CollectionPosterGrid
+            images={previewImages}
+            title={board.title}
+            className="h-full transition-transform duration-700 group-hover:scale-[1.02]"
+          />
           <div className="velvet-card-scrim absolute inset-0" aria-hidden />
 
           <div className="absolute top-3 left-3 z-10 sm:top-4 sm:left-4">

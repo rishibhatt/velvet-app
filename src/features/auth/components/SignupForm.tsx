@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/atoms/Button";
+import { PasswordInput } from "@/components/atoms/PasswordInput";
 import { MOODS } from "@/constants/moods";
 import { authService } from "@/services/auth/auth.service";
 import { signupSchema, type SignupInput } from "@/schemas/auth.schema";
@@ -112,11 +113,9 @@ export function SignupForm() {
               <label htmlFor="password" className="mb-2 block text-sm font-medium text-on-surface-variant">
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 {...register("password")}
-                className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 focus:border-primary focus:outline-none"
                 placeholder="••••••••"
               />
               {errors.password && (

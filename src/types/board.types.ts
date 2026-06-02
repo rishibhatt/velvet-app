@@ -47,6 +47,8 @@ export interface Board {
   like_count?: number;
   is_liked?: boolean;
   members?: BoardMember[];
+  /** Up to 4 item images for poster-style cards */
+  preview_images?: string[];
 }
 
 export interface BoardMember {

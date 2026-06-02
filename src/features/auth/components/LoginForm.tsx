@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/atoms/Button";
+import { PasswordInput } from "@/components/atoms/PasswordInput";
 import { authService } from "@/services/auth/auth.service";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
@@ -66,7 +67,7 @@ export function LoginForm() {
           id="email"
           type="email"
           {...register("email")}
-          className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 shadow-[var(--shadow-inner)] transition-all focus:border-primary-fixed-dim focus:ring-2 focus:ring-primary-fixed/30 focus:outline-none"
+          className="velvet-field w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 shadow-[var(--shadow-inner)]"
           placeholder="you@example.com"
         />
         {errors.email && (
@@ -78,11 +79,9 @@ export function LoginForm() {
         <label htmlFor="password" className="mb-2 block text-sm font-medium text-on-surface-variant">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           {...register("password")}
-          className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 shadow-[var(--shadow-inner)] transition-all focus:border-primary-fixed-dim focus:ring-2 focus:ring-primary-fixed/30 focus:outline-none"
           placeholder="••••••••"
         />
         {errors.password && (
