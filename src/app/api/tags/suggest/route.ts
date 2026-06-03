@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireApiUser } from "@/lib/api-auth";
 
 const TAG_SUGGESTIONS: Record<string, string[]> = {
   wedding: ["Romantic", "Floral", "Elegant", "Blush"],
@@ -9,6 +10,9 @@ const TAG_SUGGESTIONS: Record<string, string[]> = {
 };
 
 export async function POST(request: Request) {
+  const { error } = await requireApiUser();
+  if (error) return error;
+
   try {
     const { title } = await request.json();
     const lower = (title ?? "").toLowerCase();

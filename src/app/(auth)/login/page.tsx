@@ -19,7 +19,9 @@ export default function LoginPage() {
         <h1 className="font-display mb-2 text-4xl text-on-surface">Welcome back.</h1>
         <p className="text-on-surface-variant">Your velvet world awaits.</p>
       </div>
-      <LoginForm />
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   );
 }

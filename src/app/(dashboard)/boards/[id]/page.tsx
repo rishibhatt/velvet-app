@@ -35,6 +35,7 @@ import { CollectionAddCard } from "@/components/molecules/CollectionAddCard";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 
 export default function BoardDetailPage({
   params,
@@ -50,12 +51,29 @@ export default function BoardDetailPage({
     refetch: refetchBoard,
   } = useBoardDetail(id);
   const {
-    data: items,
+    data: itemsPages,
     isLoading: itemsLoading,
     isError: itemsError,
     error: itemsErr,
     refetch: refetchItems,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useItems(id);
+
+  const items = useMemo(
+    () => itemsPages?.pages.flatMap((page) => page.items) ?? [],
+    [itemsPages],
+  );
+
+  const loadMoreRef = useIntersectionObserver(
+    () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    { rootMargin: "320px", threshold: 0 },
+  );
   const { data: activities = [] } = useBoardActivity(id);
   const { user } = useAuth();
   const { openSaveModal, openItemModal, openInviteModal, openShareSheet } =
@@ -280,6 +298,11 @@ export default function BoardDetailPage({
                 }
               />
             ))}
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="col-span-full py-4">
+                {isFetchingNextPage && <ItemCardSkeleton count={4} />}
+              </div>
+            )}
           </CollectionItemsGrid>
         ) : (
           <CollectionItemsGrid emptyState>

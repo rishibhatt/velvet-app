@@ -1,0 +1,151 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
+import { ROUTES, getPublicShareUrl } from "@/constants/routes";
+import { COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
+import { useToggleBoardLike } from "@/queries/likes/mutations";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useModalStore } from "@/store/modal.store";
+import { velvetToast } from "@/lib/toast";
+import type { Board, Profile } from "@/types/board.types";
+import { cn } from "@/lib/utils";
+import { CollectionCardMedia } from "./CollectionCardMedia";
+import { CollectionCardOverlay } from "./CollectionCardOverlay";
+import { DoubleTapHeartBurst } from "./DoubleTapHeartBurst";
+import { useCollectionCardTap } from "./useCollectionCardTap";
+
+import type { CollectionCardVariant } from "./collection-card.types";
+
+export type { CollectionCardVariant } from "./collection-card.types";
+
+export interface CollectionCardProps {
+  board: Board;
+  variant?: CollectionCardVariant;
+  publicHref?: string;
+  owner?: Pick<Profile, "username" | "full_name" | "avatar_url">;
+  emptyVariant?: CollectionPosterEmptyVariant;
+  className?: string;
+  onClick?: () => void;
+}
+
+export function CollectionCard({
+  board,
+  variant = "discover",
+  publicHref,
+  owner,
+  emptyVariant,
+  className,
+  onClick,
+}: CollectionCardProps) {
+  const router = useRouter();
+  const { user, profile, isAuthenticated, isAuthReady } = useAuth();
+  const openShareSheet = useModalStore((s) => s.openShareSheet);
+  const toggleLike = useToggleBoardLike();
+  const [heartBurst, setHeartBurst] = useState(false);
+
+  const boardHref = publicHref ?? ROUTES.board(board.id);
+  const posterEmpty: CollectionPosterEmptyVariant =
+    emptyVariant ?? (variant === "owned" ? "own" : "other");
+  const canLike =
+    variant !== "owned" && board.is_public && user?.id !== board.owner_id;
+
+  const shareOwner =
+    owner ??
+    (variant === "owned" && profile
+      ? {
+          username: profile.username,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+        }
+      : undefined);
+
+  const shareUrl = useMemo(() => {
+    const path =
+      publicHref ??
+      (board.slug && shareOwner?.username
+        ? ROUTES.publicCollection(shareOwner.username, board.slug)
+        : board.slug
+          ? ROUTES.legacyPublicCollection(board.slug)
+          : boardHref);
+
+    if (typeof window !== "undefined" && path.startsWith("/")) {
+      return `${window.location.origin}${path}`;
+    }
+    return getPublicShareUrl(shareOwner?.username ?? "", board.slug ?? "", undefined);
+  }, [board.slug, boardHref, publicHref, shareOwner?.username]);
+
+  const handleShare = useCallback(() => {
+    if (!board.is_public) {
+      velvetToast.info("Make it public", "Set visibility to Public in collection settings.");
+      return;
+    }
+
+    openShareSheet({
+      url: shareUrl,
+      title: board.title,
+      text: board.description ?? undefined,
+      imageUrls: (board.preview_images ?? []).slice(0, 4),
+      eyebrow: "Velvet collection",
+    });
+  }, [board, openShareSheet, shareUrl]);
+
+  const triggerLikeBurst = useCallback(() => setHeartBurst(true), []);
+
+  const handleDoubleTap = useCallback(() => {
+    if (!canLike) return;
+    setHeartBurst(true);
+    if (!isAuthReady) return;
+    if (!isAuthenticated) {
+      velvetToast.info("Sign in to like", "Create an account to save favorites.");
+      return;
+    }
+    if (!board.is_liked) toggleLike.mutate(board.id);
+  }, [
+    board.id,
+    board.is_liked,
+    canLike,
+    isAuthenticated,
+    isAuthReady,
+    toggleLike,
+  ]);
+
+  const handleTap = useCollectionCardTap(boardHref, {
+    onNavigate: onClick,
+    onDoubleTap: handleDoubleTap,
+  });
+
+  const handleView = useCallback(() => {
+    onClick?.();
+    router.push(boardHref);
+  }, [boardHref, onClick, router]);
+
+  return (
+    <motion.article
+      whileHover={{ y: -4, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
+      whileTap={{ scale: 0.98, transition: { type: "spring", stiffness: 420, damping: 28 } }}
+      className={cn("group", COLLECTION_CARD_SHELL, className)}
+    >
+      <div className="relative">
+        <CollectionCardMedia
+          board={board}
+          emptyVariant={posterEmpty}
+          onTap={handleTap}
+        />
+        <CollectionCardOverlay
+          board={board}
+          variant={variant}
+          owner={owner}
+          shareUrl={shareUrl}
+          canLike={canLike}
+          onLikeBurst={triggerLikeBurst}
+          onShare={handleShare}
+          onView={handleView}
+        />
+        <DoubleTapHeartBurst show={heartBurst} onComplete={() => setHeartBurst(false)} />
+      </div>
+    </motion.article>
+  );
+}

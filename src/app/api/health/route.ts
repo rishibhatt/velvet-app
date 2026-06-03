@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const enabled = process.env.ENABLE_HEALTH_ENDPOINT === "true";
+  if (!enabled) {
+    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const hasKey = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -17,11 +22,10 @@ export async function GET() {
     });
     return NextResponse.json({
       ok: res.ok,
-      supabaseUrl: url,
       status: res.status,
       hint:
         res.status === 200
-          ? "Connected. If boards fail, run migration 003_fix_rls_and_storage.sql"
+          ? "Connected. If boards fail, run migration 014_security_hardening.sql"
           : "Check Supabase project status",
     });
   } catch (e) {

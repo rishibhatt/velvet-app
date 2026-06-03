@@ -49,14 +49,14 @@ export default function HomePage() {
   } = useInfiniteSlice(boards ?? [], 8);
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || isLoading || isError) return;
+    if (!isSupabaseConfigured() || isLoading || isError || !user) return;
     if (boards && boards.length === 0) {
-      const skipped = sessionStorage.getItem("velvet_onboarding_skip");
+      const skipped = user.user_metadata?.onboarding_skipped === true;
       if (!skipped) {
         router.replace("/onboarding");
       }
     }
-  }, [boards, isLoading, isError, router]);
+  }, [boards, isLoading, isError, router, user]);
 
   useEffect(() => {
     const handleScroll = () => setCompactCreate(window.scrollY > 120);
@@ -96,7 +96,6 @@ export default function HomePage() {
                   <ShowcaseBoardCard
                     board={board}
                     variant="discover"
-                    showLike
                     owner={board.owner}
                     publicHref={
                       board.slug

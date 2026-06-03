@@ -24,6 +24,15 @@ export function parseSupabaseError(error: unknown): string {
     ) {
       return "Database update needed. Run supabase/migrations/009_soft_delete_board.sql (and 008 if removing items fails) in your Supabase SQL Editor.";
     }
+    if (e.message?.includes("Email not confirmed")) {
+      return "Please verify your email before signing in. Check your inbox or resend the verification link.";
+    }
+    if (e.message?.includes("Invalid login credentials")) {
+      return "Incorrect email or password. Please try again.";
+    }
+    if (e.message?.includes("Password should be at least")) {
+      return e.message;
+    }
     if (e.message) return e.message;
   }
   if (error instanceof Error) return error.message;

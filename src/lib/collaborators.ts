@@ -1,9 +1,7 @@
 import type { Board, BoardMember, Profile } from "@/types/board.types";
 
 /** Profiles to show on collection cards (members with avatars, deduped). */
-export function getBoardCollaboratorProfiles(
-  board: Board,
-): Profile[] {
+export function getBoardCollaboratorProfiles(board: Board): Profile[] {
   const seen = new Set<string>();
   const profiles: Profile[] = [];
 

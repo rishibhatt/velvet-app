@@ -2,12 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getAppBaseUrlFromHeaders } from "@/lib/app-url";
+import { sanitizeAuthRedirect } from "@/lib/url-security";
 import type { Database } from "@/types/database.types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/onboarding";
+  const next = sanitizeAuthRedirect(searchParams.get("next"));
 
   const headerStore = await headers();
   const origin =

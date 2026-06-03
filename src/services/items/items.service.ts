@@ -24,19 +24,37 @@ function mapItem(row: Record<string, unknown>): Item {
   };
 }
 
+export const ITEMS_PAGE_SIZE = 50;
+
 export const itemsService = {
-  async getItems(boardId: string): Promise<Item[]> {
-    if (!isSupabaseConfigured()) return [];
+  async getItems(
+    boardId: string,
+    options: { page?: number; limit?: number } = {},
+  ): Promise<{ items: Item[]; hasMore: boolean }> {
+    if (!isSupabaseConfigured()) return { items: [], hasMore: false };
     requireSupabase();
+
+    const page = options.page ?? 0;
+    const limit = options.limit ?? ITEMS_PAGE_SIZE;
+    const from = page * limit;
+    const to = from + limit - 1;
+
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from("items")
-      .select(ITEM_SELECT)
+      .select(ITEM_SELECT, { count: "exact" })
       .eq("board_id", boardId)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
     if (error) throw error;
-    return (data ?? []).map((row) => mapItem(row as Record<string, unknown>));
+
+    const items = (data ?? []).map((row) => mapItem(row as Record<string, unknown>));
+    const total = count ?? items.length;
+    return {
+      items,
+      hasMore: from + items.length < total,
+    };
   },
 
   async getItemById(itemId: string): Promise<Item | null> {

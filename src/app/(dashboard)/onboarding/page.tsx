@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,14 +16,25 @@ import {
   type CreateBoardInput,
 } from "@/schemas/board.schema";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { authService } from "@/services/auth/auth.service";
+import type { SignupInput } from "@/schemas/auth.schema";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const createBoard = useCreateBoard();
+  const preferredMood =
+    (user?.user_metadata?.preferred_mood as SignupInput["mood"] | undefined) ??
+    "wedding";
   const [step, setStep] = useState(1);
   const [selectedMood, setSelectedMood] =
-    useState<CreateBoardInput["mood"]>("wedding");
+    useState<CreateBoardInput["mood"]>(preferredMood);
   const [isPublic, setIsPublic] = useState(false);
+
+  useEffect(() => {
+    setSelectedMood(preferredMood);
+  }, [preferredMood]);
 
   const {
     register,
@@ -164,8 +175,9 @@ export default function OnboardingPage() {
       <button
         type="button"
         onClick={() => {
-          sessionStorage.setItem("velvet_onboarding_skip", "1");
-          router.push("/");
+          void authService.skipOnboarding().finally(() => {
+            router.push("/");
+          });
         }}
         className="mt-6 w-full text-center text-sm font-medium text-primary hover:underline"
       >

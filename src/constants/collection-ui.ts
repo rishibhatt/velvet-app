@@ -1,9 +1,16 @@
-/** Shared collection card media frame (home, explore, profile, search) */
+/** Shared collection card shell — editorial, 24px radius */
+export const COLLECTION_CARD_SHELL =
+  "overflow-hidden rounded-[24px] bg-bg-elevated shadow-[var(--shadow-card)] transition-shadow duration-300 hover:shadow-[var(--shadow-hover)]";
+
+/** Full-bleed editorial card — image fills the card (reference layout) */
 export const COLLECTION_CARD_MEDIA =
   "relative w-full overflow-hidden aspect-[3/4] sm:aspect-[4/5]";
 
-export const COLLECTION_CARD_SHELL =
-  "overflow-hidden rounded-2xl bg-bg-elevated shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-hover)] sm:rounded-3xl";
+export const COLLECTION_CARD_TITLE =
+  "font-display text-lg leading-[1.12] text-bg-elevated drop-shadow-[0_2px_14px_rgba(0,0,0,0.4)] sm:text-xl";
+
+export const COLLECTION_CARD_SUBTITLE =
+  "mt-0.5 line-clamp-2 text-[11px] font-medium leading-snug text-white/88 sm:text-xs";
 
 /** Mobile-first: 2 columns; scales up on larger screens */
 export const COLLECTION_CARD_GRID =
@@ -11,16 +18,14 @@ export const COLLECTION_CARD_GRID =
 
 /** Horizontal rail (Discover / Your collections on home) */
 export const COLLECTION_CARD_RAIL =
-  "-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 hide-scrollbar sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-4";
+  "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 hide-scrollbar sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-4";
 
-/** Width of one card in a horizontal rail on mobile (~1.8 cards visible) */
-export const COLLECTION_CARD_RAIL_ITEM = "w-[min(52vw,200px)] shrink-0 md:w-auto";
+/** Matches one cell in COLLECTION_CARD_GRID so rail cards share explore grid height */
+export const COLLECTION_CARD_GRID_CELL_WIDTH =
+  "w-[calc((100%-0.625rem)/2)] sm:w-[calc((100%-1rem)/2)]";
 
-export const COLLECTION_CARD_TITLE =
-  "font-display text-base leading-tight text-bg-elevated drop-shadow-md sm:text-lg";
-
-export const COLLECTION_CARD_SUBTITLE =
-  "mt-0.5 line-clamp-2 text-[11px] font-medium text-bg-elevated/90 sm:text-xs";
+/** Width of one card in a horizontal rail on mobile (same height as explore grid cards) */
+export const COLLECTION_CARD_RAIL_ITEM = `${COLLECTION_CARD_GRID_CELL_WIDTH} shrink-0 md:w-auto`;
 
 /** Save / item tiles inside collection boards */
 export const ITEM_CARD_SHELL =

@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  isAuthRoute,
+  isEmailVerificationExempt,
+  isEmailVerified,
+} from "@/lib/auth-redirect";
 
 const protectedRoutes = [
   "/",
@@ -8,8 +13,8 @@ const protectedRoutes = [
   "/settings",
   "/search",
   "/onboarding",
+  "/explore",
 ];
-const authRoutes = ["/login", "/signup", "/forgot-password"];
 const publicRoutes = ["/setup", "/auth/callback", "/c", "/u"];
 
 function redirectWithCookies(
@@ -26,6 +31,12 @@ function redirectWithCookies(
   return redirect;
 }
 
+function isProtected(pathname: string): boolean {
+  return protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -36,11 +47,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!supabaseUrl || !supabaseKey) {
-    if (
-      protectedRoutes.some(
-        (route) => pathname === route || pathname.startsWith(`${route}/`),
-      )
-    ) {
+    if (isProtected(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/setup";
       return NextResponse.redirect(url);
@@ -68,25 +75,38 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    // Validates JWT and refreshes session cookies (required for SSR + ngrok)
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const isProtected = protectedRoutes.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`),
-    );
-    const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-    if (!user && isProtected) {
+    if (!user && isProtected(pathname)) {
       return redirectWithCookies(request, "/login", supabaseResponse);
     }
 
-    if (user && isAuthRoute) {
-      return redirectWithCookies(request, "/", supabaseResponse);
+    if (
+      user &&
+      !isEmailVerified(user) &&
+      isProtected(pathname) &&
+      !isEmailVerificationExempt(pathname)
+    ) {
+      return redirectWithCookies(request, "/verify-email", supabaseResponse);
+    }
+
+    if (user && isAuthRoute(pathname)) {
+      if (pathname.startsWith("/reset-password")) {
+        return supabaseResponse;
+      }
+      if (!isEmailVerified(user) && pathname.startsWith("/verify-email")) {
+        return supabaseResponse;
+      }
+      if (isEmailVerified(user)) {
+        return redirectWithCookies(request, "/", supabaseResponse);
+      }
     }
   } catch {
-    return supabaseResponse;
+    if (isProtected(pathname)) {
+      return redirectWithCookies(request, "/login", supabaseResponse);
+    }
   }
 
   return supabaseResponse;

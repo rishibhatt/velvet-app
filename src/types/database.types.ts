@@ -402,6 +402,18 @@ export interface Database {
         Args: { p_board_id: string };
         Returns: undefined;
       };
+      get_board_preview_images: {
+        Args: { p_board_ids: string[] };
+        Returns: Array<{
+          board_id: string;
+          image_url: string;
+          created_at: string;
+        }>;
+      };
+      delete_user_account: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
   };

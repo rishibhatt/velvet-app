@@ -86,22 +86,55 @@ export default async function SetupPage() {
               </code>{" "}
               (notifications + collaboration approvals)
             </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/013_owner_scoped_collection_slugs.sql
+              </code>{" "}
+              (owner-scoped public URLs)
+            </li>
+            <li>
+              <code className="rounded bg-primary/10 px-2 py-0.5 text-primary">
+                supabase/migrations/014_security_hardening.sql
+              </code>{" "}
+              (production security + performance — required)
+            </li>
           </ul>
         </li>
 
         <li className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
           <h2 className="font-display mb-3 text-xl text-on-surface">
-            2b. Supabase Dashboard — auth URLs
+            2b. Supabase Dashboard — auth &amp; security
           </h2>
           <ul className="mb-4 list-inside list-disc space-y-2 text-sm text-on-surface-variant">
             <li>
-              Authentication → Providers → Email: enable email sign-in. For dev,
-              disable &quot;Confirm email&quot; so signup works instantly.
+              Authentication → Providers → Email: enable email sign-in. For production,
+              enable &quot;Confirm email&quot; so users must verify before access.
+            </li>
+            <li>
+              Authentication → Providers → Google: add OAuth Client ID and Secret from
+              Google Cloud Console. Add redirect URI from Supabase Auth settings.
+            </li>
+            <li>
+              Authentication → URL Configuration: set Site URL to your{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">NEXT_PUBLIC_APP_URL</code>.
+              Add redirect URLs for <code className="rounded bg-bg-elevated px-2 py-0.5">/auth/callback</code>,{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">/reset-password</code>, and{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">/verify-email</code>.
+            </li>
+            <li>
+              Enable leaked password protection (HaveIBeenPwned) under Auth settings.
+            </li>
+            <li>
+              Configure custom SMTP (Resend/SendGrid) for branded verification and reset emails.
             </li>
             <li>
               Storage: bucket{" "}
               <code className="rounded bg-bg-elevated px-2 py-0.5">velvet-uploads</code>{" "}
               is created by migration 003.
+            </li>
+            <li>
+              Add <code className="rounded bg-bg-elevated px-2 py-0.5">SUPABASE_SERVICE_ROLE_KEY</code> to
+              server env for account deletion (never expose to the browser).
             </li>
           </ul>
           <SetupUrlBlock initialBaseUrl={appBaseUrl} />

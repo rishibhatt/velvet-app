@@ -2,7 +2,10 @@
 
 import { Users } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
-import { getBoardCollaboratorProfiles, hasMultipleCollaborators } from "@/lib/collaborators";
+import {
+  getBoardCollaboratorProfiles,
+  hasMultipleCollaborators,
+} from "@/lib/collaborators";
 import type { Board } from "@/types/board.types";
 import { cn } from "@/lib/utils";
 

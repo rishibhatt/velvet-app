@@ -69,3 +69,10 @@ export const BOARD_SELECT = `
     profile:profiles(id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at)
   )
 `;
+
+/** Lighter select for list views (explore, home cards). */
+export const BOARD_LIST_SELECT = `
+  *,
+  items(count),
+  board_likes(count)
+`;

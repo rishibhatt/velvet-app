@@ -4,15 +4,38 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : "*.supabase.co";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://*.supabase.co";
+
+const securityHeaders = [
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://app.posthog.com",
+      "style-src 'self' 'unsafe-inline'",
+      `img-src 'self' data: blob: https: ${supabaseUrl}`,
+      "font-src 'self' data:",
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://app.posthog.com https://www.clarity.ms`,
+      "frame-src 'self' https://accounts.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
+  },
+];
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
-  /**
-   * Next.js 16 blocks cross-origin dev requests by default.
-   * Without this, ngrok / LAN URLs can load the page but auth & RSC fail.
-   * @see https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
-   */
   allowedDevOrigins: [
     "*.ngrok-free.app",
     "*.ngrok-free.dev",
@@ -27,7 +50,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "i.ytimg.com" },
-      // Common link-preview / save sources (VelvetImage uses native img for others)
       { protocol: "https", hostname: "*.pinimg.com" },
       { protocol: "https", hostname: "**.pinimg.com" },
       { protocol: "https", hostname: "*.pinterest.com" },
@@ -39,6 +61,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.media-amazon.com" },
       { protocol: "https", hostname: "www.google.com" },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

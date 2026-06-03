@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { velvetToast } from "@/lib/toast";
@@ -17,35 +17,40 @@ import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
 
 export function LoginForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    if (searchParams.get("error") === "auth") {
+      velvetToast.error(
+        "Sign in failed",
+        "Your link may have expired. Try signing in again or request a new link.",
+      );
+    }
+  }, [searchParams]);
 
   const onSubmit = async (data: LoginInput) => {
     if (!isSupabaseConfigured()) {
       velvetToast.error("Setup required", "Add Supabase keys in .env.local — see /setup");
       return;
     }
-    setLoading(true);
     try {
       await authService.signIn(data.email, data.password);
       track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "password" });
       velvetToast.success("Welcome back!", "Your velvet world awaits.");
       router.refresh();
-      // Full navigation so middleware receives fresh auth cookies (needed for ngrok)
       window.location.assign(ROUTES.home);
-      return;
     } catch (err) {
       trackError(err, { area: "login", method: "password" });
-      velvetToast.error("Sign in failed", getErrorMessage(err, "auth"));
-    } finally {
-      setLoading(false);
+      const message = getErrorMessage(err, "auth");
+      velvetToast.error("Sign in failed", message);
     }
   };
 
@@ -101,7 +106,7 @@ export function LoginForm() {
         </Link>
       </div>
 
-      <Button type="submit" variant="gradient" size="lg" loading={loading} className="w-full">
+      <Button type="submit" variant="gradient" size="lg" loading={isSubmitting} className="w-full">
         Sign In
       </Button>
 
@@ -136,6 +141,12 @@ export function LoginForm() {
         New to Velvet?{" "}
         <Link href={ROUTES.signup} className="font-medium text-primary hover:underline">
           Create an account
+        </Link>
+      </p>
+      <p className="text-center text-sm text-on-surface-variant">
+        Didn&apos;t get a verification email?{" "}
+        <Link href={ROUTES.verifyEmail} className="font-medium text-primary hover:underline">
+          Resend it
         </Link>
       </p>
     </form>

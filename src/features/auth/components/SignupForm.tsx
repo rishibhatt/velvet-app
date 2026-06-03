@@ -10,6 +10,7 @@ import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/atoms/Button";
 import { PasswordInput } from "@/components/atoms/PasswordInput";
+import { PasswordStrengthIndicator } from "@/components/atoms/PasswordStrengthIndicator";
 import { MOODS } from "@/constants/moods";
 import { authService } from "@/services/auth/auth.service";
 import { signupSchema, type SignupInput } from "@/schemas/auth.schema";
@@ -21,7 +22,6 @@ import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
 export function SignupForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [selectedMood, setSelectedMood] =
     useState<SignupInput["mood"]>("wedding");
 
@@ -29,31 +29,46 @@ export function SignupForm() {
     register,
     handleSubmit,
     trigger,
-    formState: { errors },
+    watch,
+    formState: { errors, isSubmitting },
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: { mood: "wedding" },
   });
+
+  const password = watch("password", "");
 
   const onSubmit = async (data: SignupInput) => {
     if (!isSupabaseConfigured()) {
       velvetToast.error("Setup required", "Add Supabase keys — see /setup");
       return;
     }
-    setLoading(true);
     track(ANALYTICS_EVENTS.SIGNUP_STARTED);
     try {
-      await authService.signUp(data.email, data.password, data.fullName);
+      const result = await authService.signUp(
+        data.email,
+        data.password,
+        data.fullName,
+        selectedMood,
+      );
       track(ANALYTICS_EVENTS.SIGNUP_COMPLETED);
-      velvetToast.success("Welcome to Velvet!", "Let's create your first collection.");
+
+      if (result.session) {
+        velvetToast.success("Welcome to Velvet!", "Let's create your first collection.");
+        router.refresh();
+        window.location.assign(ROUTES.onboarding);
+        return;
+      }
+
+      velvetToast.success(
+        "Almost there!",
+        "Check your email to verify your account before continuing.",
+      );
       router.refresh();
-      window.location.assign("/onboarding");
-      return;
+      window.location.assign(ROUTES.verifyEmail);
     } catch (err) {
       trackError(err, { area: "signup" });
       velvetToast.error("Sign up failed", getErrorMessage(err, "auth"));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -122,6 +137,7 @@ export function SignupForm() {
                 {...register("password")}
                 placeholder="••••••••"
               />
+              <PasswordStrengthIndicator password={password} className="mt-2" />
               {errors.password && (
                 <p className="mt-1 text-sm text-error">{errors.password.message}</p>
               )}
@@ -172,13 +188,40 @@ export function SignupForm() {
               >
                 Back
               </Button>
-              <Button type="submit" size="lg" loading={loading} className="flex-1">
+              <Button type="submit" size="lg" loading={isSubmitting} className="flex-1">
                 Create Account
               </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-outline-variant/30" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-background px-4 text-on-surface-variant">or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="secondary"
+        size="lg"
+        className="w-full"
+        onClick={() =>
+          authService
+            .signInWithGoogle()
+            .then(() => track(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { method: "google" }))
+            .catch((err) => {
+              trackError(err, { area: "signup", method: "google" });
+              velvetToast.fromError(err, "auth");
+            })
+        }
+      >
+        Continue with Google
+      </Button>
 
       <p className="text-center text-sm text-on-surface-variant">
         Already have an account?{" "}

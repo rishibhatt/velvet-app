@@ -1,4 +1,4 @@
-import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
+import { BOARD_LIST_SELECT, mapBoard } from "@/lib/board-mapper";
 import {
   fetchBoardPreviewImages,
   resolveBoardPreviewImages,
@@ -24,7 +24,7 @@ export interface DiscoverFilters {
 }
 
 const PUBLIC_BOARD_SELECT = `
-  ${BOARD_SELECT},
+  ${BOARD_LIST_SELECT},
   owner:profiles!owner_id(id, username, full_name, avatar_url)
 `;
 
@@ -64,7 +64,6 @@ function sortBoards(boards: PublicBoard[], sort: PublicBoardSort): PublicBoard[]
       return (b.like_count ?? 0) - (a.like_count ?? 0);
     });
   }
-  // trending = most likes
   return copy.sort((a, b) => {
     const likesA = a.like_count ?? 0;
     const likesB = b.like_count ?? 0;
@@ -92,6 +91,8 @@ export const discoverService = {
     } = filters;
 
     const supabase = createClient();
+    const fetchLimit = sort === "new" ? limit : Math.min(limit * 3, 150);
+
     let request = supabase
       .from("boards")
       .select(PUBLIC_BOARD_SELECT)
@@ -106,9 +107,21 @@ export const discoverService = {
       request = request.neq("owner_id", excludeOwnerId);
     }
 
-    const { data, error } = await request.order("created_at", {
-      ascending: false,
-    });
+    const normalizedQuery = query ? sanitizeIlike(query).toLowerCase() : "";
+    if (normalizedQuery) {
+      const pattern = `%${normalizedQuery}%`;
+      request = request.or(
+        `title.ilike.${pattern},description.ilike.${pattern},mood.ilike.${pattern}`,
+      );
+    }
+
+    if (sort === "new") {
+      request = request.order("created_at", { ascending: false }).limit(fetchLimit);
+    } else {
+      request = request.order("updated_at", { ascending: false }).limit(fetchLimit);
+    }
+
+    const { data, error } = await request;
 
     if (error) throw new Error(parseSupabaseError(error));
 
@@ -125,18 +138,17 @@ export const discoverService = {
       };
     });
 
-    const normalizedQuery = query ? sanitizeIlike(query).toLowerCase() : "";
     if (normalizedQuery) {
       mapped = mapped.filter((b) => {
-        const inTitle = b.title.toLowerCase().includes(normalizedQuery);
-        const inDesc = (b.description ?? "")
-          .toLowerCase()
-          .includes(normalizedQuery);
-        const inMood = (b.mood ?? "").toLowerCase().includes(normalizedQuery);
         const inOwner = (b.owner?.username ?? "")
           .toLowerCase()
           .includes(normalizedQuery);
-        return inTitle || inDesc || inMood || inOwner;
+        return (
+          b.title.toLowerCase().includes(normalizedQuery) ||
+          (b.description ?? "").toLowerCase().includes(normalizedQuery) ||
+          (b.mood ?? "").toLowerCase().includes(normalizedQuery) ||
+          inOwner
+        );
       });
     }
 

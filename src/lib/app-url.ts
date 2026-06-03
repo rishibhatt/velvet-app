@@ -56,6 +56,16 @@ export function getLoginUrl(baseUrl?: string): string {
   return base ? `${trimSlash(base)}${ROUTES.login}` : ROUTES.login;
 }
 
+export function getResetPasswordUrl(baseUrl?: string): string {
+  const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
+  return base ? `${trimSlash(base)}${ROUTES.resetPassword}` : ROUTES.resetPassword;
+}
+
+export function getVerifyEmailUrl(baseUrl?: string): string {
+  const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
+  return base ? `${trimSlash(base)}${ROUTES.verifyEmail}` : ROUTES.verifyEmail;
+}
+
 export function getPublicShareUrl(
   username: string,
   slug: string,
@@ -83,6 +93,8 @@ export function getSupabaseRedirectUrlHints(baseUrl: string): string[] {
     urls.add(`${root}${ROUTES.authCallback}`);
     urls.add(`${root}${ROUTES.onboarding}`);
     urls.add(`${root}${ROUTES.login}`);
+    urls.add(`${root}${ROUTES.resetPassword}`);
+    urls.add(`${root}${ROUTES.verifyEmail}`);
     urls.add(`${root}/**`);
   }
   return [...urls];

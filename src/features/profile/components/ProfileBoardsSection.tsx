@@ -124,9 +124,13 @@ export function ProfileBoardsSection({
                 <BoardCard
                   key={board.id}
                   board={board}
-                  showLike={tab === "liked"}
+                  variant={tab === "yours" ? "owned" : "liked"}
                   emptyVariant={tab === "yours" ? "own" : "other"}
-                  owner={tab === "liked" ? undefined : owner}
+                  owner={
+                    tab === "liked"
+                      ? undefined
+                      : owner
+                  }
                   publicHref={
                     tab === "liked" && board.slug && board.is_public
                       ? ROUTES.legacyPublicCollection(board.slug)

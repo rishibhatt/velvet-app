@@ -11,6 +11,8 @@ interface PageProps {
   params: Promise<{ username: string; "collection-slug": string }>;
 }
 
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username, "collection-slug": slug } = await params;
   const data = await getPublicCollectionByOwnerSlug(username, slug);

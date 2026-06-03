@@ -8,23 +8,38 @@ type VelvetSupabase = SupabaseClient<Database>;
 
 const PREVIEW_LIMIT = 4;
 
-/** Latest item image URLs per board (non-deleted items only). */
-export async function fetchBoardPreviewImages(
+async function fetchPreviewsViaRpc(
+  client: VelvetSupabase,
   boardIds: string[],
-  supabase?: VelvetSupabase,
-): Promise<Record<string, string[]>> {
-  if (boardIds.length === 0) return {};
+): Promise<Record<string, string[]> | null> {
+  const { data, error } = await client.rpc("get_board_preview_images", {
+    p_board_ids: boardIds,
+  });
 
-  const client =
-    supabase ?? (isSupabaseConfigured() ? createClient() : null);
-  if (!client) return {};
+  if (error || !data) return null;
+
+  const map: Record<string, string[]> = {};
+  for (const row of data) {
+    if (!map[row.board_id]) map[row.board_id] = [];
+    if (map[row.board_id].length < PREVIEW_LIMIT) {
+      map[row.board_id].push(row.image_url);
+    }
+  }
+  return map;
+}
+
+async function fetchPreviewsFallback(
+  client: VelvetSupabase,
+  boardIds: string[],
+): Promise<Record<string, string[]>> {
   const { data, error } = await client
     .from("items")
     .select("board_id, image_url, created_at")
     .in("board_id", boardIds)
     .is("deleted_at", null)
     .not("image_url", "is", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(boardIds.length * PREVIEW_LIMIT);
 
   if (error || !data) return {};
 
@@ -39,6 +54,23 @@ export async function fetchBoardPreviewImages(
     }
   }
   return map;
+}
+
+/** Latest item image URLs per board (non-deleted items only). */
+export async function fetchBoardPreviewImages(
+  boardIds: string[],
+  supabase?: VelvetSupabase,
+): Promise<Record<string, string[]>> {
+  if (boardIds.length === 0) return {};
+
+  const client =
+    supabase ?? (isSupabaseConfigured() ? createClient() : null);
+  if (!client) return {};
+
+  const rpcResult = await fetchPreviewsViaRpc(client, boardIds);
+  if (rpcResult) return rpcResult;
+
+  return fetchPreviewsFallback(client, boardIds);
 }
 
 /** Poster grid uses live saves only — not stale board.cover_url. */
