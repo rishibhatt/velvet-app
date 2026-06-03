@@ -16,6 +16,7 @@ import { signupSchema, type SignupInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/utils";
+import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
 
 export function SignupForm() {
   const router = useRouter();
@@ -40,13 +41,16 @@ export function SignupForm() {
       return;
     }
     setLoading(true);
+    track(ANALYTICS_EVENTS.SIGNUP_STARTED);
     try {
       await authService.signUp(data.email, data.password, data.fullName);
+      track(ANALYTICS_EVENTS.SIGNUP_COMPLETED);
       velvetToast.success("Welcome to Velvet!", "Let's create your first collection.");
       router.refresh();
       window.location.assign("/onboarding");
       return;
     } catch (err) {
+      trackError(err, { area: "signup" });
       velvetToast.error("Sign up failed", getErrorMessage(err, "auth"));
     } finally {
       setLoading(false);

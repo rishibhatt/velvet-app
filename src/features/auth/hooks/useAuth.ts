@@ -6,6 +6,7 @@ import { createClient } from "@/services/supabase/client";
 import { authService } from "@/services/auth/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { isSupabaseConfigured } from "@/lib/utils";
+import { ANALYTICS_EVENTS, resetAnalytics, track } from "@/lib/analytics";
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -48,7 +49,9 @@ export function useAuth() {
   }, [setUser, setSession, clearAuth]);
 
   const signOut = useCallback(async () => {
+    track(ANALYTICS_EVENTS.LOGOUT);
     await authService.signOut();
+    resetAnalytics();
     clearAuth();
     queryClient.clear();
   }, [clearAuth, queryClient]);

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { PublicCollectionView } from "@/features/collections/components/PublicCollectionView";
+import { notFound, redirect } from "next/navigation";
 import { getPublicCollectionBySlug } from "@/lib/public-collection";
-import { publicCollectionMetadata } from "@/lib/page-metadata";
+import { noIndexMetadata } from "@/lib/seo/metadata";
+import { ROUTES } from "@/constants/routes";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -13,24 +13,13 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPublicCollectionBySlug(slug);
-  if (!data) return { title: "Collection not found" };
-  return publicCollectionMetadata(
-    data.board,
-    data.items,
-    data.owner?.full_name ?? data.owner?.username,
-  );
+  return noIndexMetadata(data?.board.title ?? "Collection not found");
 }
 
 export default async function PublicCollectionPage({ params }: PageProps) {
   const { slug } = await params;
   const data = await getPublicCollectionBySlug(slug);
   if (!data) notFound();
-
-  return (
-    <PublicCollectionView
-      board={data.board}
-      items={data.items}
-      owner={data.owner}
-    />
-  );
+  if (!data.owner || !data.board.slug) notFound();
+  redirect(ROUTES.publicCollection(data.owner.username, data.board.slug));
 }

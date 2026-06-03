@@ -56,9 +56,15 @@ export function getLoginUrl(baseUrl?: string): string {
   return base ? `${trimSlash(base)}${ROUTES.login}` : ROUTES.login;
 }
 
-export function getPublicShareUrl(slug: string, baseUrl?: string): string {
+export function getPublicShareUrl(
+  username: string,
+  slug: string,
+  baseUrl?: string,
+): string {
   const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
-  const path = ROUTES.publicCollection(slug);
+  const path = username
+    ? ROUTES.publicCollection(username, slug)
+    : ROUTES.legacyPublicCollection(slug);
   return base ? `${trimSlash(base)}${path}` : path;
 }
 

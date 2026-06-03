@@ -7,31 +7,40 @@ import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { ShareButton } from "@/components/molecules/ShareButton";
-import { getMoodEmoji } from "@/constants/moods";
-import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
-import { VelvetLogo } from "@/components/atoms/VelvetLogo";
-import { Navbar } from "@/components/organisms/Navbar";
+import { getMoodEmoji } from "@/constants/moods";
+import { getMoodDisplayLabel } from "@/constants/moods";
+import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
+import { VelvetLogo } from "@/components/atoms/VelvetLogo";
+import { Navbar } from "@/components/organisms/Navbar";
+import { CollectionLinks } from "@/components/seo/CollectionLinks";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { likesService } from "@/services/likes/likes.service";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
 import { previewImagesFromItems } from "@/lib/collection-previews";
-import type { Board, Item } from "@/types/board.types";
+import type { Board, Item, Tag } from "@/types/board.types";
 
 interface PublicCollectionViewProps {
   board: Board;
   items: Item[];
-  owner: {
-    username: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-}
+  owner: {
+    username: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+  tags?: Tag[];
+  moreFromCreator?: Board[];
+  relatedCollections?: Board[];
+}
 
 export function PublicCollectionView({
   board: initialBoard,
-  items,
-  owner,
-}: PublicCollectionViewProps) {
+  items,
+  owner,
+  tags = [],
+  moreFromCreator = [],
+  relatedCollections = [],
+}: PublicCollectionViewProps) {
   const { isAuthenticated, isAuthReady, user } = useAuth();
 
   const { data: isLiked } = useQuery({
@@ -49,8 +58,11 @@ export function PublicCollectionView({
       : initialBoard;
 
   const heroImages = previewImagesFromItems(items);
-  const canLike =
-    isAuthReady && isAuthenticated && user != null && user.id !== board.owner_id;
+  const canLike =
+    isAuthReady && isAuthenticated && user != null && user.id !== board.owner_id;
+  const moodLabel = getMoodDisplayLabel(board.mood, board.mood_label);
+  const publicUrl =
+    owner && board.slug ? ROUTES.publicCollection(owner.username, board.slug) : undefined;
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
@@ -65,17 +77,19 @@ export function PublicCollectionView({
               className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
             />
             <div className="flex items-center gap-2">
-              {board.slug && (
-                <ShareButton
-                  variant="icon"
-                  url={getPublicShareUrl(board.slug)}
+              {publicUrl && owner && board.slug && (
+                <ShareButton
+                  variant="icon"
+                  url={getPublicShareUrl(owner.username, board.slug)}
                   title={board.title}
                   text={board.description ?? undefined}
                   imageUrls={heroImages}
                   eyebrow="Velvet collection"
                   preview
                   label="Share collection"
-                />
+                  analyticsEvent={ANALYTICS_EVENTS.COLLECTION_SHARED}
+                  analyticsProperties={{ collection_id: board.id }}
+                />
               )}
               <BoardLikeButton
                 boardId={board.id}
@@ -92,11 +106,11 @@ export function PublicCollectionView({
         emptyVariant="other"
         title={board.title}
         description={board.description}
-        badge={
-          <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
-            {getMoodEmoji(board.mood)} Public collection
-          </span>
-        }
+        badge={
+          <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
+            {getMoodEmoji(board.mood)} {moodLabel}
+          </span>
+        }
         meta={
           owner ? (
             <p className="text-sm text-on-surface">
@@ -112,8 +126,38 @@ export function PublicCollectionView({
         }
       />
 
-      <main className="page-container py-stack-lg pb-28 md:pb-12">
-        {items.length > 0 ? (
+      <main className="page-container py-stack-lg pb-28 md:pb-12">
+        <section className="mb-8 space-y-4 text-sm text-on-surface-variant">
+          <div className="flex flex-wrap gap-2">
+            {board.mood && (
+              <Link className="rounded-full bg-surface-container px-3 py-1 font-medium text-primary" href={ROUTES.category(board.mood)}>
+                {moodLabel}
+              </Link>
+            )}
+            {tags.map((tag) => (
+              <Link key={tag.id} className="rounded-full bg-surface-container px-3 py-1 font-medium text-primary" href={ROUTES.tag(tag.name.toLowerCase().replace(/\s+/g, "-"))}>
+                <span
+                  onClick={() =>
+                    track(ANALYTICS_EVENTS.EXPLORE_TAG_CLICKED, {
+                      tag: tag.name,
+                      collection_id: board.id,
+                    })
+                  }
+                >
+                  #{tag.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <dl className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-4">
+            <div><dt className="font-semibold text-on-surface">Creator</dt><dd>{owner?.full_name ?? owner?.username ?? "Creator"}</dd></div>
+            <div><dt className="font-semibold text-on-surface">Created</dt><dd>{new Date(board.created_at).toLocaleDateString()}</dd></div>
+            <div><dt className="font-semibold text-on-surface">Updated</dt><dd>{new Date(board.updated_at).toLocaleDateString()}</dd></div>
+            <div><dt className="font-semibold text-on-surface">Items</dt><dd>{board.item_count ?? items.length}</dd></div>
+          </dl>
+        </section>
+
+        {items.length > 0 ? (
           <PublicItemGrid
             items={items}
             curatorLabel={
@@ -124,7 +168,14 @@ export function PublicCollectionView({
           <p className="py-12 text-center text-on-surface-variant">
             This collection is waiting for its first save.
           </p>
-        )}
+        )}
+
+        {(moreFromCreator.length > 0 || relatedCollections.length > 0) && (
+          <section className="mt-12 grid gap-8 md:grid-cols-2">
+            <CollectionLinks title="More from creator" boards={moreFromCreator} owner={owner} />
+            <CollectionLinks title="Related collections" boards={relatedCollections} />
+          </section>
+        )}
 
         {isAuthReady && !isAuthenticated && (
           <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl border border-primary/20 bg-primary-fixed/30 p-6 text-center sm:mt-16 sm:p-10">
@@ -154,6 +205,7 @@ export function PublicCollectionView({
         <p>Your velvet world.</p>
       </footer>
     </div>
-  );
-}
+  );
+}
+
 

@@ -13,14 +13,16 @@ type ProfileResult = Pick<
 
 interface ProfileSearchCardProps {
   profile: ProfileResult;
+  onClick?: () => void;
 }
 
-export function ProfileSearchCard({ profile }: ProfileSearchCardProps) {
+export function ProfileSearchCard({ profile, onClick }: ProfileSearchCardProps) {
   const displayName = profile.full_name ?? profile.username;
 
   return (
     <Link
       href={ROUTES.creator(profile.username)}
+      onClick={onClick}
       className="flex items-center gap-4 rounded-2xl border border-outline-variant/20 bg-bg-elevated p-4 transition-all active:scale-[0.99] hover:border-primary/30 hover:shadow-[var(--shadow-card)]"
     >
       <Avatar

@@ -5,6 +5,7 @@ import { likesService } from "@/services/likes/likes.service";
 import { discoverKeys } from "@/queries/discover/keys";
 import { boardKeys } from "@/queries/board/keys";
 import { velvetToast } from "@/lib/toast";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import type { PublicBoard } from "@/services/discover/discover.service";
 import type { Board } from "@/types/board.types";
 
@@ -84,6 +85,12 @@ export function useToggleBoardLike() {
       queryClient.setQueryData<Board>(boardKeys.detail(boardId), (old) =>
         old ? patch(old) : old,
       );
+      if (result.liked) {
+        track(ANALYTICS_EVENTS.COLLECTION_LIKED, {
+          collection_id: boardId,
+          like_count: result.likeCount,
+        });
+      }
     },
   });
 }

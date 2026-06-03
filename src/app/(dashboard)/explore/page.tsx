@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ExploreHero } from "@/components/organisms/ExploreHero";
 import { ExploreFiltersBar } from "@/components/organisms/ExploreFiltersBar";
@@ -19,6 +19,7 @@ import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 import { ROUTES } from "@/constants/routes";
 import { fadeUp, stagger } from "@/lib/animations";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 export default function ExplorePage() {
   const { user } = useAuth();
@@ -39,6 +40,13 @@ export default function ExplorePage() {
     usePublicBoards(filters);
 
   const { visible, sentinelRef, hasMore } = useInfiniteSlice(boards, 12);
+
+  useEffect(() => {
+    track(ANALYTICS_EVENTS.EXPLORE_VIEWED, {
+      category: mood,
+      result_count: boards.length,
+    });
+  }, [boards.length, mood]);
 
   return (
     <main className="page-container py-stack-lg pb-28 md:py-12 md:pb-12">
@@ -89,8 +97,16 @@ export default function ExplorePage() {
                   <ExploreCollectionCard
                     board={board}
                     owner={board.owner}
+                    onClick={() =>
+                      track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
+                        collection_id: board.id,
+                        category: board.mood,
+                      })
+                    }
                     publicHref={
-                      board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                      board.slug && board.owner?.username
+                        ? ROUTES.publicCollection(board.owner.username, board.slug)
+                        : undefined
                     }
                   />
                 </motion.div>
@@ -115,8 +131,16 @@ export default function ExplorePage() {
                 <ExploreBoardListRow
                   board={board}
                   owner={board.owner}
+                  onClick={() =>
+                    track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
+                      collection_id: board.id,
+                      category: board.mood,
+                    })
+                  }
                   publicHref={
-                    board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                    board.slug && board.owner?.username
+                      ? ROUTES.publicCollection(board.owner.username, board.slug)
+                      : undefined
                   }
                 />
               </motion.li>

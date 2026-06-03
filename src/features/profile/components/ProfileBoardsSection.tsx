@@ -129,7 +129,7 @@ export function ProfileBoardsSection({
                   owner={tab === "liked" ? undefined : owner}
                   publicHref={
                     tab === "liked" && board.slug && board.is_public
-                      ? ROUTES.publicCollection(board.slug)
+                      ? ROUTES.legacyPublicCollection(board.slug)
                       : undefined
                   }
                 />

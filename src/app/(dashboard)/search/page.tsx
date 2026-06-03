@@ -18,6 +18,7 @@ import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGri
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 type SearchTab = "mine" | "public" | "people";
 
@@ -99,6 +100,21 @@ function SearchContent() {
   const { visible: visiblePublic, sentinelRef: publicSentinel } =
     useInfiniteSlice(publicBoards, 12);
 
+  useEffect(() => {
+    if (!normalized) return;
+    const count =
+      tab === "mine"
+        ? filteredMine.length
+        : tab === "public"
+          ? publicBoards.length
+          : profiles.length;
+    track(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+      query: normalized,
+      results_count: count,
+      tab,
+    });
+  }, [filteredMine.length, normalized, profiles.length, publicBoards.length, tab]);
+
   const placeholders: Record<SearchTab, string> = {
     mine: "Search your collections…",
     public: "Search public collections…",
@@ -151,6 +167,13 @@ function SearchContent() {
                   <Link
                     key={board.id}
                     href={ROUTES.board(board.id)}
+                    onClick={() =>
+                      track(ANALYTICS_EVENTS.SEARCH_RESULT_CLICKED, {
+                        query: normalized,
+                        result_type: "own_collection",
+                        collection_id: board.id,
+                      })
+                    }
                     className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-bg-elevated p-3 transition-all active:scale-[0.99] hover:border-primary/30 sm:gap-4 sm:p-4"
                   >
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl sm:h-[72px] sm:w-[72px]">
@@ -224,8 +247,18 @@ function SearchContent() {
                     owner={board.owner}
                     publicHref={
                       board.slug
-                        ? ROUTES.publicCollection(board.slug)
+                        ? board.owner?.username
+                          ? ROUTES.publicCollection(board.owner.username, board.slug)
+                          : ROUTES.legacyPublicCollection(board.slug)
                         : undefined
+                    }
+                    className="cursor-pointer"
+                    onClick={() =>
+                      track(ANALYTICS_EVENTS.SEARCH_RESULT_CLICKED, {
+                        query: normalized,
+                        result_type: "public_collection",
+                        collection_id: board.id,
+                      })
                     }
                   />
                 ))}
@@ -264,7 +297,17 @@ function SearchContent() {
           ) : profiles.length > 0 ? (
             <div className="space-y-3">
               {profiles.map((profile) => (
-                <ProfileSearchCard key={profile.id} profile={profile} />
+                <ProfileSearchCard
+                  key={profile.id}
+                  profile={profile}
+                  onClick={() =>
+                    track(ANALYTICS_EVENTS.SEARCH_RESULT_CLICKED, {
+                      query: normalized,
+                      result_type: "profile",
+                      profile_id: profile.id,
+                    })
+                  }
+                />
               ))}
             </div>
           ) : (

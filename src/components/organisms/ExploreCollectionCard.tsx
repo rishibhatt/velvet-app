@@ -22,6 +22,7 @@ interface ExploreCollectionCardProps {
   publicHref?: string;
   owner?: Pick<Profile, "username" | "full_name" | "avatar_url">;
   className?: string;
+  onClick?: () => void;
 }
 
 export function ExploreCollectionCard({
@@ -29,6 +30,7 @@ export function ExploreCollectionCard({
   publicHref,
   owner,
   className,
+  onClick,
 }: ExploreCollectionCardProps) {
   const boardHref = publicHref ?? ROUTES.board(board.id);
   const moodChip = getMoodDisplayLabel(board.mood, board.mood_label);
@@ -44,7 +46,7 @@ export function ExploreCollectionCard({
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className={cn("group flex flex-col", COLLECTION_CARD_SHELL, className)}
     >
-      <Link href={boardHref} className="relative block">
+      <Link href={boardHref} className="relative block" onClick={onClick}>
         <div className={COLLECTION_CARD_MEDIA}>
           <CollectionPosterGrid
             images={previewImages}

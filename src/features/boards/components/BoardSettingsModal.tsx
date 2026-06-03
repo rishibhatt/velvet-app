@@ -82,7 +82,7 @@ export function BoardSettingsModal({
       velvetToast.info("Make it public", "Toggle visibility to Public to get a share link.");
       return;
     }
-    const url = getPublicShareUrl(board.slug);
+    const url = getPublicShareUrl("", board.slug);
     const imageUrl =
       board.preview_images?.[0] ?? board.cover_url ?? undefined;
     openShareSheet({
@@ -243,7 +243,7 @@ export function BoardSettingsModal({
               </span>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <p className="min-w-0 flex-1 break-all rounded-xl border border-outline-variant/30 bg-surface-container px-3 py-2.5 font-mono text-[11px] leading-relaxed text-on-surface sm:text-xs">
-                  {getPublicShareUrl(board.slug)}
+                  {getPublicShareUrl("", board.slug)}
                 </p>
                 <Button
                   type="button"
@@ -253,7 +253,7 @@ export function BoardSettingsModal({
                   className="shrink-0"
                   onClick={() =>
                     void shareOrCopy({
-                      url: getPublicShareUrl(board.slug!),
+                      url: getPublicShareUrl("", board.slug!),
                       title: board.title,
                       text: board.description ?? undefined,
                     })

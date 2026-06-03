@@ -100,7 +100,9 @@ export default function HomePage() {
                     owner={board.owner}
                     publicHref={
                       board.slug
-                        ? ROUTES.publicCollection(board.slug)
+                        ? board.owner?.username
+                          ? ROUTES.publicCollection(board.owner.username, board.slug)
+                          : ROUTES.legacyPublicCollection(board.slug)
                         : undefined
                     }
                   />

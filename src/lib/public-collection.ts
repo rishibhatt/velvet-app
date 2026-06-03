@@ -1,7 +1,8 @@
 import { attachBoardPreviews } from "@/lib/collection-previews";
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
 import { createClient } from "@/services/supabase/server";
-import type { Board, Item } from "@/types/board.types";
+import { getPublicBoardsByMood, getPublicBoardsByOwner } from "@/lib/public-discovery";
+import type { Board, Item, Profile, Tag } from "@/types/board.types";
 
 const ITEM_SELECT = `
   *,
@@ -57,11 +58,71 @@ export async function getPublicCollectionBySlug(slug: string): Promise<{
   };
 }
 
+export async function getPublicCollectionByOwnerSlug(
+  username: string,
+  slug: string,
+): Promise<{
+  board: Board;
+  items: Item[];
+  owner: Pick<Profile, "username" | "full_name" | "avatar_url"> | null;
+  tags: Tag[];
+  moreFromCreator: Board[];
+  relatedCollections: Board[];
+} | null> {
+  const supabase = await createClient();
+  const { data: owner } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url")
+    .eq("username", username)
+    .single();
+
+  if (!owner) return null;
+
+  const { data: boardRow, error } = await supabase
+    .from("boards")
+    .select(BOARD_SELECT)
+    .eq("owner_id", owner.id)
+    .eq("slug", slug)
+    .eq("is_public", true)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !boardRow) return null;
+
+  const board = mapBoard(boardRow as never);
+  const { data: itemsData } = await supabase
+    .from("items")
+    .select(ITEM_SELECT)
+    .eq("board_id", board.id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const { data: tagsData } = await supabase
+    .from("tags")
+    .select("*")
+    .eq("board_id", board.id)
+    .order("name", { ascending: true });
+
+  const more = await getPublicBoardsByOwner(owner.id, board.id, 6);
+  const related = await getPublicBoardsByMood(board.mood, board.id, 8);
+
+  return {
+    board,
+    items: (itemsData ?? []).map((row) =>
+      mapItem(row as Record<string, unknown>),
+    ),
+    owner,
+    tags: tagsData ?? [],
+    moreFromCreator: more,
+    relatedCollections: related,
+  };
+}
+
 export async function getPublicProfile(username: string) {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, avatar_url, banner_url, bio, website")
+    .select("id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at")
     .eq("username", username)
     .single();
 
@@ -83,3 +144,5 @@ export async function getPublicProfile(username: string) {
     boards: boardsWithPreviews,
   };
 }
+
+export { getPublicBoardsByMood, getTagPage } from "@/lib/public-discovery";

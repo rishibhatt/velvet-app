@@ -7,7 +7,6 @@ const protectedRoutes = [
   "/profile",
   "/settings",
   "/search",
-  "/explore",
   "/onboarding",
 ];
 const authRoutes = ["/login", "/signup", "/forgot-password"];

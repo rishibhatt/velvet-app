@@ -102,7 +102,7 @@ export function publicCollectionMetadata(
     ogImagesFromUrls(posterUrls, board.title) ??
     velvetBrandOgMetadata().openGraph?.images;
   const canonical = board.slug
-    ? absoluteRoute(ROUTES.publicCollection(board.slug))
+    ? absoluteRoute(ROUTES.legacyPublicCollection(board.slug))
     : undefined;
 
   return {

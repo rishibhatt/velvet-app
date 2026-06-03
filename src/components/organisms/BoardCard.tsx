@@ -27,6 +27,7 @@ interface BoardCardProps {
   showLike?: boolean;
   emptyVariant?: CollectionPosterEmptyVariant;
   className?: string;
+  onClick?: () => void;
 }
 
 export function BoardCard({
@@ -36,6 +37,7 @@ export function BoardCard({
   showLike = false,
   emptyVariant = "own",
   className,
+  onClick,
 }: BoardCardProps) {
   const showDiscoverFooter = Boolean(owner) && (showLike || Boolean(publicHref));
   const showCollab = hasMultipleCollaborators(board);
@@ -49,7 +51,7 @@ export function BoardCard({
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className={cn("group flex h-full flex-col", COLLECTION_CARD_SHELL, className)}
     >
-      <Link href={boardHref} className="relative block flex-1">
+      <Link href={boardHref} className="relative block flex-1" onClick={onClick}>
         <div className={COLLECTION_CARD_MEDIA}>
           <CollectionPosterGrid
             images={previewImages}

@@ -6,6 +6,8 @@ import { IconButton } from "@/components/atoms/IconButton";
 import { shareOrCopy } from "@/lib/share";
 import { useModalStore } from "@/store/modal.store";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
+import type { AnalyticsEventName, AnalyticsProperties } from "@/lib/analytics/events";
 
 interface ShareButtonProps {
   url: string;
@@ -19,6 +21,8 @@ interface ShareButtonProps {
   imageUrls?: string[];
   eyebrow?: string;
   preview?: boolean;
+  analyticsEvent?: AnalyticsEventName;
+  analyticsProperties?: AnalyticsProperties;
 }
 
 export function ShareButton({
@@ -33,10 +37,18 @@ export function ShareButton({
   imageUrls,
   eyebrow,
   preview = false,
+  analyticsEvent,
+  analyticsProperties,
 }: ShareButtonProps) {
   const openShareSheet = useModalStore((s) => s.openShareSheet);
 
   const handleShare = () => {
+    if (analyticsEvent) {
+      track(analyticsEvent, {
+        share_type: preview ? "share_sheet" : "native_or_copy",
+        ...analyticsProperties,
+      });
+    }
     if (preview) {
       openShareSheet({
         url,

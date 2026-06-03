@@ -13,6 +13,7 @@ import { authService } from "@/services/auth/auth.service";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
 import { isSupabaseConfigured } from "@/lib/utils";
+import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
 
 export function LoginForm() {
   const router = useRouter();
@@ -34,12 +35,14 @@ export function LoginForm() {
     setLoading(true);
     try {
       await authService.signIn(data.email, data.password);
+      track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "password" });
       velvetToast.success("Welcome back!", "Your velvet world awaits.");
       router.refresh();
       // Full navigation so middleware receives fresh auth cookies (needed for ngrok)
       window.location.assign(ROUTES.home);
       return;
     } catch (err) {
+      trackError(err, { area: "login", method: "password" });
       velvetToast.error("Sign in failed", getErrorMessage(err, "auth"));
     } finally {
       setLoading(false);
@@ -117,9 +120,13 @@ export function LoginForm() {
         size="lg"
         className="w-full"
         onClick={() =>
-          authService.signInWithGoogle().catch((err) =>
-            velvetToast.fromError(err, "auth"),
-          )
+          authService
+            .signInWithGoogle()
+            .then(() => track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "google" }))
+            .catch((err) => {
+              trackError(err, { area: "login", method: "google" });
+              velvetToast.fromError(err, "auth");
+            })
         }
       >
         Continue with Google

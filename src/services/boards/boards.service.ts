@@ -1,7 +1,7 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
 import { attachBoardPreviews } from "@/lib/collection-previews";
 import { likesService } from "@/services/likes/likes.service";
-import { slugifyTitle, uniqueSlug } from "@/lib/slug";
+import { incrementSlug, slugifyTitle } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
@@ -15,6 +15,37 @@ import type {
 import type { Database } from "@/types/database.types";
 
 type BoardUpdate = Database["public"]["Tables"]["boards"]["Update"];
+
+async function resolveOwnerScopedSlug(
+  supabase: ReturnType<typeof createClient>,
+  ownerId: string,
+  title: string,
+  excludeBoardId?: string,
+): Promise<string> {
+  const base = slugifyTitle(title);
+  const { data, error } = await supabase
+    .from("boards")
+    .select("id, slug")
+    .eq("owner_id", ownerId)
+    .is("deleted_at", null)
+    .like("slug", `${base}%`);
+
+  if (error) throw new Error(parseSupabaseError(error));
+
+  const existing = new Set(
+    (data ?? [])
+      .filter((row) => row.id !== excludeBoardId)
+      .map((row) => row.slug)
+      .filter((slug): slug is string => Boolean(slug)),
+  );
+
+  for (let index = 1; index < 1000; index += 1) {
+    const candidate = incrementSlug(base, index);
+    if (!existing.has(candidate)) return candidate;
+  }
+
+  throw new Error("Could not generate a unique collection URL.");
+}
 
 export const boardsService = {
   async getBoards(): Promise<Board[]> {
@@ -286,8 +317,7 @@ export const boardsService = {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("You must be signed in to create a board.");
 
-    const baseSlug = slugifyTitle(input.title);
-    const slug = uniqueSlug(baseSlug, crypto.randomUUID());
+    const slug = await resolveOwnerScopedSlug(supabase, user.id, input.title);
 
     const { data, error } = await supabase
       .from("boards")
@@ -331,8 +361,20 @@ export const boardsService = {
     const supabase = createClient();
     const patch: BoardUpdate = {};
     if (input.title !== undefined) {
+      const { data: boardOwner, error: ownerError } = await supabase
+        .from("boards")
+        .select("owner_id")
+        .eq("id", boardId)
+        .single();
+      if (ownerError) throw new Error(parseSupabaseError(ownerError));
+
       patch.title = input.title;
-      patch.slug = uniqueSlug(slugifyTitle(input.title), boardId);
+      patch.slug = await resolveOwnerScopedSlug(
+        supabase,
+        boardOwner.owner_id,
+        input.title,
+        boardId,
+      );
     }
     if (input.description !== undefined) patch.description = input.description;
     if (input.isPublic !== undefined) patch.is_public = input.isPublic;

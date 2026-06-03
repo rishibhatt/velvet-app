@@ -11,6 +11,7 @@ import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { getCreatorProfileUrl } from "@/lib/app-url";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import type { Board } from "@/types/board.types";
 
 interface CreatorProfile {
@@ -76,6 +77,8 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
               eyebrow="Velvet profile"
               preview
               label="Share profile"
+              analyticsEvent={ANALYTICS_EVENTS.PROFILE_SHARED}
+              analyticsProperties={{ username: profile.username }}
             />
           </div>
         </div>
@@ -131,7 +134,7 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
                   showLike
                   emptyVariant="other"
                   publicHref={
-                    board.slug ? ROUTES.publicCollection(board.slug) : undefined
+                    board.slug ? ROUTES.publicCollection(profile.username, board.slug) : undefined
                   }
                 />
               ))}

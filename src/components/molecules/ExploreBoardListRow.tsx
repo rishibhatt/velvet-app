@@ -15,12 +15,14 @@ interface ExploreBoardListRowProps {
   board: Board | PublicBoard;
   publicHref?: string;
   owner?: Pick<Profile, "username" | "full_name" | "avatar_url">;
+  onClick?: () => void;
 }
 
 export function ExploreBoardListRow({
   board,
   publicHref,
   owner,
+  onClick,
 }: ExploreBoardListRowProps) {
   const { user } = useAuth();
   const href = publicHref ?? ROUTES.board(board.id);
@@ -28,7 +30,7 @@ export function ExploreBoardListRow({
 
   return (
     <article className="flex gap-3 overflow-hidden rounded-2xl border border-outline-variant/20 bg-bg-elevated p-2 shadow-sm transition-shadow hover:shadow-[var(--shadow-card)] sm:gap-4 sm:p-3">
-      <Link href={href} className="relative block h-24 w-24 shrink-0 overflow-hidden rounded-xl sm:h-28 sm:w-32">
+      <Link href={href} onClick={onClick} className="relative block h-24 w-24 shrink-0 overflow-hidden rounded-xl sm:h-28 sm:w-32">
         {board.cover_url ? (
           <VelvetImage
             src={board.cover_url}
@@ -49,7 +51,7 @@ export function ExploreBoardListRow({
               {getMoodEmoji(board.mood)}{" "}
               {getMoodDisplayLabel(board.mood, board.mood_label).toLowerCase()}
             </span>
-            <Link href={href}>
+            <Link href={href} onClick={onClick}>
               <h3 className="font-display truncate text-lg text-on-surface">
                 {board.title}
               </h3>

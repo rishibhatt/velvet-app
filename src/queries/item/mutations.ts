@@ -7,6 +7,7 @@ import type { Board, Item, SaveItemInput } from "@/types/board.types";
 import { boardKeys, itemKeys } from "../board/keys";
 import { getErrorMessage } from "@/lib/errors";
 import { velvetToast } from "@/lib/toast";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 function patchBoardInList(
   boards: Board[] | undefined,
@@ -56,6 +57,21 @@ export function useSaveItem(boardId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+    },
+    onSuccess: (item) => {
+      if (item.type === "image") {
+        track(ANALYTICS_EVENTS.IMAGE_SAVED, {
+          collection_id: boardId,
+          item_id: item.id,
+        });
+      }
+      if (item.type === "url" || item.type === "video") {
+        track(ANALYTICS_EVENTS.LINK_SAVED, {
+          collection_id: boardId,
+          item_id: item.id,
+          source: item.source,
+        });
+      }
     },
   });
 }

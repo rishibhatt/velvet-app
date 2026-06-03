@@ -166,7 +166,7 @@ export default function BoardDetailPage({
       return;
     }
     openShareSheet({
-      url: getPublicShareUrl(board.slug),
+      url: getPublicShareUrl("", board.slug),
       title: board.title,
       text: board.description ?? undefined,
       imageUrls: previewUrls.slice(0, 4),

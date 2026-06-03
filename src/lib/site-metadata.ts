@@ -52,6 +52,9 @@ export function createSiteMetadata(overrides?: Metadata): Metadata {
       ],
     },
     manifest: "/site.webmanifest",
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    },
     openGraph: {
       type: "website",
       locale: "en_US",

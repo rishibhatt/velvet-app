@@ -6,14 +6,21 @@ import type { BoardRole, CreateBoardInput } from "@/types/board.types";
 import { activityKeys } from "@/queries/activity/queries";
 import { boardKeys } from "./keys";
 import { velvetToast } from "@/lib/toast";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateBoardInput) => boardsService.createBoard(input),
     meta: { errorContext: "board" },
-    onSuccess: () => {
+    onSuccess: (board, input) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+      track(ANALYTICS_EVENTS.COLLECTION_CREATED, {
+        collection_id: board.id,
+        collection_name: board.title,
+        category: board.mood ?? input.mood,
+        visibility: board.is_public ? "public" : "private",
+      });
     },
   });
 }
@@ -36,8 +43,9 @@ export function useDeleteBoard() {
   return useMutation({
     mutationFn: (id: string) => boardsService.deleteBoard(id),
     meta: { errorContext: "board" },
-    onSuccess: () => {
+    onSuccess: (_result, id) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+      track(ANALYTICS_EVENTS.COLLECTION_DELETED, { collection_id: id });
     },
   });
 }
