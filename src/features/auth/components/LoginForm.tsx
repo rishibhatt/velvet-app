@@ -7,8 +7,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
-import { Button } from "@/components/atoms/Button";
-import { PasswordInput } from "@/components/atoms/PasswordInput";
+import {
+  AuthForm,
+  AuthFloatingField,
+  AuthPasswordField,
+  AuthPrimaryButton,
+  AuthFooter,
+  AuthFooterLink,
+  SocialLogin,
+} from "@/components/auth";
 import { authService } from "@/services/auth/auth.service";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
@@ -44,21 +51,20 @@ export function LoginForm() {
     try {
       await authService.signIn(data.email, data.password);
       track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "password" });
-      velvetToast.success("Welcome back!", "Your velvet world awaits.");
+      velvetToast.success("Welcome back!", "Your inspiration space is waiting.");
       router.refresh();
       window.location.assign(ROUTES.home);
     } catch (err) {
       trackError(err, { area: "login", method: "password" });
-      const message = getErrorMessage(err, "auth");
-      velvetToast.error("Sign in failed", message);
+      velvetToast.error("Sign in failed", getErrorMessage(err, "auth"));
     }
   };
 
   if (!isSupabaseConfigured()) {
     return (
-      <p className="text-center text-on-surface-variant">
+      <p className="text-center text-[#7A665D]">
         Connect Supabase first.{" "}
-        <Link href="/setup" className="font-semibold text-primary underline">
+        <Link href="/setup" className="font-semibold text-[#B96F5E] underline">
           Setup guide
         </Link>
       </p>
@@ -66,89 +72,50 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <label htmlFor="email" className="mb-2 block text-sm font-medium text-on-surface-variant">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          {...register("email")}
-          className="velvet-field w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 shadow-[var(--shadow-inner)]"
-          placeholder="you@example.com"
-        />
-        {errors.email && (
-          <p className="mt-1 text-sm text-error">{errors.email.message}</p>
-        )}
-      </div>
+    <AuthForm onSubmit={handleSubmit(onSubmit)}>
+      <AuthFloatingField
+        label="Email"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
 
-      <div>
-        <label htmlFor="password" className="mb-2 block text-sm font-medium text-on-surface-variant">
-          Password
-        </label>
-        <PasswordInput
-          id="password"
-          {...register("password")}
-          placeholder="••••••••"
-        />
-        {errors.password && (
-          <p className="mt-1 text-sm text-error">{errors.password.message}</p>
-        )}
-      </div>
+      <AuthPasswordField
+        label="Password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       <div className="text-right">
         <Link
           href={ROUTES.forgotPassword}
-          className="text-sm text-primary hover:underline"
+          className="text-sm font-medium text-[#B96F5E] hover:underline"
         >
           Forgot password?
         </Link>
       </div>
 
-      <Button type="submit" variant="gradient" size="lg" loading={isSubmitting} className="w-full">
-        Sign In
-      </Button>
+      <AuthPrimaryButton loading={isSubmitting}>Sign In</AuthPrimaryButton>
 
-      <div className="relative py-2">
+      <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-outline-variant/30" />
+          <div className="w-full border-t border-[#E9DDD4]" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-background px-4 text-on-surface-variant">or</span>
+          <span className="bg-[#FAF7F2] px-3 text-[#7A665D] lg:bg-transparent">or</span>
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="lg"
-        className="w-full"
-        onClick={() =>
-          authService
-            .signInWithGoogle()
-            .then(() => track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "google" }))
-            .catch((err) => {
-              trackError(err, { area: "login", method: "google" });
-              velvetToast.fromError(err, "auth");
-            })
-        }
-      >
-        Continue with Google
-      </Button>
+      <SocialLogin
+        analyticsArea="login"
+        onSuccess={() => track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "google" })}
+      />
 
-      <p className="text-center text-sm text-on-surface-variant">
-        New to Velvet?{" "}
-        <Link href={ROUTES.signup} className="font-medium text-primary hover:underline">
-          Create an account
-        </Link>
-      </p>
-      <p className="text-center text-sm text-on-surface-variant">
-        Didn&apos;t get a verification email?{" "}
-        <Link href={ROUTES.verifyEmail} className="font-medium text-primary hover:underline">
-          Resend it
-        </Link>
-      </p>
-    </form>
+      <AuthFooter>
+        New to Velvet? <AuthFooterLink href={ROUTES.signup}>Create Account</AuthFooterLink>
+      </AuthFooter>
+    </AuthForm>
   );
 }

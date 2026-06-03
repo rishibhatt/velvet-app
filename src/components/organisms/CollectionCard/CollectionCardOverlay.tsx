@@ -14,6 +14,9 @@ import { CollectionCardLikePill } from "./CollectionCardLikePill";
 import { CollectionCardMoreMenu } from "./CollectionCardMoreMenu";
 import { cn } from "@/lib/utils";
 
+const CARD_QUICK_ACTION =
+  "pointer-events-auto inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white shadow-lg backdrop-blur-md transition-transform active:scale-95";
+
 interface CollectionCardOverlayProps {
   board: Board;
   variant: CollectionCardVariant;
@@ -66,21 +69,21 @@ export function CollectionCardOverlay({
       </div>
 
       {/* Bottom content + floating actions */}
-      <div className="mt-auto flex items-end justify-between gap-2 p-2.5 sm:p-3">
-        <div className="min-w-0 flex-1 pr-2">
+      <div className="mt-auto flex items-end justify-between gap-3 p-3 sm:p-3.5">
+        <div className="min-w-0 flex-1 pr-3">
           {!isOwned && displayOwner && (
             <Link
               href={ROUTES.creator(displayOwner.username)}
               onClick={(e) => e.stopPropagation()}
-              className="pointer-events-auto mb-1.5 inline-flex max-w-full items-center gap-1.5 rounded-full py-0.5 pr-2 transition-opacity hover:opacity-90"
+              className="pointer-events-auto mb-2 inline-flex max-w-full items-center gap-2 rounded-full py-0.5 pr-2 transition-opacity hover:opacity-90"
             >
               <Avatar
                 src={displayOwner.avatar_url}
                 name={displayOwner.full_name ?? displayOwner.username}
                 size="sm"
-                className="!h-5 !w-5 ring-1 ring-white/40 sm:!h-6 sm:!w-6"
+                className="!h-6 !w-6 ring-1 ring-white/40 sm:!h-7 sm:!w-7"
               />
-              <span className="truncate text-[11px] font-medium text-white/92 sm:text-xs">
+              <span className="truncate text-xs font-medium text-white/92 sm:text-sm">
                 {displayOwner.full_name ?? displayOwner.username}
               </span>
             </Link>
@@ -94,15 +97,31 @@ export function CollectionCardOverlay({
           <CollaboratorChips board={board} className="mt-2 max-w-full" />
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <div className="flex shrink-0 items-center gap-2">
           {!isOwned && (
-            <CollectionCardLikePill
-              boardId={board.id}
-              likeCount={board.like_count ?? 0}
-              isLiked={board.is_liked}
-              canLike={canLike}
-              onLikeBurst={onLikeBurst}
-            />
+            <>
+              <CollectionCardLikePill
+                boardId={board.id}
+                likeCount={board.like_count ?? 0}
+                isLiked={board.is_liked}
+                canLike={canLike}
+                onLikeBurst={onLikeBurst}
+              />
+              {board.is_public && (
+                <button
+                  type="button"
+                  aria-label="Share collection"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onShare();
+                  }}
+                  className={CARD_QUICK_ACTION}
+                >
+                  <Share2 className="h-4 w-4" strokeWidth={2.25} />
+                </button>
+              )}
+            </>
           )}
           {isOwned && (
             <button
@@ -113,9 +132,9 @@ export function CollectionCardOverlay({
                 e.stopPropagation();
                 onShare();
               }}
-              className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white shadow-lg backdrop-blur-md transition-transform active:scale-95"
+              className={CARD_QUICK_ACTION}
             >
-              <Share2 className="h-3.5 w-3.5" strokeWidth={2.25} />
+              <Share2 className="h-4 w-4" strokeWidth={2.25} />
             </button>
           )}
         </div>

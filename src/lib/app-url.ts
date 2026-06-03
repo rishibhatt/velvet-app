@@ -66,6 +66,11 @@ export function getVerifyEmailUrl(baseUrl?: string): string {
   return base ? `${trimSlash(base)}${ROUTES.verifyEmail}` : ROUTES.verifyEmail;
 }
 
+export function getEmailVerifiedUrl(baseUrl?: string): string {
+  const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
+  return base ? `${trimSlash(base)}${ROUTES.emailVerified}` : ROUTES.emailVerified;
+}
+
 export function getPublicShareUrl(
   username: string,
   slug: string,
@@ -95,6 +100,7 @@ export function getSupabaseRedirectUrlHints(baseUrl: string): string[] {
     urls.add(`${root}${ROUTES.login}`);
     urls.add(`${root}${ROUTES.resetPassword}`);
     urls.add(`${root}${ROUTES.verifyEmail}`);
+    urls.add(`${root}${ROUTES.emailVerified}`);
     urls.add(`${root}/**`);
   }
   return [...urls];

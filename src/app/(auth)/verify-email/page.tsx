@@ -1,28 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
+import { motion } from "framer-motion";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
-import { AuthLayout } from "@/components/layouts/AuthLayout";
-import { Button } from "@/components/atoms/Button";
+import {
+  AuthLayout,
+  AuthHeader,
+  AuthPrimaryButton,
+  AuthOutlinedButton,
+  AuthFooter,
+  AuthFooterLink,
+} from "@/components/auth";
 import { authService } from "@/services/auth/auth.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { createClient } from "@/services/supabase/client";
 import { ROUTES } from "@/constants/routes";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export default function VerifyEmailPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const email = searchParams.get("email") ?? user?.email ?? "your email";
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const supabase = createClient();
+    const interval = setInterval(() => {
+      void supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user?.email_confirmed_at) {
+          router.replace(ROUTES.emailVerified);
+        }
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [router]);
 
   const handleResend = async () => {
     setLoading(true);
     try {
       await authService.resendVerificationEmail();
-      setSent(true);
       velvetToast.success("Email sent", "Check your inbox for the verification link.");
+      router.push(`${ROUTES.emailSent}?email=${encodeURIComponent(email)}&type=verify`);
     } catch (err) {
       velvetToast.error("Couldn't send email", getErrorMessage(err, "auth"));
     } finally {
@@ -33,9 +59,9 @@ export default function VerifyEmailPage() {
   if (!isSupabaseConfigured()) {
     return (
       <AuthLayout>
-        <p className="text-center text-on-surface-variant">
+        <p className="text-center text-[#7A665D]">
           Connect Supabase first.{" "}
-          <Link href="/setup" className="font-semibold text-primary underline">
+          <Link href="/setup" className="font-semibold text-[#B96F5E] underline">
             Setup guide
           </Link>
         </p>
@@ -44,48 +70,55 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <AuthLayout>
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-secondary-container/30">
-          <Mail className="h-8 w-8 text-primary" />
-        </div>
-        <h1 className="font-display mb-2 text-4xl text-on-surface">
-          Verify your email
-        </h1>
-        <p className="text-on-surface-variant">
+    <AuthLayout centered>
+      <AuthHeader
+        align="center"
+        showLogo={false}
+        headline="Verify your email."
+        subtext="We're waiting for confirmation."
+      />
+
+      <div className="mb-8 flex flex-col items-center text-center">
+        <motion.div
+          className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-[#E9DDD4] bg-[#FFFCF8]"
+          animate={{ scale: [1, 1.04, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <motion.span
+            className="absolute inset-0 rounded-full border-2 border-[#B96F5E]/30"
+            animate={{ scale: [1, 1.2], opacity: [0.6, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+          />
+          <Mail className="h-9 w-9 text-[#B96F5E]" strokeWidth={1.5} />
+        </motion.div>
+        <p className="text-base text-[#7A665D]">
           We sent a verification link to{" "}
-          <span className="font-medium text-on-surface">
-            {user?.email ?? "your email"}
-          </span>
-          . Click the link to unlock your Velvet account.
+          <span className="font-semibold text-[#2D1E1A]">{email}</span>.
+        </p>
+        <p className="mt-2 text-sm text-[#7A665D]/90">
+          This page refreshes automatically when you confirm.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <Button
+      <div className="space-y-3">
+        <AuthPrimaryButton type="button" loading={loading} onClick={() => void handleResend()}>
+          Resend verification email
+        </AuthPrimaryButton>
+        <AuthOutlinedButton
           type="button"
-          size="lg"
-          className="w-full"
-          loading={loading}
-          onClick={() => void handleResend()}
-        >
-          {sent ? "Resend again" : "Resend verification email"}
-        </Button>
-        <p className="text-center text-sm text-on-surface-variant">
-          Check your spam folder if you don&apos;t see it within a few minutes.
-        </p>
-        <p className="text-center text-sm">
-          <button
-            type="button"
-            className="text-primary hover:underline"
-            onClick={() => void authService.signOut().then(() => {
+          onClick={() =>
+            void authService.signOut().then(() => {
               window.location.assign(ROUTES.login);
-            })}
-          >
-            Sign out and use a different email
-          </button>
-        </p>
+            })
+          }
+        >
+          Sign out
+        </AuthOutlinedButton>
       </div>
+
+      <AuthFooter className="mt-8">
+        <AuthFooterLink href={ROUTES.login}>Back to sign in</AuthFooterLink>
+      </AuthFooter>
     </AuthLayout>
   );
 }

@@ -22,8 +22,9 @@ import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
 import { isSupabaseConfigured } from "@/lib/utils";
 import {
-  COLLECTION_CARD_RAIL,
-  COLLECTION_CARD_RAIL_ITEM,
+  COLLECTION_CARD_GRID,
+  HOME_DISCOVER_CARD_RAIL,
+  HOME_DISCOVER_CARD_RAIL_ITEM,
 } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { UI_LABELS } from "@/constants/ui-labels";
@@ -82,17 +83,17 @@ export default function HomePage() {
         <section className="velvet-panel mb-6 p-4 sm:p-6 md:mb-8">
           <DiscoverSectionHeader />
           {discoverLoading ? (
-            <div className={COLLECTION_CARD_RAIL}>
+            <div className={HOME_DISCOVER_CARD_RAIL}>
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className={COLLECTION_CARD_RAIL_ITEM}>
+                <div key={i} className={HOME_DISCOVER_CARD_RAIL_ITEM}>
                   <ShowcaseBoardCardSkeleton />
                 </div>
               ))}
             </div>
           ) : (
-            <div className={COLLECTION_CARD_RAIL}>
+            <div className={HOME_DISCOVER_CARD_RAIL}>
               {discoverPreview.map((board) => (
-                <div key={board.id} className={COLLECTION_CARD_RAIL_ITEM}>
+                <div key={board.id} className={HOME_DISCOVER_CARD_RAIL_ITEM}>
                   <ShowcaseBoardCard
                     board={board}
                     variant="discover"
@@ -120,31 +121,29 @@ export default function HomePage() {
         />
 
         {isLoading ? (
-          <div className={COLLECTION_CARD_RAIL}>
+          <div className={COLLECTION_CARD_GRID}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className={COLLECTION_CARD_RAIL_ITEM}>
-                <ShowcaseBoardCardSkeleton />
-              </div>
+              <ShowcaseBoardCardSkeleton key={i} />
             ))}
           </div>
         ) : boards && boards.length > 0 ? (
           <>
             <motion.div
-              className={cn(COLLECTION_CARD_RAIL, "pb-2")}
+              className={cn(COLLECTION_CARD_GRID, "pb-2")}
               variants={stagger}
               initial="initial"
               animate="animate"
             >
               {visibleBoards.map((board) => (
-                <motion.div key={board.id} variants={fadeUp} className={COLLECTION_CARD_RAIL_ITEM}>
+                <motion.div key={board.id} variants={fadeUp} className="min-w-0">
                   <ShowcaseBoardCard board={board} variant="owned" />
                 </motion.div>
               ))}
             </motion.div>
             {hasMoreBoards && (
-              <div ref={boardsSentinelRef} className={cn(COLLECTION_CARD_RAIL, "mt-2")}>
-                <ShowcaseBoardCardSkeleton className={COLLECTION_CARD_RAIL_ITEM} />
-                <ShowcaseBoardCardSkeleton className={COLLECTION_CARD_RAIL_ITEM} />
+              <div ref={boardsSentinelRef} className={cn(COLLECTION_CARD_GRID, "mt-2")}>
+                <ShowcaseBoardCardSkeleton />
+                <ShowcaseBoardCardSkeleton />
               </div>
             )}
           </>

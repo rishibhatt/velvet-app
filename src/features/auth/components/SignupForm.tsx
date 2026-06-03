@@ -1,55 +1,75 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, AnimatePresence } from "framer-motion";
+import { Check, X } from "lucide-react";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
-import { Button } from "@/components/atoms/Button";
-import { PasswordInput } from "@/components/atoms/PasswordInput";
+import {
+  AuthForm,
+  AuthFloatingField,
+  AuthPasswordField,
+  AuthPrimaryButton,
+  AuthFooter,
+  AuthFooterLink,
+  SocialLogin,
+} from "@/components/auth";
 import { PasswordStrengthIndicator } from "@/components/atoms/PasswordStrengthIndicator";
-import { MOODS } from "@/constants/moods";
 import { authService } from "@/services/auth/auth.service";
 import { signupSchema, type SignupInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/utils";
+import { useUsernameAvailability } from "@/hooks/useUsernameAvailability";
 import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
-
 export function SignupForm() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [selectedMood, setSelectedMood] =
-    useState<SignupInput["mood"]>("wedding");
 
   const {
     register,
     handleSubmit,
-    trigger,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { mood: "wedding" },
+    defaultValues: { mood: "other" },
   });
 
   const password = watch("password", "");
+  const username = watch("username", "");
+  const usernameStatus = useUsernameAvailability(username);
 
   const onSubmit = async (data: SignupInput) => {
     if (!isSupabaseConfigured()) {
       velvetToast.error("Setup required", "Add Supabase keys — see /setup");
       return;
     }
+
+    if (usernameStatus === "taken" || usernameStatus === "invalid") {
+      velvetToast.error("Username unavailable", "Choose a different username.");
+      return;
+    }
+
+    if (usernameStatus === "checking") {
+      velvetToast.info("One moment", "Still checking username availability.");
+      return;
+    }
+
+    const available = await authService.isUsernameAvailable(data.username);
+    if (!available) {
+      velvetToast.error("Username taken", "That username is already in use.");
+      return;
+    }
+
     track(ANALYTICS_EVENTS.SIGNUP_STARTED);
     try {
       const result = await authService.signUp(
         data.email,
         data.password,
         data.fullName,
-        selectedMood,
+        data.username,
+        data.mood,
       );
       track(ANALYTICS_EVENTS.SIGNUP_COMPLETED);
 
@@ -60,12 +80,8 @@ export function SignupForm() {
         return;
       }
 
-      velvetToast.success(
-        "Almost there!",
-        "Check your email to verify your account before continuing.",
-      );
-      router.refresh();
-      window.location.assign(ROUTES.verifyEmail);
+      velvetToast.success("Almost there!", "Check your email to verify your account.");
+      router.push(`${ROUTES.verifyEmail}?email=${encodeURIComponent(data.email)}`);
     } catch (err) {
       trackError(err, { area: "signup" });
       velvetToast.error("Sign up failed", getErrorMessage(err, "auth"));
@@ -74,161 +90,106 @@ export function SignupForm() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <p className="text-center text-on-surface-variant">
+      <p className="text-center text-[#7A665D]">
         Connect Supabase first.{" "}
-        <Link href="/setup" className="font-semibold text-primary underline">
+        <Link href="/setup" className="font-semibold text-[#B96F5E] underline">
           Setup guide
         </Link>
       </p>
     );
   }
 
-  const nextStep = async () => {
-    const valid = await trigger(["fullName", "email", "password"]);
-    if (valid) setStep(2);
-  };
+  const usernameHint = (() => {
+    if (!username.trim()) return null;
+    if (usernameStatus === "checking") {
+      return <p className="px-1 text-sm text-[#7A665D]">Checking availability…</p>;
+    }
+    if (usernameStatus === "available") {
+      return (
+        <p className="flex items-center gap-1 px-1 text-sm font-medium text-emerald-700">
+          <Check className="h-3.5 w-3.5" aria-hidden />
+          Available
+        </p>
+      );
+    }
+    if (usernameStatus === "taken") {
+      return (
+        <p className="flex items-center gap-1 px-1 text-sm font-medium text-red-600">
+          <X className="h-3.5 w-3.5" aria-hidden />
+          Username already taken
+        </p>
+      );
+    }
+    if (usernameStatus === "invalid") {
+      return (
+        <p className="px-1 text-sm text-red-600">
+          Use 3–30 characters: lowercase letters, numbers, underscores
+        </p>
+      );
+    }
+    return null;
+  })();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <AnimatePresence mode="wait">
-        {step === 1 ? (
-          <motion.div
-            key="step1"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="space-y-6"
-          >
-            <div>
-              <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-on-surface-variant">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                {...register("fullName")}
-                className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 focus:border-primary focus:outline-none"
-                placeholder="Aanya Sharma"
-              />
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-error">{errors.fullName.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-on-surface-variant">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                {...register("email")}
-                className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 focus:border-primary focus:outline-none"
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-error">{errors.email.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-on-surface-variant">
-                Password
-              </label>
-              <PasswordInput
-                id="password"
-                {...register("password")}
-                placeholder="••••••••"
-              />
-              <PasswordStrengthIndicator password={password} className="mt-2" />
-              {errors.password && (
-                <p className="mt-1 text-sm text-error">{errors.password.message}</p>
-              )}
-            </div>
-            <Button type="button" size="lg" className="w-full" onClick={nextStep}>
-              Continue
-            </Button>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="step2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div>
-              <p className="mb-4 font-display text-lg text-on-surface">
-                What will you plan first?
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {MOODS.slice(0, 5).map((mood) => (
-                  <button
-                    key={mood.value}
-                    type="button"
-                    onClick={() => setSelectedMood(mood.value)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-full border-[1.5px] px-5 py-2.5 transition-all",
-                      selectedMood === mood.value
-                        ? "border-secondary-container bg-secondary-container/20"
-                        : "border-transparent bg-surface-container-low",
-                    )}
-                  >
-                    <span>{mood.emoji}</span>
-                    <span className="text-sm font-medium">{mood.label}</span>
-                  </button>
-                ))}
-              </div>
-              <input type="hidden" {...register("mood")} value={selectedMood} />
-            </div>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                className="flex-1"
-                onClick={() => setStep(1)}
-              >
-                Back
-              </Button>
-              <Button type="submit" size="lg" loading={isSubmitting} className="flex-1">
-                Create Account
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <AuthForm onSubmit={handleSubmit(onSubmit)}>
+      <AuthFloatingField
+        label="Name"
+        autoComplete="name"
+        error={errors.fullName?.message}
+        {...register("fullName")}
+      />
 
-      <div className="relative py-2">
+      <AuthFloatingField
+        label="Username"
+        autoComplete="username"
+        error={errors.username?.message}
+        hint={usernameHint}
+        {...register("username")}
+      />
+
+      <AuthFloatingField
+        label="Email"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
+      />
+
+      <AuthPasswordField
+        label="Password"
+        autoComplete="new-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
+      <PasswordStrengthIndicator password={password} className="px-1" />
+
+      <AuthPasswordField
+        label="Confirm Password"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+        {...register("confirmPassword")}
+      />
+
+      <AuthPrimaryButton loading={isSubmitting}>Create Account</AuthPrimaryButton>
+
+      <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-outline-variant/30" />
+          <div className="w-full border-t border-[#E9DDD4]" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-background px-4 text-on-surface-variant">or</span>
+          <span className="bg-[#FAF7F2] px-3 text-[#7A665D] lg:bg-transparent">or</span>
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="lg"
-        className="w-full"
-        onClick={() =>
-          authService
-            .signInWithGoogle()
-            .then(() => track(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { method: "google" }))
-            .catch((err) => {
-              trackError(err, { area: "signup", method: "google" });
-              velvetToast.fromError(err, "auth");
-            })
-        }
-      >
-        Continue with Google
-      </Button>
+      <SocialLogin
+        analyticsArea="signup"
+        onSuccess={() => track(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { method: "google" })}
+      />
 
-      <p className="text-center text-sm text-on-surface-variant">
+      <AuthFooter>
         Already have an account?{" "}
-        <Link href={ROUTES.login} className="font-medium text-primary hover:underline">
-          Sign in
-        </Link>
-      </p>
-    </form>
+        <AuthFooterLink href={ROUTES.login}>Sign in</AuthFooterLink>
+      </AuthFooter>
+    </AuthForm>
   );
 }

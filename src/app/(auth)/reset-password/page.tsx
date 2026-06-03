@@ -7,9 +7,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
-import { AuthLayout } from "@/components/layouts/AuthLayout";
-import { Button } from "@/components/atoms/Button";
-import { PasswordInput } from "@/components/atoms/PasswordInput";
+import {
+  AuthLayout,
+  AuthHeader,
+  AuthForm,
+  AuthPasswordField,
+  AuthPrimaryButton,
+  AuthFooter,
+  AuthFooterLink,
+} from "@/components/auth";
 import { PasswordStrengthIndicator } from "@/components/atoms/PasswordStrengthIndicator";
 import { authService } from "@/services/auth/auth.service";
 import { createClient } from "@/services/supabase/client";
@@ -62,9 +68,9 @@ export default function ResetPasswordPage() {
   const onSubmit = async (data: ResetPasswordInput) => {
     try {
       await authService.updatePassword(data.password);
-      velvetToast.success("Password updated", "You can now sign in with your new password.");
+      velvetToast.success("Password updated", "Your account is secure again.");
       await authService.signOut();
-      router.push(ROUTES.login);
+      router.push(ROUTES.resetPasswordSuccess);
     } catch (err) {
       velvetToast.error("Couldn't reset password", getErrorMessage(err, "auth"));
     }
@@ -75,9 +81,9 @@ export default function ResetPasswordPage() {
   if (!isSupabaseConfigured()) {
     return (
       <AuthLayout>
-        <p className="text-center text-on-surface-variant">
+        <p className="text-center text-[#7A665D]">
           Connect Supabase first.{" "}
-          <Link href="/setup" className="font-semibold text-primary underline">
+          <Link href="/setup" className="font-semibold text-[#B96F5E] underline">
             Setup guide
           </Link>
         </p>
@@ -88,70 +94,44 @@ export default function ResetPasswordPage() {
   if (!sessionValid) {
     return (
       <AuthLayout>
-        <div className="mb-8">
-          <h1 className="font-display mb-2 text-4xl text-on-surface">
-            Link expired
-          </h1>
-          <p className="text-on-surface-variant">
-            Request a new password reset link to continue.
-          </p>
-        </div>
-        <Link href={ROUTES.forgotPassword}>
-          <Button size="lg" className="w-full">
-            Request new link
-          </Button>
-        </Link>
+        <AuthHeader
+          headline="Link expired"
+          subtext="Request a new password reset link to continue."
+        />
+        <AuthPrimaryButton type="button" onClick={() => router.push(ROUTES.forgotPassword)}>
+          Request new link
+        </AuthPrimaryButton>
+        <AuthFooter className="mt-6">
+          <AuthFooterLink href={ROUTES.login}>Back to sign in</AuthFooterLink>
+        </AuthFooter>
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout>
-      <div className="mb-8">
-        <h1 className="font-display mb-2 text-4xl text-on-surface">
-          Set new password
-        </h1>
-        <p className="text-on-surface-variant">
-          Choose a strong password for your account.
-        </p>
-      </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium">
-            New password
-          </label>
-          <PasswordInput
-            id="password"
-            {...register("password")}
-            placeholder="••••••••"
-          />
-          <PasswordStrengthIndicator password={password} className="mt-2" />
-          {errors.password && (
-            <p className="mt-1 text-sm text-error">{errors.password.message}</p>
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="mb-2 block text-sm font-medium"
-          >
-            Confirm password
-          </label>
-          <PasswordInput
-            id="confirmPassword"
-            {...register("confirmPassword")}
-            placeholder="••••••••"
-          />
-          {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-error">
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
-        <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
-          Update password
-        </Button>
-      </form>
+      <AuthHeader
+        headline="Create a new password."
+        subtext="Choose a strong password you'll remember."
+      />
+      <AuthForm onSubmit={handleSubmit(onSubmit)}>
+        <AuthPasswordField
+          label="Password"
+          autoComplete="new-password"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+        <PasswordStrengthIndicator password={password} className="px-1" />
+
+        <AuthPasswordField
+          label="Confirm Password"
+          autoComplete="new-password"
+          error={errors.confirmPassword?.message}
+          {...register("confirmPassword")}
+        />
+
+        <AuthPrimaryButton loading={isSubmitting}>Update password</AuthPrimaryButton>
+      </AuthForm>
     </AuthLayout>
   );
 }

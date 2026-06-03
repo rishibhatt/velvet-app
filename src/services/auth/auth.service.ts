@@ -2,7 +2,7 @@ import {
   getAuthCallbackUrl,
   getOnboardingUrl,
   getResetPasswordUrl,
-  getVerifyEmailUrl,
+  getEmailVerifiedUrl,
 } from "@/lib/app-url";
 import { requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
@@ -33,23 +33,46 @@ export const authService = {
     email: string,
     password: string,
     fullName: string,
+    username: string,
     mood?: SignupInput["mood"],
   ) {
     requireSupabase();
     const supabase = createClient();
+    const normalizedUsername = username.trim().toLowerCase();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          preferred_username: normalizedUsername,
           preferred_mood: mood ?? null,
         },
-        emailRedirectTo: getVerifyEmailUrl(),
+        emailRedirectTo: getEmailVerifiedUrl(),
       },
     });
     if (error) throw error;
+
+    if (data.session && data.user) {
+      await supabase
+        .from("profiles")
+        .update({ username: normalizedUsername, full_name: fullName })
+        .eq("id", data.user.id);
+    }
+
     return data;
+  },
+
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    const normalized = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,30}$/.test(normalized)) return false;
+
+    const res = await fetch(
+      `/api/profiles/username-available?username=${encodeURIComponent(normalized)}`,
+    );
+    if (!res.ok) return false;
+    const body = (await res.json()) as { available?: boolean };
+    return body.available === true;
   },
 
   async signInWithGoogle() {
@@ -115,7 +138,7 @@ export const authService = {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: user.email,
-      options: { emailRedirectTo: getOnboardingUrl() },
+      options: { emailRedirectTo: getEmailVerifiedUrl() },
     });
     if (error) throw error;
   },

@@ -35,7 +35,13 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const verified = Boolean(session?.user?.email_confirmed_at);
+      const destination =
+        verified && next === "/onboarding" ? "/email-verified" : next;
+      return NextResponse.redirect(`${origin}${destination}`);
     }
   }
 

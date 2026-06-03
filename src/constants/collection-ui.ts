@@ -12,20 +12,20 @@ export const COLLECTION_CARD_TITLE =
 export const COLLECTION_CARD_SUBTITLE =
   "mt-0.5 line-clamp-2 text-[11px] font-medium leading-snug text-white/88 sm:text-xs";
 
-/** Mobile-first: 2 columns; scales up on larger screens */
+/** Mobile-first: 1 card per row; scales up on tablet/desktop */
 export const COLLECTION_CARD_GRID =
-  "grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
 
-/** Horizontal rail (Discover / Your collections on home) */
-export const COLLECTION_CARD_RAIL =
-  "-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 hide-scrollbar sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-4";
+/**
+ * Home Discover preview only — horizontal scroll on mobile with next-card peek.
+ * Desktop uses the same multi-column grid as explore.
+ */
+export const HOME_DISCOVER_CARD_RAIL =
+  "-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 hide-scrollbar scroll-smooth snap-x snap-mandatory sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-4";
 
-/** Matches one cell in COLLECTION_CARD_GRID so rail cards share explore grid height */
-export const COLLECTION_CARD_GRID_CELL_WIDTH =
-  "w-[calc((100%-0.625rem)/2)] sm:w-[calc((100%-1rem)/2)]";
-
-/** Width of one card in a horizontal rail on mobile (same height as explore grid cards) */
-export const COLLECTION_CARD_RAIL_ITEM = `${COLLECTION_CARD_GRID_CELL_WIDTH} shrink-0 md:w-auto`;
+/** ~82vw width so the next card peeks and invites a swipe */
+export const HOME_DISCOVER_CARD_RAIL_ITEM =
+  "w-[min(82vw,320px)] shrink-0 snap-start md:w-auto";
 
 /** Save / item tiles inside collection boards */
 export const ITEM_CARD_SHELL =

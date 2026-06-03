@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { velvetToast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
-import { AuthLayout } from "@/components/layouts/AuthLayout";
-import { Button } from "@/components/atoms/Button";
+import {
+  AuthLayout,
+  AuthHeader,
+  AuthForm,
+  AuthFloatingField,
+  AuthPrimaryButton,
+  AuthFooter,
+  AuthFooterLink,
+} from "@/components/auth";
 import { authService } from "@/services/auth/auth.service";
 import {
   forgotPasswordSchema,
@@ -18,9 +25,8 @@ import { ROUTES } from "@/constants/routes";
 import { isSupabaseConfigured } from "@/lib/utils";
 
 export default function ForgotPasswordForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [sent, setSent] = useState(false);
-  const [sentEmail, setSentEmail] = useState("");
 
   const {
     register,
@@ -43,73 +49,44 @@ export default function ForgotPasswordForm() {
     }
     try {
       await authService.resetPassword(data.email);
-      setSentEmail(data.email);
-      setSent(true);
-      velvetToast.success("Email sent", "Check your inbox for reset instructions.");
+      router.push(`${ROUTES.emailSent}?email=${encodeURIComponent(data.email)}&type=reset`);
     } catch (err) {
       velvetToast.error("Couldn't send email", getErrorMessage(err, "auth"));
     }
   };
 
-  if (sent) {
+  if (!isSupabaseConfigured()) {
     return (
       <AuthLayout>
-        <div className="mb-8">
-          <h1 className="font-display mb-2 text-4xl text-on-surface">
-            Check your email
-          </h1>
-          <p className="text-on-surface-variant">
-            We sent a reset link to{" "}
-            <span className="font-medium text-on-surface">{sentEmail}</span>.
-            Click the link to set a new password.
-          </p>
-          <p className="mt-4 text-sm text-on-surface-variant">
-            Don&apos;t see it? Check your spam folder or try again in a few minutes.
-          </p>
-        </div>
-        <Link href={ROUTES.login}>
-          <Button size="lg" className="w-full">
-            Back to sign in
-          </Button>
-        </Link>
+        <p className="text-center text-[#7A665D]">
+          Connect Supabase first.{" "}
+          <Link href="/setup" className="font-semibold text-[#B96F5E] underline">
+            Setup guide
+          </Link>
+        </p>
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout>
-      <div className="mb-8">
-        <h1 className="font-display mb-2 text-4xl text-on-surface">
-          Reset password
-        </h1>
-        <p className="text-on-surface-variant">
-          We&apos;ll send you a link to reset your password.
-        </p>
-      </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            {...register("email")}
-            className="w-full rounded-full border border-outline-variant/30 bg-surface-container-low px-5 py-3 focus:border-primary focus:outline-none"
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-error">{errors.email.message}</p>
-          )}
-        </div>
-        <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
-          Send Reset Link
-        </Button>
-        <p className="text-center text-sm">
-          <Link href={ROUTES.login} className="text-primary hover:underline">
-            Back to sign in
-          </Link>
-        </p>
-      </form>
+      <AuthHeader
+        headline="Forgot your password?"
+        subtext="We'll send a secure link to restore access."
+      />
+      <AuthForm onSubmit={handleSubmit(onSubmit)}>
+        <AuthFloatingField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+        <AuthPrimaryButton loading={isSubmitting}>Send Reset Link</AuthPrimaryButton>
+      </AuthForm>
+      <AuthFooter className="mt-6">
+        <AuthFooterLink href={ROUTES.login}>Back to sign in</AuthFooterLink>
+      </AuthFooter>
     </AuthLayout>
   );
 }

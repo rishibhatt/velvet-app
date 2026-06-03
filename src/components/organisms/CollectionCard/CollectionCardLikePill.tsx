@@ -46,7 +46,7 @@ export function CollectionCardLikePill({
   };
 
   const shell = cn(
-    "pointer-events-auto inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg backdrop-blur-md transition-transform active:scale-95",
+    "pointer-events-auto inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-3 text-xs font-semibold text-white shadow-lg backdrop-blur-md transition-transform active:scale-95",
     isLiked && "border-error/40 bg-error/35",
     className,
   );
@@ -59,7 +59,7 @@ export function CollectionCardLikePill({
         className={shell}
         aria-label="Sign in to like"
       >
-        <Heart className="h-3.5 w-3.5" strokeWidth={2.25} />
+        <Heart className="h-4 w-4 shrink-0" strokeWidth={2.25} />
         <span className="tabular-nums">{formatCount(likeCount)}</span>
       </Link>
     );
@@ -75,7 +75,7 @@ export function CollectionCardLikePill({
       className={cn(shell, (!canLike || !isAuthReady) && isAuthenticated && "opacity-80")}
     >
       <Heart
-        className={cn("h-3.5 w-3.5", isLiked && "fill-current")}
+        className={cn("h-4 w-4 shrink-0", isLiked && "fill-current")}
         strokeWidth={2.25}
       />
       <span className="tabular-nums">{formatCount(likeCount)}</span>

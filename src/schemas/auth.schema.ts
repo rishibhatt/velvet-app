@@ -12,20 +12,40 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const signupSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email"),
-  password: passwordSchema,
-  mood: z.enum([
-    "wedding",
-    "travel",
-    "fashion",
-    "home",
-    "events",
-    "lifestyle",
-    "other",
-  ]),
-});
+const usernameSchema = z
+  .string()
+  .min(3, "Username must be at least 3 characters")
+  .max(30, "Username must be at most 30 characters")
+  .regex(
+    /^[a-z0-9_]+$/,
+    "Use lowercase letters, numbers, and underscores only",
+  );
+
+export const signupSchema = z
+  .object({
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    username: usernameSchema,
+    email: z.string().email("Please enter a valid email"),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    mood: z
+      .enum([
+        "wedding",
+        "travel",
+        "fashion",
+        "home",
+        "events",
+        "lifestyle",
+        "other",
+      ])
+      .optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export { usernameSchema };
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email"),
