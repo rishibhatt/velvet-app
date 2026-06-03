@@ -2,7 +2,10 @@
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { resolveHeroPreviewImages } from "@/lib/collection-previews";
-import { UserPlus, Share2, Plus, Users, Settings } from "lucide-react";
+import { Share2, Plus } from "lucide-react";
+import { IconButton } from "@/components/atoms/IconButton";
+import { CollectionCoverToolbar } from "@/components/molecules/CollectionCoverToolbar";
+import { CollectionHeroStatsRow } from "@/components/molecules/CollectionHeroStatsRow";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
@@ -14,8 +17,7 @@ import {
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { Button } from "@/components/atoms/Button";
-import { IconButton } from "@/components/atoms/IconButton";
-import { AvatarStack } from "@/components/molecules/AvatarStack";
+import { CollectionBoardActions } from "@/components/molecules/CollectionBoardActions";
 import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
 import { CollabPanel } from "@/components/organisms/CollabPanel";
@@ -33,7 +35,6 @@ import { isSupabaseConfigured } from "@/lib/utils";
 import { BoardSettingsModal } from "@/features/boards/components/BoardSettingsModal";
 import { CollectionAddCard } from "@/components/molecules/CollectionAddCard";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
-import { BoardLikeButton } from "@/components/molecules/BoardLikeButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 
@@ -76,8 +77,7 @@ export default function BoardDetailPage({
   );
   const { data: activities = [] } = useBoardActivity(id);
   const { user } = useAuth();
-  const { openSaveModal, openItemModal, openInviteModal, openShareSheet } =
-    useModalStore();
+  const { openSaveModal, openItemModal, openShareSheet } = useModalStore();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -165,10 +165,8 @@ export default function BoardDetailPage({
     );
   }
 
-  const members = board.members ?? [];
   const canInvite = canManageBoardSettings(board, user?.id);
   const canEditItems = canEditBoardItems(board, user?.id);
-  const canOpenSettings = canEditBoardMeta(board, user?.id);
   const previewUrls =
     heroImages.length > 0
       ? heroImages
@@ -196,10 +194,35 @@ export default function BoardDetailPage({
     <>
       <CollectionCoverHero
         overlay={
-          <PageBackButton
-            href={ROUTES.home}
-            label="Collections"
-            className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
+          <CollectionCoverToolbar
+            back={
+              <PageBackButton
+                href={ROUTES.home}
+                label="Collections"
+                className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
+              />
+            }
+            boardId={board.id}
+            likeCount={board.like_count ?? 0}
+            showLike={false}
+            canLike={false}
+            share={
+              board.is_public && board.slug
+                ? {
+                    url: getPublicShareUrl("", board.slug),
+                    title: board.title,
+                    text: board.description ?? undefined,
+                    imageUrls: previewUrls.slice(0, 4),
+                  }
+                : undefined
+            }
+            endSlot={
+              !board.is_public || !board.slug ? (
+                <IconButton label="Share collection" onClick={handleShare}>
+                  <Share2 className="h-5 w-5" />
+                </IconButton>
+              ) : undefined
+            }
           />
         }
         images={heroImages}
@@ -208,49 +231,27 @@ export default function BoardDetailPage({
         title={board.title}
         description={board.description}
         badge={
-          <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
-            {getMoodEmoji(board.mood)} {board.item_count ?? items?.length ?? 0} items
-          </span>
+          board.mood ? (
+            <span className="inline-flex rounded-full bg-bg-elevated px-3 py-1 text-xs font-bold text-primary shadow-sm ring-1 ring-outline-variant/20">
+              {getMoodEmoji(board.mood)}
+            </span>
+          ) : undefined
+        }
+        meta={
+          <CollectionHeroStatsRow
+            itemCount={board.item_count ?? items?.length ?? 0}
+            likeCount={board.like_count ?? 0}
+            boardId={board.id}
+            showLike={false}
+            collaboratorCount={board.members?.length ?? 0}
+          />
         }
         actions={
-          <>
-            {board.is_public && (
-              <BoardLikeButton
-                boardId={board.id}
-                likeCount={board.like_count ?? 0}
-                isLiked={board.is_liked}
-                canLike={user != null && user.id !== board.owner_id}
-                size="md"
-              />
-            )}
-            <AvatarStack profiles={members.map((m) => m.profile)} max={3} />
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Users}
-              onClick={() => setCollabPanelOpen(true)}
-            >
-              Collab
-            </Button>
-            {canInvite && (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={UserPlus}
-                onClick={() => openInviteModal(board.id)}
-              >
-                Invite
-              </Button>
-            )}
-            {canOpenSettings && (
-              <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
-                <Settings className="h-5 w-5" />
-              </IconButton>
-            )}
-            <IconButton label="Share collection" onClick={() => void handleShare()}>
-              <Share2 className="h-5 w-5" />
-            </IconButton>
-          </>
+          <CollectionBoardActions
+            board={board}
+            userId={user?.id}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
         }
       />
 
@@ -334,13 +335,13 @@ export default function BoardDetailPage({
         open={collabPanelOpen}
         onClose={() => setCollabPanelOpen(false)}
         boardId={board.id}
-        members={members}
+        members={board.members ?? []}
         activities={activities}
         canManage={canInvite}
         ownerId={board.owner_id}
       />
 
-      {canOpenSettings && (
+      {canEditBoardMeta(board, user?.id) && (
         <BoardSettingsModal
           board={board}
           open={settingsOpen}

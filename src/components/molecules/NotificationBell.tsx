@@ -20,10 +20,11 @@ import {
   useMarkNotificationRead,
   useRespondBoardInvite,
 } from "@/queries/notifications/mutations";
+import { useRespondCollaborationRequest } from "@/queries/collaboration/mutations";
 import { notificationKeys } from "@/queries/notifications/keys";
 import type { AppNotification } from "@/types/board.types";
 
-function getInviteStatus(notification: AppNotification) {
+function getMetadataStatus(notification: AppNotification) {
   const status = notification.metadata?.status;
   return typeof status === "string" ? status : "pending";
 }
@@ -31,6 +32,16 @@ function getInviteStatus(notification: AppNotification) {
 function getInvitationId(notification: AppNotification) {
   const invitationId = notification.metadata?.invitationId;
   return typeof invitationId === "string" ? invitationId : null;
+}
+
+function getRequestId(notification: AppNotification) {
+  const requestId = notification.metadata?.requestId;
+  return typeof requestId === "string" ? requestId : null;
+}
+
+function getNotificationDirection(notification: AppNotification) {
+  const direction = notification.metadata?.direction;
+  return typeof direction === "string" ? direction : null;
 }
 
 function getNotificationHref(notification: AppNotification) {
@@ -56,13 +67,30 @@ function NotificationItem({
 }) {
   const markRead = useMarkNotificationRead();
   const respondInvite = useRespondBoardInvite();
+  const respondCollabRequest = useRespondCollaborationRequest();
   const invitationId = getInvitationId(notification);
-  const inviteStatus = getInviteStatus(notification);
+  const requestId = getRequestId(notification);
+  const status = getMetadataStatus(notification);
+  const direction = getNotificationDirection(notification);
+
   const isPendingInvite =
     notification.type === "board_invite" &&
     invitationId != null &&
-    inviteStatus === "pending";
+    status === "pending";
+
+  const isPendingCollabRequest =
+    notification.type === "collab_request" &&
+    requestId != null &&
+    status === "pending" &&
+    direction === "to_owner";
+
+  const isResolvedCollabForRequester =
+    notification.type === "collab_request" &&
+    direction === "to_requester" &&
+    (status === "accepted" || status === "denied");
+
   const isUnread = notification.read_at == null;
+  const isResponding = respondInvite.isPending || respondCollabRequest.isPending;
 
   const handleNavigate = () => {
     if (isUnread) markRead.mutate(notification.id);
@@ -110,7 +138,7 @@ function NotificationItem({
                 size="sm"
                 variant="gradient"
                 icon={Check}
-                loading={respondInvite.isPending}
+                loading={isResponding}
                 onClick={() =>
                   respondInvite.mutate({ invitationId, accept: true })
                 }
@@ -121,12 +149,38 @@ function NotificationItem({
                 type="button"
                 size="sm"
                 variant="secondary"
-                disabled={respondInvite.isPending}
+                disabled={isResponding}
                 onClick={() =>
                   respondInvite.mutate({ invitationId, accept: false })
                 }
               >
                 Deny
+              </Button>
+            </div>
+          ) : isPendingCollabRequest ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="gradient"
+                icon={Check}
+                loading={isResponding}
+                onClick={() =>
+                  respondCollabRequest.mutate({ requestId, accept: true })
+                }
+              >
+                Approve
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={isResponding}
+                onClick={() =>
+                  respondCollabRequest.mutate({ requestId, accept: false })
+                }
+              >
+                Decline
               </Button>
             </div>
           ) : (
@@ -136,7 +190,9 @@ function NotificationItem({
                 onClick={handleNavigate}
                 className="text-xs font-bold text-primary hover:underline"
               >
-                View
+                {isResolvedCollabForRequester && status === "accepted"
+                  ? "Open collection"
+                  : "View"}
               </Link>
               {isUnread && (
                 <button

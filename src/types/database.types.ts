@@ -398,6 +398,14 @@ export interface Database {
         Args: { p_invitation_id: string; p_accept: boolean };
         Returns: string;
       };
+      create_collaboration_request: {
+        Args: { p_board_id: string; p_role?: string };
+        Returns: string;
+      };
+      respond_collaboration_request: {
+        Args: { p_request_id: string; p_accept: boolean };
+        Returns: string;
+      };
       create_board_like_notification: {
         Args: { p_board_id: string };
         Returns: undefined;

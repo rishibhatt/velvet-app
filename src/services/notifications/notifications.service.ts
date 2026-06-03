@@ -100,6 +100,21 @@ export const notificationsService = {
     });
 
     if (error) throw new Error(parseSupabaseError(error));
-    return { boardId: data };
+    return { boardId: data as string };
+  },
+
+  async respondToCollabRequest(
+    requestId: string,
+    accept: boolean,
+  ): Promise<{ boardId: string }> {
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("respond_collaboration_request", {
+      p_request_id: requestId,
+      p_accept: accept,
+    });
+
+    if (error) throw new Error(parseSupabaseError(error));
+    return { boardId: data as string };
   },
 };

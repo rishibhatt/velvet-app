@@ -22,9 +22,10 @@ import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
 import { isSupabaseConfigured } from "@/lib/utils";
 import {
-  COLLECTION_CARD_GRID,
   HOME_DISCOVER_CARD_RAIL,
   HOME_DISCOVER_CARD_RAIL_ITEM,
+  HOME_OWNED_CARD_RAIL,
+  HOME_OWNED_CARD_RAIL_ITEM,
 } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { UI_LABELS } from "@/constants/ui-labels";
@@ -121,29 +122,35 @@ export default function HomePage() {
         />
 
         {isLoading ? (
-          <div className={COLLECTION_CARD_GRID}>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <ShowcaseBoardCardSkeleton key={i} />
+          <div className={HOME_OWNED_CARD_RAIL}>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className={HOME_OWNED_CARD_RAIL_ITEM}>
+                <ShowcaseBoardCardSkeleton />
+              </div>
             ))}
           </div>
         ) : boards && boards.length > 0 ? (
           <>
             <motion.div
-              className={cn(COLLECTION_CARD_GRID, "pb-2")}
+              className={cn(HOME_OWNED_CARD_RAIL, "pb-2")}
               variants={stagger}
               initial="initial"
               animate="animate"
             >
               {visibleBoards.map((board) => (
-                <motion.div key={board.id} variants={fadeUp} className="min-w-0">
+                <motion.div key={board.id} variants={fadeUp} className={HOME_OWNED_CARD_RAIL_ITEM}>
                   <ShowcaseBoardCard board={board} variant="owned" />
                 </motion.div>
               ))}
             </motion.div>
             {hasMoreBoards && (
-              <div ref={boardsSentinelRef} className={cn(COLLECTION_CARD_GRID, "mt-2")}>
-                <ShowcaseBoardCardSkeleton />
-                <ShowcaseBoardCardSkeleton />
+              <div ref={boardsSentinelRef} className={cn(HOME_OWNED_CARD_RAIL, "mt-2")}>
+                <div className={HOME_OWNED_CARD_RAIL_ITEM}>
+                  <ShowcaseBoardCardSkeleton />
+                </div>
+                <div className={HOME_OWNED_CARD_RAIL_ITEM}>
+                  <ShowcaseBoardCardSkeleton />
+                </div>
               </div>
             )}
           </>
@@ -153,7 +160,7 @@ export default function HomePage() {
             description="Create your first board and begin curating the moments that matter."
             actionLabel={UI_LABELS.createFirstCollection}
             onAction={openCreateBoard}
-            className="border-0 bg-transparent shadow-none"
+            className="border-0 bg-transparent px-4 py-10 shadow-none sm:py-12"
           />
         )}
       </section>

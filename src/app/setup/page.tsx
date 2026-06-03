@@ -88,6 +88,12 @@ export default async function SetupPage() {
             </li>
             <li>
               <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/015_collaboration_requests.sql
+              </code>{" "}
+              (collaboration requests + owner approve/decline)
+            </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
                 supabase/migrations/013_owner_scoped_collection_slugs.sql
               </code>{" "}
               (owner-scoped public URLs)

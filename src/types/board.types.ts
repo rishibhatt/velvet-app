@@ -15,7 +15,9 @@ export type BoardInvitationStatus =
   | "denied"
   | "cancelled";
 
-export type NotificationType = "board_invite" | "board_like";
+export type NotificationType = "board_invite" | "board_like" | "collab_request";
+
+export type CollaborationRequestStatus = "pending" | "accepted" | "denied";
 
 export type ItemType = "url" | "image" | "video" | "note";
 
@@ -37,6 +39,20 @@ export interface Profile {
   website: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface BoardCollaborationRequest {
+  id: string;
+  board_id: string;
+  requester_id: string;
+  role: BoardRole;
+  status: CollaborationRequestStatus;
+  responded_at: string | null;
+  created_at: string;
+  requester?: Pick<
+    Profile,
+    "id" | "username" | "full_name" | "avatar_url"
+  > | null;
 }
 
 export interface Board {

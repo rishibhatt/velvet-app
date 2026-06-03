@@ -137,28 +137,31 @@ export function ProfileHeroCard({
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[min(100%,320px)] md:shrink-0">
+          <div className="flex w-full flex-col gap-2 sm:w-auto md:shrink-0 md:items-end">
             {profile.username && (
-              <Link href={ROUTES.creator(profile.username)} className="w-full">
+              <Link
+                href={ROUTES.creator(profile.username)}
+                className="w-full sm:w-auto"
+              >
                 <Button
                   variant="gradient"
                   size="sm"
                   type="button"
                   icon={ExternalLink}
-                  className="w-full shadow-md"
+                  className="w-full shadow-md sm:w-auto"
                 >
                   View public page
                 </Button>
               </Link>
             )}
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 type="button"
                 icon={Pencil}
                 onClick={onEdit}
-                className="w-full border-outline-variant/50 bg-bg-elevated"
+                className="w-full border-outline-variant/50 bg-bg-elevated sm:w-auto"
               >
                 Edit profile
               </Button>
@@ -168,7 +171,7 @@ export function ProfileHeroCard({
                   size="sm"
                   type="button"
                   icon={Settings}
-                  className="w-full border-outline-variant/50 bg-bg-elevated"
+                  className="w-full border-outline-variant/50 bg-bg-elevated sm:w-auto"
                 >
                   Settings
                 </Button>
@@ -182,7 +185,7 @@ export function ProfileHeroCard({
                   eyebrow="Velvet profile"
                   preview
                   label="Share"
-                  className="col-span-2 sm:col-span-1"
+                  className="col-span-2 w-full sm:col-span-1 sm:w-auto"
                 />
               )}
             </div>

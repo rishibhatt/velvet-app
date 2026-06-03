@@ -1,5 +1,6 @@
 import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
 import { attachBoardPreviews } from "@/lib/collection-previews";
+import { itemsService, ITEMS_PAGE_SIZE } from "@/services/items/items.service";
 import { likesService } from "@/services/likes/likes.service";
 import { incrementSlug, slugifyTitle } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
@@ -431,5 +432,99 @@ export const boardsService = {
   async hasAnyBoard(): Promise<boolean> {
     const boards = await this.getBoards();
     return boards.length > 0;
+  },
+
+  async requestCollaboration(boardId: string): Promise<string> {
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("create_collaboration_request", {
+      p_board_id: boardId,
+      p_role: "editor",
+    });
+    if (error) throw new Error(parseSupabaseError(error));
+    return data as string;
+  },
+
+  async listPendingCollaborationRequests(
+    boardId: string,
+  ): Promise<import("@/types/board.types").BoardCollaborationRequest[]> {
+    requireSupabase();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("board_collaboration_requests")
+      .select(
+        `
+          id,
+          board_id,
+          requester_id,
+          role,
+          status,
+          responded_at,
+          created_at,
+          requester:profiles!board_collaboration_requests_requester_id_fkey(
+            id, username, full_name, avatar_url
+          )
+        `,
+      )
+      .eq("board_id", boardId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(parseSupabaseError(error));
+    return (data ?? []) as import("@/types/board.types").BoardCollaborationRequest[];
+  },
+
+  async duplicateBoard(sourceBoardId: string): Promise<Board> {
+    requireSupabase();
+    const source = await this.getBoardById(sourceBoardId);
+    if (!source) throw new Error("Collection not found or you don't have access.");
+
+    const {
+      data: { user },
+    } = await createClient().auth.getUser();
+    if (!user) throw new Error("You must be signed in to duplicate a collection.");
+
+    const allItems = [];
+    let page = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const batch = await itemsService.getItems(sourceBoardId, {
+        page,
+        limit: ITEMS_PAGE_SIZE,
+      });
+      allItems.push(...batch.items);
+      hasMore = batch.hasMore;
+      page += 1;
+      if (page > 20) break;
+    }
+
+    const baseTitle = source.title.trim();
+    const copyTitle = baseTitle.toLowerCase().startsWith("copy of ")
+      ? baseTitle
+      : `Copy of ${baseTitle}`;
+
+    const newBoard = await this.createBoard({
+      title: copyTitle,
+      mood: source.mood ?? "other",
+      moodLabel: source.mood_label ?? undefined,
+      isPublic: false,
+      description: source.description ?? undefined,
+    });
+
+    for (const item of allItems) {
+      await itemsService.saveItem({
+        boardId: newBoard.id,
+        type: item.type,
+        sourceUrl: item.source_url ?? undefined,
+        imageUrl: item.image_url ?? undefined,
+        title: item.title ?? "Saved item",
+        description: item.description ?? undefined,
+        notes: item.notes ?? undefined,
+        source: item.source ?? "web",
+        tags: item.tags?.map((t) => t.name) ?? [],
+      });
+    }
+
+    return (await this.getBoardById(newBoard.id)) ?? newBoard;
   },
 };

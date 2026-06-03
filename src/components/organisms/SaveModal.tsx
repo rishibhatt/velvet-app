@@ -161,14 +161,29 @@ export function SaveModal() {
 
   const resetForm = () => {
     setSaved(false);
+    clearModeContent();
+    setMode("link");
+  };
+
+  const clearModeContent = () => {
     setUrl("");
     setTitle("");
     setNotes("");
     setImageUrl(null);
+    if (localPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(localPreview);
+    }
     setLocalPreview(null);
     setSelectedTags([]);
     setTags([]);
-    setMode("link");
+    setSource("web");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const switchMode = (next: SaveMode) => {
+    if (next === mode) return;
+    clearModeContent();
+    setMode(next);
   };
 
   const previewSrc = localPreview || imageUrl;
@@ -212,9 +227,12 @@ export function SaveModal() {
             { value: "note", label: "Note" },
           ]}
           value={mode}
-          onChange={(v) => setMode(v as SaveMode)}
+          onChange={(v) => switchMode(v as SaveMode)}
           className="mb-4"
         />
+        <p className="mb-4 text-center text-xs text-on-surface-variant">
+          Choose one type per save — switching clears the current draft.
+        </p>
 
         {mode === "note" ? (
           <div className="rounded-xl border border-outline-variant/40 bg-bg-elevated p-4">
@@ -335,11 +353,11 @@ export function SaveModal() {
           </select>
         </div>
 
-        {mode !== "note" && (
+        {mode === "link" && (
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-semibold text-on-surface">
               <Edit3 className="h-4 w-4 text-primary" />
-              Notes
+              Notes <span className="font-normal text-on-surface-variant">(optional)</span>
             </label>
             <textarea
               value={notes}

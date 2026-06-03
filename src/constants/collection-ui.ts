@@ -23,9 +23,13 @@ export const COLLECTION_CARD_GRID =
 export const HOME_DISCOVER_CARD_RAIL =
   "-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 hide-scrollbar scroll-smooth snap-x snap-mandatory sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-4";
 
-/** ~82vw width so the next card peeks and invites a swipe */
+/** ~72vw on mobile — smaller card + clearer peek of the next slide */
 export const HOME_DISCOVER_CARD_RAIL_ITEM =
-  "w-[min(82vw,320px)] shrink-0 snap-start md:w-auto";
+  "w-[min(72vw,280px)] shrink-0 snap-start md:w-auto";
+
+/** Your collections on home — same horizontal rail as Discover */
+export const HOME_OWNED_CARD_RAIL = HOME_DISCOVER_CARD_RAIL;
+export const HOME_OWNED_CARD_RAIL_ITEM = HOME_DISCOVER_CARD_RAIL_ITEM;
 
 /** Save / item tiles inside collection boards */
 export const ITEM_CARD_SHELL =

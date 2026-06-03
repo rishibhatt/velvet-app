@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { boardsService } from "@/services/boards/boards.service";
 import type { BoardRole, CreateBoardInput } from "@/types/board.types";
 import { activityKeys } from "@/queries/activity/queries";
+import { collabRequestKeys } from "@/queries/collaboration/keys";
+import { notificationKeys } from "@/queries/notifications/keys";
 import { boardKeys } from "./keys";
 import { velvetToast } from "@/lib/toast";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
@@ -62,6 +64,30 @@ export function useInviteMember(boardId: string) {
         "Invite sent",
         "They'll get a notification to accept or deny the collaboration.",
       );
+    },
+  });
+}
+
+export function useDuplicateBoard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sourceBoardId: string) => boardsService.duplicateBoard(sourceBoardId),
+    meta: { errorContext: "board" },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+    },
+  });
+}
+
+export function useRequestCollaboration(boardId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => boardsService.requestCollaboration(boardId),
+    meta: { errorContext: "board" },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: activityKeys.board(boardId) });
+      queryClient.invalidateQueries({ queryKey: collabRequestKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }

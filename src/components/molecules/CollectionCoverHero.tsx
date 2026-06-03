@@ -89,7 +89,9 @@ export function CollectionCoverHero({
           )}
           {meta && <div className="mt-3">{meta}</div>}
           {actions && (
-            <div className="mt-5 flex flex-wrap items-center gap-3">{actions}</div>
+            <div className="mt-5 flex flex-wrap items-center gap-2 sm:gap-2.5 md:flex-nowrap md:gap-3">
+              {actions}
+            </div>
           )}
         </div>
       </div>
