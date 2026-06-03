@@ -72,6 +72,9 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
               url={shareUrl}
               title={`${profile.full_name ?? profile.username} on Velvet`}
               text={profile.bio ?? undefined}
+              imageUrl={profile.avatar_url ?? profile.banner_url}
+              eyebrow="Velvet profile"
+              preview
               label="Share profile"
             />
           </div>

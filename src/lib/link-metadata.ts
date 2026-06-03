@@ -192,6 +192,33 @@ async function fetchNoembed(url: string): Promise<{
   }
 }
 
+async function fetchSpotifyOembed(url: string): Promise<{
+  title: string | null;
+  imageUrl: string | null;
+  description: string | null;
+}> {
+  try {
+    const endpoint = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+    const response = await fetch(endpoint, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return { title: null, imageUrl: null, description: null };
+    const data = (await response.json()) as {
+      title?: string;
+      thumbnail_url?: string;
+      description?: string;
+    };
+    return {
+      title: data.title ?? null,
+      imageUrl: data.thumbnail_url ?? null,
+      description: data.description ?? null,
+    };
+  } catch {
+    return { title: null, imageUrl: null, description: null };
+  }
+}
+
 async function fetchPinterestOembed(url: string): Promise<string | null> {
   try {
     const endpoint = `https://www.pinterest.com/oembed.json?url=${encodeURIComponent(url)}`;
@@ -241,6 +268,13 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
     imageUrl = googleMapsStaticImage(url) ?? imageUrl;
   }
 
+  if (hostIncludes(url, ["spotify"])) {
+    const spotify = await fetchSpotifyOembed(url);
+    title = title ?? spotify.title;
+    imageUrl = imageUrl ?? spotify.imageUrl;
+    description = description ?? spotify.description;
+  }
+
   const needsNoembed =
     hostIncludes(url, [
       "instagram",
@@ -250,7 +284,16 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
       "twitter",
       "x.com",
       "tiktok",
+      "reddit",
+      "redd.it",
     ]) || (source === "pinterest" && !imageUrl);
+
+  if (hostIncludes(url, ["reddit", "redd.it"]) && (!title || !imageUrl)) {
+    const microlink = await fetchMicrolink(url);
+    title = title ?? microlink.title;
+    imageUrl = imageUrl ?? microlink.imageUrl;
+    description = description ?? microlink.description;
+  }
 
   if (source === "instagram" || needsNoembed) {
     const microlink = await fetchMicrolink(url);

@@ -10,6 +10,8 @@ import {
   Send,
   Trash2,
   Link2,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { confirmAction } from "@/lib/confirm";
 import { shareOrCopy } from "@/lib/share";
@@ -17,7 +19,7 @@ import { Button } from "@/components/atoms/Button";
 import { Avatar } from "@/components/atoms/Avatar";
 import { SourceBadge } from "@/components/molecules/SourceBadge";
 import { useItemDetail } from "@/queries/item/queries";
-import { useDeleteItem } from "@/queries/item/mutations";
+import { useDeleteItem, useUpdateItem } from "@/queries/item/mutations";
 import {
   useComments,
   useAddComment,
@@ -101,6 +103,10 @@ export function ItemDetailModal() {
         : undefined;
 
   const readOnly = itemModal.readOnly ?? false;
+  const canEdit = (itemModal.canEdit ?? false) && !readOnly;
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editNotes, setEditNotes] = useState("");
   const curatorName =
     itemModal.curatorLabel ??
     profile?.full_name ??
@@ -111,6 +117,7 @@ export function ItemDetailModal() {
   const boardId =
     itemModal.boardId ?? item?.board_id ?? "";
   const deleteItem = useDeleteItem(boardId);
+  const updateItem = useUpdateItem(boardId);
 
   useBodyScrollLock(itemModal.open && Boolean(item));
 
@@ -142,6 +149,37 @@ export function ItemDetailModal() {
       closeItemModal();
     } catch {
       /* mutation global toast */
+    }
+  };
+
+  const startEditing = () => {
+    if (!item || !canEdit) return;
+    setEditTitle(item.title ?? "");
+    setEditNotes(item.notes ?? "");
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    if (!item) return;
+    setEditTitle(item.title ?? "");
+    setEditNotes(item.notes ?? "");
+    setEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!item || !canEdit) return;
+    const nextTitle = editTitle.trim() || null;
+    const nextNotes = editNotes.trim() || null;
+    try {
+      await updateItem.mutateAsync({
+        itemId: item.id,
+        title: nextTitle,
+        notes: nextNotes,
+        description: item.type === "note" ? nextNotes : item.description,
+      });
+      setEditing(false);
+    } catch {
+      /* mutation toast */
     }
   };
 
@@ -197,6 +235,40 @@ export function ItemDetailModal() {
             {/* Content column */}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <header className="flex shrink-0 items-center justify-end gap-2 border-b border-outline-variant/15 px-4 py-3 sm:px-6 lg:px-8">
+                {canEdit && !editing && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    icon={Pencil}
+                    onClick={startEditing}
+                  >
+                    Edit
+                  </Button>
+                )}
+                {editing && (
+                  <div className="mr-auto flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="gradient"
+                      size="sm"
+                      icon={Check}
+                      onClick={() => void handleSaveEdit()}
+                      loading={updateItem.isPending}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={cancelEditing}
+                      disabled={updateItem.isPending}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="secondary"
@@ -230,9 +302,28 @@ export function ItemDetailModal() {
                   <p className="mb-4 text-xs text-on-surface-variant">Loading…</p>
                 )}
 
-                <h1 className="font-display text-2xl leading-[1.15] text-on-surface sm:text-3xl lg:text-[2rem]">
-                  {item.title ?? "Untitled save"}
-                </h1>
+                {editing ? (
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="item-title"
+                      className="block text-sm font-semibold text-on-surface"
+                    >
+                      Save name
+                    </label>
+                    <input
+                      id="item-title"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Untitled save"
+                      className="velvet-field w-full rounded-xl px-4 py-3 font-display text-2xl leading-[1.15] text-on-surface sm:text-3xl lg:text-[2rem]"
+                      autoComplete="off"
+                    />
+                  </div>
+                ) : (
+                  <h1 className="font-display text-2xl leading-[1.15] text-on-surface sm:text-3xl lg:text-[2rem]">
+                    {item.title ?? "Untitled save"}
+                  </h1>
+                )}
 
                 <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-on-surface-variant">
                   <span>
@@ -284,7 +375,24 @@ export function ItemDetailModal() {
                   </div>
                 )}
 
-                {item.notes && (
+                {editing ? (
+                  <div className="mt-8 rounded-2xl border border-outline-variant/20 bg-surface-container-low/80 p-5 lg:p-6">
+                    <label
+                      htmlFor="item-notes"
+                      className="mb-2 block text-xs font-bold tracking-[0.2em] text-primary uppercase"
+                    >
+                      Notes
+                    </label>
+                    <textarea
+                      id="item-notes"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      rows={4}
+                      placeholder="Add a note for this save"
+                      className="velvet-field w-full resize-none rounded-xl px-4 py-3 text-base leading-relaxed text-on-surface"
+                    />
+                  </div>
+                ) : item.notes ? (
                   <div className="mt-8 rounded-2xl border border-outline-variant/20 bg-surface-container-low/80 p-5 lg:p-6">
                     <h3 className="mb-2 text-xs font-bold tracking-[0.2em] text-primary uppercase">
                       {readOnly ? "Notes" : "Your notes"}
@@ -293,7 +401,7 @@ export function ItemDetailModal() {
                       {item.notes}
                     </p>
                   </div>
-                )}
+                ) : null}
 
                 <section className="mt-10 border-t border-outline-variant/20 pt-8 lg:mt-12 lg:pt-10">
                   <div className="mb-6 flex items-center justify-between gap-4">
@@ -374,18 +482,37 @@ export function ItemDetailModal() {
               {!readOnly && (
                 <footer className="shrink-0 border-t border-outline-variant/15 bg-surface-container-low/40 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-on-surface-variant">
-                      This removes the save from your collection. You can add it again later.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      icon={Trash2}
-                      className="w-full shrink-0 !border-error/35 !text-error sm:w-auto"
-                      onClick={handleDelete}
-                      loading={deleteItem.isPending}
-                    >
-                      Remove from collection
-                    </Button>
+                    {canEdit ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        icon={editing ? Check : Pencil}
+                        className="w-full shrink-0 sm:w-auto"
+                        onClick={
+                          editing
+                            ? () => void handleSaveEdit()
+                            : startEditing
+                        }
+                        loading={updateItem.isPending}
+                      >
+                        {editing ? "Save changes" : "Edit save"}
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-on-surface-variant">
+                        You can view this save, but only collection editors can change it.
+                      </p>
+                    )}
+                    {canEdit && (
+                      <Button
+                        variant="secondary"
+                        icon={Trash2}
+                        className="w-full shrink-0 !border-error/35 !text-error sm:w-auto"
+                        onClick={handleDelete}
+                        loading={deleteItem.isPending}
+                      >
+                        Remove from collection
+                      </Button>
+                    )}
                   </div>
                 </footer>
               )}

@@ -8,6 +8,7 @@ import { Avatar } from "@/components/atoms/Avatar";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { confirmAction } from "@/lib/confirm";
 
 export function ProfileMenu() {
   const router = useRouter();
@@ -27,6 +28,14 @@ export function ProfileMenu() {
 
   const handleSignOut = async () => {
     setOpen(false);
+    const ok = await confirmAction({
+      title: "Sign out of Velvet?",
+      description: "You can sign back in anytime with your account.",
+      confirmLabel: "Sign out",
+      cancelLabel: "Stay here",
+      variant: "destructive",
+    });
+    if (!ok) return;
     await signOut();
     router.push(ROUTES.login);
     router.refresh();

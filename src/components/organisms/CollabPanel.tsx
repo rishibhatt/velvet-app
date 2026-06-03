@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { UserPlus, X } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import { Button } from "@/components/atoms/Button";
+import { CollaboratorSearchInput } from "@/components/molecules/CollaboratorSearchInput";
 import { slideInRight } from "@/lib/animations";
 import { formatMemberRole } from "@/lib/collaborators";
 import { formatRelativeTime } from "@/utils/format";
@@ -102,16 +103,12 @@ export function CollabPanel({
                 Invite
               </h3>
               <form onSubmit={handleInlineInvite} className="space-y-3">
-                <div className="flex items-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 focus-within:border-primary">
-                  <span className="text-sm text-on-surface-variant">@</span>
-                  <input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="username"
-                    className="min-w-0 flex-1 bg-transparent text-sm text-on-surface placeholder:text-outline/70 focus:outline-none"
-                    required
-                  />
-                </div>
+                <CollaboratorSearchInput
+                  value={username}
+                  onChange={setUsername}
+                  placeholder="username"
+                  inputClassName="text-sm"
+                />
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as BoardRole)}

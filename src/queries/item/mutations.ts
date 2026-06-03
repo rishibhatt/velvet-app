@@ -60,6 +60,36 @@ export function useSaveItem(boardId: string) {
   });
 }
 
+export function useUpdateItem(boardId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      ...input
+    }: {
+      itemId: string;
+      title?: string | null;
+      notes?: string | null;
+      description?: string | null;
+    }) => itemsService.updateItem(itemId, input),
+    meta: { skipErrorToast: true, errorContext: "item" },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Item[]>(itemKeys.list(boardId), (old) =>
+        (old ?? []).map((i) => (i.id === updated.id ? updated : i)),
+      );
+      queryClient.setQueryData(itemKeys.detail(updated.id), updated);
+      velvetToast.success("Save updated");
+    },
+    onError: (err) => {
+      velvetToast.error("Couldn't update", getErrorMessage(err, "item"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
+      queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+    },
+  });
+}
+
 export function useDeleteItem(boardId: string) {
   const queryClient = useQueryClient();
   return useMutation({

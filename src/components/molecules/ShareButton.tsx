@@ -4,6 +4,7 @@ import { Share2 } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { IconButton } from "@/components/atoms/IconButton";
 import { shareOrCopy } from "@/lib/share";
+import { useModalStore } from "@/store/modal.store";
 import { cn } from "@/lib/utils";
 
 interface ShareButtonProps {
@@ -14,6 +15,10 @@ interface ShareButtonProps {
   variant?: "button" | "icon";
   size?: "sm" | "md";
   className?: string;
+  imageUrl?: string | null;
+  imageUrls?: string[];
+  eyebrow?: string;
+  preview?: boolean;
 }
 
 export function ShareButton({
@@ -24,8 +29,25 @@ export function ShareButton({
   variant = "button",
   size = "sm",
   className,
+  imageUrl,
+  imageUrls,
+  eyebrow,
+  preview = false,
 }: ShareButtonProps) {
+  const openShareSheet = useModalStore((s) => s.openShareSheet);
+
   const handleShare = () => {
+    if (preview) {
+      openShareSheet({
+        url,
+        title,
+        text,
+        imageUrl,
+        imageUrls,
+        eyebrow,
+      });
+      return;
+    }
     void shareOrCopy({ url, title, text });
   };
 

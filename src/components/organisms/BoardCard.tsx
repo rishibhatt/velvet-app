@@ -95,7 +95,7 @@ export function BoardCard({
       </Link>
 
       {showDiscoverFooter && owner && (
-        <CollectionDiscoverFooter board={board} owner={owner} />
+        <CollectionDiscoverFooter board={board} owner={owner} compact />
       )}
     </motion.article>
   );

@@ -75,6 +75,19 @@ export const likesService = {
         user_id: user.id,
       });
       if (error) throw new Error(parseSupabaseError(error));
+
+      const { error: notificationError } = await supabase.rpc(
+        "create_board_like_notification",
+        { p_board_id: boardId },
+      );
+      if (
+        notificationError &&
+        !parseSupabaseError(notificationError).includes(
+          "create_board_like_notification",
+        )
+      ) {
+        throw new Error(parseSupabaseError(notificationError));
+      }
     }
 
     const { count, error: countError } = await supabase

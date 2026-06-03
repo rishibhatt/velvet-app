@@ -8,7 +8,18 @@ export interface ItemModalState {
   /** Item data from the grid click — avoids showing a stale cached item while loading */
   snapshot?: Item;
   readOnly?: boolean;
+  canEdit?: boolean;
   curatorLabel?: string;
+}
+
+export interface ShareSheetState {
+  open: boolean;
+  url?: string;
+  title?: string;
+  text?: string;
+  imageUrl?: string | null;
+  imageUrls?: string[];
+  eyebrow?: string;
 }
 
 interface ModalStore {
@@ -16,6 +27,7 @@ interface ModalStore {
   itemModal: ItemModalState;
   createBoardModal: boolean;
   inviteModal: { open: boolean; boardId?: string };
+  shareSheet: ShareSheetState;
   openSaveModal: (boardId?: string) => void;
   openItemModal: (
     itemId: string,
@@ -23,11 +35,14 @@ interface ModalStore {
       snapshot?: Item;
       boardId?: string;
       readOnly?: boolean;
+      canEdit?: boolean;
       curatorLabel?: string;
     },
   ) => void;
   openCreateBoard: () => void;
   openInviteModal: (boardId: string) => void;
+  openShareSheet: (payload: Omit<ShareSheetState, "open">) => void;
+  closeShareSheet: () => void;
   closeSaveModal: () => void;
   closeItemModal: () => void;
   closeCreateBoard: () => void;
@@ -40,6 +55,7 @@ export const useModalStore = create<ModalStore>((set) => ({
   itemModal: { open: false },
   createBoardModal: false,
   inviteModal: { open: false },
+  shareSheet: { open: false },
   openSaveModal: (boardId) =>
     set({ saveModal: { open: true, boardId } }),
   openItemModal: (itemId, options) =>
@@ -50,12 +66,16 @@ export const useModalStore = create<ModalStore>((set) => ({
         boardId: options?.boardId ?? options?.snapshot?.board_id,
         snapshot: options?.snapshot,
         readOnly: options?.readOnly,
+        canEdit: options?.canEdit,
         curatorLabel: options?.curatorLabel,
       },
     }),
   openCreateBoard: () => set({ createBoardModal: true }),
   openInviteModal: (boardId) =>
     set({ inviteModal: { open: true, boardId } }),
+  openShareSheet: (payload) =>
+    set({ shareSheet: { open: true, ...payload } }),
+  closeShareSheet: () => set({ shareSheet: { open: false } }),
   closeSaveModal: () => set({ saveModal: { open: false } }),
   closeItemModal: () => set({ itemModal: { open: false } }),
   closeCreateBoard: () => set({ createBoardModal: false }),
@@ -66,5 +86,6 @@ export const useModalStore = create<ModalStore>((set) => ({
       itemModal: { open: false },
       createBoardModal: false,
       inviteModal: { open: false },
+      shareSheet: { open: false },
     }),
 }));

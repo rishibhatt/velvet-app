@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/atoms/Skeleton";
 import { ProfileEditor } from "@/features/profile/components/ProfileEditor";
 import { ProfileBoardsSection } from "@/features/profile/components/ProfileBoardsSection";
@@ -10,7 +9,6 @@ import { ProfileStatsGrid } from "@/features/profile/components/ProfileStatsGrid
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBoards, useLikedBoards } from "@/queries/board/queries";
 import { useModalStore } from "@/store/modal.store";
-import { ROUTES } from "@/constants/routes";
 
 function ProfilePageSkeleton() {
   return (
@@ -32,8 +30,7 @@ function ProfilePageSkeleton() {
 }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const { profile, isLoading: profileLoading, signOut } = useAuth();
+  const { profile, isLoading: profileLoading } = useAuth();
   const { data: boards = [], isLoading: boardsLoading } = useBoards();
   const { data: likedBoards = [], isLoading: likedLoading } = useLikedBoards();
   const { openCreateBoard } = useModalStore();
@@ -59,12 +56,6 @@ export default function ProfilePage() {
       likesReceived,
     };
   }, [boards, profile?.id]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push(ROUTES.login);
-    router.refresh();
-  };
 
   if (profileLoading) {
     return <ProfilePageSkeleton />;
@@ -96,7 +87,6 @@ export default function ProfilePage() {
       <ProfileHeroCard
         profile={profile}
         onEdit={() => setEditing(true)}
-        onSignOut={() => void handleSignOut()}
       />
 
       <ProfileStatsGrid

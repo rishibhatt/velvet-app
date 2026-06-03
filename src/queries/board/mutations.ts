@@ -49,10 +49,11 @@ export function useInviteMember(boardId: string) {
       boardsService.inviteMember(boardId, input.username, input.role),
     meta: { errorContext: "board" },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
-      queryClient.invalidateQueries({ queryKey: boardKeys.list() });
       queryClient.invalidateQueries({ queryKey: activityKeys.board(boardId) });
-      velvetToast.success("Collaborator invited", "They can now access this collection.");
+      velvetToast.success(
+        "Invite sent",
+        "They'll get a notification to accept or deny the collaboration.",
+      );
     },
   });
 }

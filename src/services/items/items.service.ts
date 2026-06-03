@@ -3,7 +3,9 @@ import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
 import type { Comment, Item, SaveItemInput } from "@/types/board.types";
-import type { Profile } from "@/types/board.types";
+import type { Database } from "@/types/database.types";
+
+type ItemUpdate = Database["public"]["Tables"]["items"]["Update"];
 
 const ITEM_SELECT = `
   *,
@@ -14,7 +16,8 @@ const ITEM_SELECT = `
 
 function mapItem(row: Record<string, unknown>): Item {
   const itemTags = (row.item_tags as Array<{ tag: unknown }>) ?? [];
-  const { item_tags: _tags, ...rest } = row;
+  const rest = { ...row };
+  delete rest.item_tags;
   return {
     ...(rest as unknown as Item),
     tags: itemTags.map((it) => it.tag).filter(Boolean) as Item["tags"],
@@ -124,6 +127,29 @@ export const itemsService = {
     });
 
     return savedItem;
+  },
+
+  async updateItem(
+    itemId: string,
+    input: { title?: string | null; notes?: string | null; description?: string | null },
+  ): Promise<Item> {
+    requireSupabase();
+    const supabase = createClient();
+    const patch: ItemUpdate = {};
+    if (input.title !== undefined) patch.title = input.title;
+    if (input.notes !== undefined) patch.notes = input.notes;
+    if (input.description !== undefined) patch.description = input.description;
+
+    const { data, error } = await supabase
+      .from("items")
+      .update(patch)
+      .eq("id", itemId)
+      .is("deleted_at", null)
+      .select(ITEM_SELECT)
+      .single();
+
+    if (error) throw new Error(parseSupabaseError(error));
+    return mapItem(data as Record<string, unknown>);
   },
 
   async deleteItem(itemId: string) {

@@ -73,7 +73,9 @@ export function ExploreCollectionCard({
         </div>
       </Link>
 
-      {owner && <CollectionDiscoverFooter board={board} owner={owner} />}
+      {owner && (
+        <CollectionDiscoverFooter board={board} owner={owner} compact />
+      )}
     </motion.article>
   );
 }

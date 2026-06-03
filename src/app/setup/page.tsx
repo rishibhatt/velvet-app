@@ -80,6 +80,12 @@ export default async function SetupPage() {
               </code>{" "}
               (likes + trending sort)
             </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/012_notifications_and_invitations.sql
+              </code>{" "}
+              (notifications + collaboration approvals)
+            </li>
           </ul>
         </li>
 

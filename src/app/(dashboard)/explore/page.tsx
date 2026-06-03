@@ -14,7 +14,6 @@ import { EmptyState } from "@/components/molecules/EmptyState";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { usePublicBoards } from "@/queries/discover/queries";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import type { PublicBoardSort } from "@/services/discover/discover.service";
 import type { Mood } from "@/types/board.types";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
@@ -24,17 +23,16 @@ import { fadeUp, stagger } from "@/lib/animations";
 export default function ExplorePage() {
   const { user } = useAuth();
   const [mood, setMood] = useState<Mood | null>(null);
-  const [sort, setSort] = useState<PublicBoardSort>("trending");
   const [viewMode, setViewMode] = useState<ExploreViewMode>("grid");
 
   const filters = useMemo(
     () => ({
       mood,
-      sort,
+      sort: "trending" as const,
       excludeOwnerId: user?.id,
       limit: 48,
     }),
-    [mood, sort, user?.id],
+    [mood, user?.id],
   );
 
   const { data: boards = [], isLoading, isError, error, refetch } =
@@ -44,7 +42,7 @@ export default function ExplorePage() {
 
   return (
     <main className="page-container py-stack-lg pb-28 md:py-12 md:pb-12">
-      <ExploreHero sort={sort} onSortChange={setSort} />
+      <ExploreHero />
 
       <ExploreFiltersBar
         mood={mood}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
+import { CollaboratorSearchInput } from "@/components/molecules/CollaboratorSearchInput";
 import { ModalShell } from "@/components/organisms/ModalShell";
 import { useBoardDetail } from "@/queries/board/queries";
 import { useInviteMember } from "@/queries/board/mutations";
@@ -38,7 +39,7 @@ export function InviteModal() {
       setUsername("");
       handleClose();
     } catch {
-      /* global mutation toast */
+      return;
     }
   };
 
@@ -49,8 +50,8 @@ export function InviteModal() {
       title="Invite collaborator"
       subtitle={
         board?.title
-          ? `Add someone to “${board.title}”`
-          : "They’ll see this collection in their library"
+          ? `Invite someone to "${board.title}"`
+          : "They will get a notification to accept or deny"
       }
       className="surface-panel max-w-md"
       contentClassName="p-stack-lg"
@@ -68,26 +69,11 @@ export function InviteModal() {
       }
     >
       <form id="invite-collaborator-form" onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="invite-username" className="text-xs font-bold tracking-widest text-on-surface-variant uppercase">
-            Username
-          </label>
-          <div className="flex items-center gap-2 rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-3 focus-within:border-primary">
-            <span className="text-on-surface-variant">@</span>
-            <input
-              id="invite-username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="theirusername"
-              autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent text-on-surface placeholder:text-outline/70 focus:outline-none"
-              required
-            />
-          </div>
-          <p className="text-xs text-on-surface-variant">
-            They must already have a Velvet account with this username.
-          </p>
-        </div>
+        <CollaboratorSearchInput
+          inputId="invite-username"
+          value={username}
+          onChange={setUsername}
+        />
 
         <div className="space-y-2">
           <span className="text-xs font-bold tracking-widest text-on-surface-variant uppercase">

@@ -6,7 +6,6 @@ import {
   Calendar,
   ExternalLink,
   Globe,
-  LogOut,
   Pencil,
   Settings,
 } from "lucide-react";
@@ -23,13 +22,11 @@ import { cn } from "@/lib/utils";
 interface ProfileHeroCardProps {
   profile: Profile;
   onEdit: () => void;
-  onSignOut: () => void;
 }
 
 export function ProfileHeroCard({
   profile,
   onEdit,
-  onSignOut,
 }: ProfileHeroCardProps) {
   const displayName = profile.full_name ?? "Your profile";
   const websiteLabel = profile.website
@@ -181,20 +178,13 @@ export function ProfileHeroCard({
                   url={profileShareUrl}
                   title={`${displayName} on Velvet`}
                   text={profile.bio ?? undefined}
+                  imageUrl={profile.avatar_url ?? profile.banner_url}
+                  eyebrow="Velvet profile"
+                  preview
                   label="Share"
                   className="col-span-2 sm:col-span-1"
                 />
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                icon={LogOut}
-                onClick={onSignOut}
-                className="col-span-1 text-on-surface-variant sm:w-auto"
-              >
-                Sign out
-              </Button>
             </div>
           </div>
         </div>

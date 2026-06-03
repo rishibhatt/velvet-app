@@ -6,7 +6,11 @@ import { UserPlus, Share2, Plus, Users, Settings } from "lucide-react";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
-import { shareOrCopy } from "@/lib/share";
+import {
+  canEditBoardItems,
+  canEditBoardMeta,
+  canManageBoardSettings,
+} from "@/lib/board-permissions";
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { Button } from "@/components/atoms/Button";
@@ -54,7 +58,8 @@ export default function BoardDetailPage({
   } = useItems(id);
   const { data: activities = [] } = useBoardActivity(id);
   const { user } = useAuth();
-  const { openSaveModal, openItemModal, openInviteModal } = useModalStore();
+  const { openSaveModal, openItemModal, openInviteModal, openShareSheet } =
+    useModalStore();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -143,11 +148,15 @@ export default function BoardDetailPage({
   }
 
   const members = board.members ?? [];
-  const canInvite =
-    user?.id === board.owner_id ||
-    members.some((m) => m.user_id === user?.id && m.role === "admin");
+  const canInvite = canManageBoardSettings(board, user?.id);
+  const canEditItems = canEditBoardItems(board, user?.id);
+  const canOpenSettings = canEditBoardMeta(board, user?.id);
+  const previewUrls =
+    heroImages.length > 0
+      ? heroImages
+      : (board.preview_images ?? (board.cover_url ? [board.cover_url] : []));
 
-  const handleShare = async () => {
+  const handleShare = () => {
     if (!board.is_public) {
       velvetToast.info("Make it public", "Open settings and set visibility to Public.");
       return;
@@ -156,10 +165,12 @@ export default function BoardDetailPage({
       velvetToast.error("Migration needed", "Run migration 004 in Supabase (see /setup).");
       return;
     }
-    await shareOrCopy({
+    openShareSheet({
       url: getPublicShareUrl(board.slug),
       title: board.title,
       text: board.description ?? undefined,
+      imageUrls: previewUrls.slice(0, 4),
+      eyebrow: "Velvet collection",
     });
   };
 
@@ -213,9 +224,11 @@ export default function BoardDetailPage({
                 Invite
               </Button>
             )}
-            <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
-              <Settings className="h-5 w-5" />
-            </IconButton>
+            {canOpenSettings && (
+              <IconButton label="Collection settings" onClick={() => setSettingsOpen(true)}>
+                <Settings className="h-5 w-5" />
+              </IconButton>
+            )}
             <IconButton label="Share collection" onClick={() => void handleShare()}>
               <Share2 className="h-5 w-5" />
             </IconButton>
@@ -259,7 +272,11 @@ export default function BoardDetailPage({
                 key={item.id}
                 item={item}
                 onClick={() =>
-                  openItemModal(item.id, { snapshot: item, boardId: id })
+                  openItemModal(item.id, {
+                    snapshot: item,
+                    boardId: id,
+                    canEdit: canEditItems,
+                  })
                 }
               />
             ))}
@@ -274,19 +291,21 @@ export default function BoardDetailPage({
         )}
       </section>
 
-      <div className="fixed bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] left-0 z-40 flex w-full flex-col items-center md:bottom-0">
-        <div className="flex min-h-[72px] w-full items-center justify-center border-t border-outline-variant/20 bg-bg-elevated/98 px-4 shadow-[0_-4px_24px_rgba(46,42,39,0.06)] sm:px-margin-mobile md:pb-safe">
-          <Button
-            size="lg"
-            variant="gradient"
-            icon={Plus}
-            className="w-full max-w-md"
-            onClick={() => openSaveModal(id)}
-          >
-            {UI_LABELS.saveToCollection}
-          </Button>
+      {canEditItems && (
+        <div className="fixed bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] left-0 z-40 flex w-full flex-col items-center md:bottom-0">
+          <div className="flex min-h-[72px] w-full items-center justify-center border-t border-outline-variant/20 bg-bg-elevated/98 px-4 shadow-[0_-4px_24px_rgba(46,42,39,0.06)] sm:px-margin-mobile md:pb-safe">
+            <Button
+              size="lg"
+              variant="gradient"
+              icon={Plus}
+              className="w-full max-w-md"
+              onClick={() => openSaveModal(id)}
+            >
+              {UI_LABELS.saveToCollection}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <CollabPanel
         open={collabPanelOpen}
@@ -298,11 +317,13 @@ export default function BoardDetailPage({
         ownerId={board.owner_id}
       />
 
-      <BoardSettingsModal
-        board={board}
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
+      {canOpenSettings && (
+        <BoardSettingsModal
+          board={board}
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </>
   );
 }

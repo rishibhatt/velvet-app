@@ -87,6 +87,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      board_invitations: {
+        Row: {
+          id: string;
+          board_id: string;
+          inviter_id: string;
+          invitee_id: string;
+          role: string;
+          status: string;
+          responded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          board_id: string;
+          inviter_id: string;
+          invitee_id: string;
+          role: string;
+          status?: string;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          board_id?: string;
+          inviter_id?: string;
+          invitee_id?: string;
+          role?: string;
+          status?: string;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       boards: {
         Row: {
           id: string;
@@ -288,6 +321,48 @@ export interface Database {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_id: string;
+          actor_id: string | null;
+          type: string;
+          title: string;
+          body: string | null;
+          resource_type: string | null;
+          resource_id: string | null;
+          metadata: Json | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipient_id: string;
+          actor_id?: string | null;
+          type: string;
+          title: string;
+          body?: string | null;
+          resource_type?: string | null;
+          resource_id?: string | null;
+          metadata?: Json | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          recipient_id?: string;
+          actor_id?: string | null;
+          type?: string;
+          title?: string;
+          body?: string | null;
+          resource_type?: string | null;
+          resource_id?: string | null;
+          metadata?: Json | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -310,6 +385,22 @@ export interface Database {
       can_edit_board_items: {
         Args: { p_board_id: string };
         Returns: boolean;
+      };
+      can_manage_board_invites: {
+        Args: { p_board_id: string };
+        Returns: boolean;
+      };
+      create_board_invitation: {
+        Args: { p_board_id: string; p_invitee_id: string; p_role: string };
+        Returns: string;
+      };
+      respond_board_invitation: {
+        Args: { p_invitation_id: string; p_accept: boolean };
+        Returns: string;
+      };
+      create_board_like_notification: {
+        Args: { p_board_id: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

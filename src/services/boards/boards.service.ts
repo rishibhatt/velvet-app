@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
 import type {
   Board,
+  BoardInvitation,
   BoardMember,
   CreateBoardInput,
   UpdateBoardInput,
@@ -155,7 +156,7 @@ export const boardsService = {
     boardId: string,
     username: string,
     role: BoardMember["role"],
-  ): Promise<BoardMember> {
+  ): Promise<BoardInvitation> {
     requireSupabase();
     const supabase = createClient();
     const {
@@ -197,53 +198,35 @@ export const boardsService = {
       throw new Error("They are already a collaborator on this collection.");
     }
 
-    const memberSelect = `
-      id,
-      board_id,
-      user_id,
-      role,
-      created_at,
-      profile:profiles(id, username, full_name, avatar_url, banner_url, bio, website, created_at, updated_at)
-    `;
+    const { data: pending } = await supabase
+      .from("board_invitations")
+      .select("id")
+      .eq("board_id", boardId)
+      .eq("invitee_id", profile.id)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (pending) {
+      throw new Error("They already have a pending invite for this collection.");
+    }
 
-    const { data: member, error: insertError } = await supabase
-      .from("board_members")
-      .insert({
-        board_id: boardId,
-        user_id: profile.id,
-        role,
-      })
-      .select(memberSelect)
+    const { data: invitationId, error: inviteError } = await supabase.rpc(
+      "create_board_invitation",
+      {
+        p_board_id: boardId,
+        p_invitee_id: profile.id,
+        p_role: role,
+      },
+    );
+    if (inviteError) throw new Error(parseSupabaseError(inviteError));
+
+    const { data: invitation, error: invitationError } = await supabase
+      .from("board_invitations")
+      .select("*")
+      .eq("id", invitationId)
       .single();
+    if (invitationError) throw new Error(parseSupabaseError(invitationError));
 
-    if (insertError) throw new Error(parseSupabaseError(insertError));
-
-    await supabase.from("activity_logs").insert({
-      board_id: boardId,
-      user_id: user.id,
-      action: `invited @${profile.username} as ${role}`,
-      entity: "member",
-      entity_id: (member as { id: string }).id,
-      metadata: { username: profile.username, role },
-    });
-
-    const row = member as unknown as {
-      id: string;
-      board_id: string;
-      user_id: string;
-      role: BoardMember["role"];
-      created_at: string;
-      profile: BoardMember["profile"];
-    };
-
-    return {
-      id: row.id,
-      board_id: row.board_id,
-      user_id: row.user_id,
-      role: row.role,
-      created_at: row.created_at,
-      profile: row.profile ?? undefined,
-    };
+    return invitation as BoardInvitation;
   },
 
   async removeMember(boardId: string, memberId: string): Promise<void> {

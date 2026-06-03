@@ -9,6 +9,14 @@ export type Mood =
 
 export type BoardRole = "viewer" | "editor" | "admin";
 
+export type BoardInvitationStatus =
+  | "pending"
+  | "accepted"
+  | "denied"
+  | "cancelled";
+
+export type NotificationType = "board_invite" | "board_like";
+
 export type ItemType = "url" | "image" | "video" | "note";
 
 export type ItemSource =
@@ -62,6 +70,32 @@ export interface BoardMember {
   role: BoardRole;
   created_at: string;
   profile?: Profile;
+}
+
+export interface BoardInvitation {
+  id: string;
+  board_id: string;
+  inviter_id: string;
+  invitee_id: string;
+  role: BoardRole;
+  status: BoardInvitationStatus;
+  responded_at: string | null;
+  created_at: string;
+}
+
+export interface AppNotification {
+  id: string;
+  recipient_id: string;
+  actor_id: string | null;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  resource_type: string | null;
+  resource_id: string | null;
+  metadata: Record<string, unknown> | null;
+  read_at: string | null;
+  created_at: string;
+  actor?: Pick<Profile, "id" | "username" | "full_name" | "avatar_url"> | null;
 }
 
 export interface Item {

@@ -71,7 +71,10 @@ export function PublicCollectionView({
                   url={getPublicShareUrl(board.slug)}
                   title={board.title}
                   text={board.description ?? undefined}
-                  label="Share collection"
+                  imageUrls={heroImages}
+                  eyebrow="Velvet collection"
+                  preview
+                  label="Share collection"
                 />
               )}
               <BoardLikeButton
@@ -153,4 +156,4 @@ export function PublicCollectionView({
     </div>
   );
 }
-
+

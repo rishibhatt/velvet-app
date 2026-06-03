@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search, Home, Compass, User } from "lucide-react";
 import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { ProfileMenu } from "@/components/molecules/ProfileMenu";
+import { NotificationBell } from "@/components/molecules/NotificationBell";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useState, FormEvent } from "react";
@@ -95,6 +96,7 @@ export function Navbar() {
             >
               <Search className="h-5 w-5" />
             </Link>
+            <NotificationBell />
             <ProfileMenu />
           </div>
         </div>

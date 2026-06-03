@@ -13,8 +13,8 @@ export const COLLECTION_CARD_GRID =
 export const COLLECTION_CARD_RAIL =
   "-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 hide-scrollbar sm:gap-4 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-4";
 
-/** Width of one card in a horizontal rail on mobile (~2 cards visible) */
-export const COLLECTION_CARD_RAIL_ITEM = "w-[min(44vw,168px)] shrink-0 md:w-auto";
+/** Width of one card in a horizontal rail on mobile (~1.8 cards visible) */
+export const COLLECTION_CARD_RAIL_ITEM = "w-[min(52vw,200px)] shrink-0 md:w-auto";
 
 export const COLLECTION_CARD_TITLE =
   "font-display text-base leading-tight text-bg-elevated drop-shadow-md sm:text-lg";

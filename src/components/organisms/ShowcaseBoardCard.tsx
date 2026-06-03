@@ -118,7 +118,7 @@ export function ShowcaseBoardCard({
       </Link>
 
       {isDiscover && owner && showLike && (
-        <CollectionDiscoverFooter board={board} owner={owner} />
+        <CollectionDiscoverFooter board={board} owner={owner} compact />
       )}
     </motion.article>
   );

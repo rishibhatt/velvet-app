@@ -2,15 +2,8 @@
 
 import { Sparkles } from "lucide-react";
 import { LifestyleHeroBanner } from "@/components/organisms/LifestyleHeroBanner";
-import { DiscoverSortToggle } from "@/components/molecules/DiscoverSortToggle";
-import type { PublicBoardSort } from "@/services/discover/discover.service";
 
-interface ExploreHeroProps {
-  sort: PublicBoardSort;
-  onSortChange: (sort: PublicBoardSort) => void;
-}
-
-export function ExploreHero({ sort, onSortChange }: ExploreHeroProps) {
+export function ExploreHero() {
   return (
     <LifestyleHeroBanner
       eyebrow={
@@ -27,15 +20,7 @@ export function ExploreHero({ sort, onSortChange }: ExploreHeroProps) {
           </span>
         </h1>
       }
-      subtitle="Browse inspiration from the Velvet community — filter by mood or see what's trending right now."
-      footer={
-        <DiscoverSortToggle
-          value={sort}
-          onChange={onSortChange}
-          variant="explore"
-          className="max-w-full"
-        />
-      }
+      subtitle="Browse inspiration from the Velvet community - filter by mood or see what's trending right now."
     />
   );
 }
