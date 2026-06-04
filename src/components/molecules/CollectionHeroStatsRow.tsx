@@ -4,6 +4,7 @@ import { Layers, Users } from "lucide-react";
 import { formatCount } from "@/utils/format";
 import { CollectionHeroStatChip } from "./CollectionHeroStatChip";
 import { BoardLikeButton } from "./BoardLikeButton";
+import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 
 interface CollectionHeroStatsRowProps {
   itemCount: number;
@@ -27,6 +28,12 @@ export function CollectionHeroStatsRow({
   collaboratorCount = 0,
   showLikeChip = false,
 }: CollectionHeroStatsRowProps) {
+  const { likeCount: displayCount } = useBoardLikeDisplay({
+    boardId,
+    likeCount,
+    isLiked: isLiked ?? false,
+  });
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <CollectionHeroStatChip icon={<Layers className="h-3.5 w-3.5 text-primary" aria-hidden />}>
@@ -50,9 +57,9 @@ export function CollectionHeroStatsRow({
         />
       )}
 
-      {!showLikeChip && likeCount > 0 && (
+      {!showLikeChip && displayCount > 0 && (
         <CollectionHeroStatChip>
-          {formatCount(likeCount)} {likeCount === 1 ? "like" : "likes"}
+          {formatCount(displayCount)} {displayCount === 1 ? "like" : "likes"}
         </CollectionHeroStatChip>
       )}
     </div>

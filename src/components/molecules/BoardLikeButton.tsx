@@ -2,7 +2,7 @@
 
 import type { MouseEvent } from "react";
 import { Heart } from "lucide-react";
-import { useToggleBoardLike } from "@/queries/likes/mutations";
+import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,8 @@ export function BoardLikeButton({
 }: BoardLikeButtonProps) {
   const pathname = usePathname();
   const { isAuthenticated, isAuthReady } = useAuth();
-  const toggle = useToggleBoardLike();
+  const { likeCount: displayCount, isLiked: displayLiked, isPending, toggleLike } =
+    useBoardLikeDisplay({ boardId, likeCount, isLiked });
   const loginHref = loginWithReturn(pathname || "/explore");
   const isFooter = appearance === "footer";
   const isToolbar = appearance === "toolbar";
@@ -42,7 +43,7 @@ export function BoardLikeButton({
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthReady) return;
+    if (!isAuthReady || isPending) return;
 
     if (!isAuthenticated) {
       velvetToast.info("Sign in to like", "Create an account to save favorites.");
@@ -50,7 +51,7 @@ export function BoardLikeButton({
     }
     if (!canLike) return;
 
-    toggle.mutate(boardId);
+    toggleLike();
   };
 
   const iconSize = isToolbar ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-4 w-4";
@@ -58,7 +59,8 @@ export function BoardLikeButton({
   if (isToolbar) {
     const shell = cn(
       "relative inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/40 bg-bg-elevated text-primary shadow-sm transition-all hover:bg-primary-fixed/50 active:scale-95",
-      isLiked && "border-error/30 bg-error/10 text-error",
+      displayLiked && "border-error/30 bg-error/10 text-error",
+      isPending && "pointer-events-none opacity-80",
       className,
     );
 
@@ -71,9 +73,9 @@ export function BoardLikeButton({
           aria-label="Sign in to like"
         >
           <Heart className={iconSize} strokeWidth={2.25} />
-          {likeCount > 0 && (
+          {displayCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[18px] rounded-full bg-primary px-1 py-px text-center text-[10px] font-bold leading-none text-on-primary">
-              {formatCount(likeCount)}
+              {formatCount(displayCount)}
             </span>
           )}
         </Link>
@@ -84,28 +86,29 @@ export function BoardLikeButton({
       <button
         type="button"
         onClick={handleClick}
-        disabled={(!canLike && isAuthenticated) || !isAuthReady}
-        aria-label={isLiked ? "Unlike collection" : "Like collection"}
-        aria-pressed={isLiked}
+        disabled={(!canLike && isAuthenticated) || !isAuthReady || isPending}
+        aria-label={displayLiked ? "Unlike collection" : "Like collection"}
+        aria-pressed={displayLiked}
+        aria-busy={isPending}
         className={cn(
           shell,
           (!canLike || !isAuthReady) && isAuthenticated && "opacity-70",
         )}
       >
         <Heart
-          className={cn(iconSize, isLiked && "fill-current")}
+          className={cn(iconSize, displayLiked && "fill-current")}
           strokeWidth={2.25}
         />
-        {likeCount > 0 && (
+        {displayCount > 0 && (
           <span
             className={cn(
               "absolute -top-0.5 -right-0.5 min-w-[18px] rounded-full px-1 py-px text-center text-[10px] font-bold leading-none",
-              isLiked
+              displayLiked
                 ? "bg-error text-on-primary"
                 : "bg-primary text-on-primary",
             )}
           >
-            {formatCount(likeCount)}
+            {formatCount(displayCount)}
           </span>
         )}
       </button>
@@ -121,13 +124,14 @@ export function BoardLikeButton({
   const baseStyles = cn(
     "inline-flex items-center rounded-full font-semibold transition-all active:scale-95",
     pad,
+    isPending && "pointer-events-none opacity-80",
   );
 
   const toneStyles = isFooter
-    ? isLiked
+    ? displayLiked
       ? "bg-primary text-on-primary shadow-sm ring-1 ring-primary/20"
       : "bg-bg-elevated text-primary shadow-sm ring-1 ring-outline-variant/25 hover:bg-primary-fixed/45"
-    : isLiked
+    : displayLiked
       ? "bg-bg-elevated/95 text-error ring-1 ring-error/35 shadow-md"
       : "bg-bg-elevated/95 text-primary shadow-sm ring-1 ring-outline-variant/20 hover:bg-primary-fixed/50";
 
@@ -151,7 +155,7 @@ export function BoardLikeButton({
         aria-label="Sign in to like collections"
       >
         <Heart className={iconSize} strokeWidth={2.25} />
-        <span className={countClass}>{formatCount(likeCount)}</span>
+        <span className={countClass}>{formatCount(displayCount)}</span>
       </Link>
     );
   }
@@ -160,21 +164,17 @@ export function BoardLikeButton({
     <button
       type="button"
       onClick={handleClick}
-      disabled={(!canLike && isAuthenticated) || !isAuthReady}
-      aria-label={isLiked ? "Unlike collection" : "Like collection"}
-      aria-pressed={isLiked}
-      className={cn(
-        baseStyles,
-        toneStyles,
-        (!canLike || !isAuthReady) && isAuthenticated && "opacity-70",
-        className,
-      )}
+      disabled={(!canLike && isAuthenticated) || !isAuthReady || isPending}
+      aria-label={displayLiked ? "Unlike collection" : "Like collection"}
+      aria-pressed={displayLiked}
+      aria-busy={isPending}
+      className={cn(baseStyles, toneStyles, (!canLike || !isAuthReady) && isAuthenticated && "opacity-70", className)}
     >
       <Heart
-        className={cn(iconSize, isLiked && "fill-current")}
+        className={cn(iconSize, displayLiked && "fill-current")}
         strokeWidth={2.25}
       />
-      <span className={countClass}>{formatCount(likeCount)}</span>
+      <span className={countClass}>{formatCount(displayCount)}</span>
     </button>
   );
 }

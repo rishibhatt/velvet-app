@@ -7,6 +7,7 @@ import { createSiteMetadata } from "@/lib/site-metadata";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 import { AuthProvider } from "@/providers/AuthProvider";
+import { NotificationRealtimeProvider } from "@/providers/NotificationRealtimeProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { GlobalModals } from "@/components/layouts/GlobalModals";
 import { JsonLd, organizationSchema, websiteSchema } from "@/lib/seo/schema";
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-body text-on-surface antialiased">
         <QueryProvider>
           <AuthProvider>
+            <NotificationRealtimeProvider>
             <NavigationProgressProvider>
               <AnalyticsProvider>
                 <ToastProvider>
@@ -47,6 +49,7 @@ export default function RootLayout({
                 </ToastProvider>
               </AnalyticsProvider>
             </NavigationProgressProvider>
+            </NotificationRealtimeProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

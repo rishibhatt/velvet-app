@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Bell, Check, CheckCheck, Heart, MessageCircle, UserPlus, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Avatar } from "@/components/atoms/Avatar";
 import { Button } from "@/components/atoms/Button";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { createClient } from "@/services/supabase/client";
-import { isSupabaseConfigured, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/utils/format";
 import {
   useNotifications,
@@ -21,7 +19,6 @@ import {
   useRespondBoardInvite,
 } from "@/queries/notifications/mutations";
 import { useRespondCollaborationRequest } from "@/queries/collaboration/mutations";
-import { notificationKeys } from "@/queries/notifications/keys";
 import type { AppNotification } from "@/types/board.types";
 
 function getMetadataStatus(notification: AppNotification) {
@@ -219,39 +216,11 @@ function NotificationItem({
 }
 
 export function NotificationBell() {
-  const { user, isAuthenticated, isAuthReady } = useAuth();
-  const queryClient = useQueryClient();
+  const { isAuthenticated, isAuthReady } = useAuth();
   const [open, setOpen] = useState(false);
   const { data: notifications = [], isLoading, isError } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const markAllRead = useMarkAllNotificationsRead();
-
-  useEffect(() => {
-    if (!isSupabaseConfigured() || !isAuthReady || !isAuthenticated || !user?.id) {
-      return;
-    }
-
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `recipient_id=eq.${user.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: notificationKeys.all });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isAuthenticated, isAuthReady, queryClient, user?.id]);
 
   const visibleCount = useMemo(
     () => Math.min(unreadCount, 99),

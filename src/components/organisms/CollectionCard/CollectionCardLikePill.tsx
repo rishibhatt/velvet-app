@@ -3,7 +3,7 @@
 import type { MouseEvent } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { useToggleBoardLike } from "@/queries/likes/mutations";
+import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { velvetToast } from "@/lib/toast";
@@ -32,24 +32,26 @@ export function CollectionCardLikePill({
 }: CollectionCardLikePillProps) {
   const pathname = usePathname();
   const { isAuthenticated, isAuthReady } = useAuth();
-  const toggle = useToggleBoardLike();
+  const { likeCount: displayCount, isLiked: displayLiked, isPending, toggleLike } =
+    useBoardLikeDisplay({ boardId, likeCount, isLiked });
 
   const handleClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthReady) return;
+    if (!isAuthReady || isPending) return;
     if (!isAuthenticated) {
       velvetToast.info("Sign in to like", "Create an account to save favorites.");
       return;
     }
     if (!canLike) return;
-    if (!isLiked) onLikeBurst?.();
-    toggle.mutate(boardId);
+    if (!displayLiked) onLikeBurst?.();
+    toggleLike();
   };
 
   const shell = cn(
     "pointer-events-auto inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-3 text-xs font-semibold text-white shadow-lg backdrop-blur-md transition-transform active:scale-95",
-    isLiked && "border-error/40 bg-error/35",
+    displayLiked && "border-error/40 bg-error/35",
+    isPending && "pointer-events-none opacity-80",
     className,
   );
 
@@ -62,7 +64,7 @@ export function CollectionCardLikePill({
         aria-label="Sign in to like"
       >
         <Heart className="h-4 w-4 shrink-0" strokeWidth={2.25} />
-        <span className="tabular-nums">{formatCount(likeCount)}</span>
+        <span className="tabular-nums">{formatCount(displayCount)}</span>
       </Link>
     );
   }
@@ -71,16 +73,17 @@ export function CollectionCardLikePill({
     <button
       type="button"
       onClick={handleClick}
-      disabled={(!canLike && isAuthenticated) || !isAuthReady}
-      aria-label={isLiked ? "Unlike collection" : "Like collection"}
-      aria-pressed={isLiked}
+      disabled={(!canLike && isAuthenticated) || !isAuthReady || isPending}
+      aria-label={displayLiked ? "Unlike collection" : "Like collection"}
+      aria-pressed={displayLiked}
+      aria-busy={isPending}
       className={cn(shell, (!canLike || !isAuthReady) && isAuthenticated && "opacity-80")}
     >
       <Heart
-        className={cn("h-4 w-4 shrink-0", isLiked && "fill-current")}
+        className={cn("h-4 w-4 shrink-0", displayLiked && "fill-current")}
         strokeWidth={2.25}
       />
-      <span className="tabular-nums">{formatCount(likeCount)}</span>
+      <span className="tabular-nums">{formatCount(displayCount)}</span>
     </button>
   );
 }

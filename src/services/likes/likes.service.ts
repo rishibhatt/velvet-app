@@ -2,6 +2,22 @@ import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
 
+type ToggleBoardLikeResult = {
+  liked: boolean;
+  likeCount: number;
+};
+
+function parseToggleResult(data: unknown): ToggleBoardLikeResult {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid like response.");
+  }
+  const row = data as { liked?: boolean; likeCount?: number };
+  if (typeof row.liked !== "boolean" || typeof row.likeCount !== "number") {
+    throw new Error("Invalid like response.");
+  }
+  return { liked: row.liked, likeCount: row.likeCount };
+}
+
 export const likesService = {
   async getLikedBoardIds(boardIds: string[]): Promise<Set<string>> {
     if (!isSupabaseConfigured() || boardIds.length === 0) return new Set();
@@ -24,7 +40,29 @@ export const likesService = {
 
   async toggleBoardLike(
     boardId: string,
-  ): Promise<{ liked: boolean; likeCount: number }> {
+  ): Promise<ToggleBoardLikeResult> {
+    requireSupabase();
+    const supabase = createClient();
+
+    const { data, error } = await supabase.rpc("toggle_board_like", {
+      p_board_id: boardId,
+    });
+
+    if (error) {
+      const message = parseSupabaseError(error);
+      if (message.includes("toggle_board_like")) {
+        return this.toggleBoardLikeLegacy(boardId);
+      }
+      throw new Error(message);
+    }
+
+    return parseToggleResult(data);
+  },
+
+  /** Fallback when migration 019 has not been applied yet. */
+  async toggleBoardLikeLegacy(
+    boardId: string,
+  ): Promise<ToggleBoardLikeResult> {
     requireSupabase();
     const supabase = createClient();
     const {
@@ -76,18 +114,18 @@ export const likesService = {
       });
       if (error) throw new Error(parseSupabaseError(error));
 
-      const { error: notificationError } = await supabase.rpc(
-        "create_board_like_notification",
-        { p_board_id: boardId },
-      );
-      if (
-        notificationError &&
-        !parseSupabaseError(notificationError).includes(
-          "create_board_like_notification",
-        )
-      ) {
-        throw new Error(parseSupabaseError(notificationError));
-      }
+      void supabase
+        .rpc("create_board_like_notification", { p_board_id: boardId })
+        .then(({ error: notificationError }) => {
+          if (
+            notificationError &&
+            !parseSupabaseError(notificationError).includes(
+              "create_board_like_notification",
+            )
+          ) {
+            console.warn("[velvet] like notification:", notificationError.message);
+          }
+        });
     }
 
     const { count, error: countError } = await supabase

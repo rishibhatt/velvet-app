@@ -12,7 +12,8 @@ export function useNotifications() {
     queryFn: () => notificationsService.list(),
     enabled: isAuthReady && isAuthenticated,
     meta: { skipErrorToast: true },
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -23,6 +24,7 @@ export function useUnreadNotificationCount() {
     queryFn: () => notificationsService.unreadCount(),
     enabled: isAuthReady && isAuthenticated,
     meta: { skipErrorToast: true },
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   });
 }

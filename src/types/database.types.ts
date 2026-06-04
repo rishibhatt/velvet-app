@@ -414,6 +414,10 @@ export interface Database {
         Args: { p_board_id: string };
         Returns: undefined;
       };
+      toggle_board_like: {
+        Args: { p_board_id: string };
+        Returns: Json;
+      };
       get_board_preview_images: {
         Args: { p_board_ids: string[] };
         Returns: Array<{

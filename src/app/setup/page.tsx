@@ -110,6 +110,24 @@ export default async function SetupPage() {
               </code>{" "}
               (production security + performance — required)
             </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/017_comment_notifications.sql
+              </code>{" "}
+              (comment + like notifications)
+            </li>
+            <li>
+              <code className="rounded bg-primary/10 px-2 py-0.5 text-primary">
+                supabase/migrations/018_notifications_realtime.sql
+              </code>{" "}
+              (live notification bell — required for realtime)
+            </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/019_toggle_board_like_rpc.sql
+              </code>{" "}
+              (instant likes — single fast toggle RPC)
+            </li>
           </ul>
         </li>
 
@@ -147,6 +165,14 @@ export default async function SetupPage() {
             <li>
               Add <code className="rounded bg-bg-elevated px-2 py-0.5">SUPABASE_SERVICE_ROLE_KEY</code> to
               server env for account deletion (never expose to the browser).
+            </li>
+            <li>
+              <strong>Live notifications:</strong> run migration{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">018_notifications_realtime.sql</code>{" "}
+              or open Database → Publications →{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">supabase_realtime</code> and enable the{" "}
+              <code className="rounded bg-bg-elevated px-2 py-0.5">notifications</code> table. No extra API
+              keys — the app uses Supabase Realtime over WebSocket with your existing anon key.
             </li>
           </ul>
           <SetupUrlBlock initialBaseUrl={appBaseUrl} />

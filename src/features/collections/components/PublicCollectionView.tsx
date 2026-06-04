@@ -21,6 +21,8 @@ import { CollectionLinks } from "@/components/seo/CollectionLinks";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { likesService } from "@/services/likes/likes.service";
+import { likeKeys } from "@/queries/likes/keys";
+import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
 import { previewImagesFromItems } from "@/lib/collection-previews";
 import type { Board, Item, Tag } from "@/types/board.types";
@@ -57,22 +59,29 @@ export function PublicCollectionView({
   );
 
   const { data: isLiked } = useQuery({
-    queryKey: ["board-liked", initialBoard.id, user?.id],
+    queryKey: likeKeys.status(initialBoard.id),
     queryFn: async () => {
       const ids = await likesService.getLikedBoardIds([initialBoard.id]);
       return ids.has(initialBoard.id);
     },
     enabled: isAuthReady && isAuthenticated && Boolean(user?.id),
+    staleTime: 60_000,
   });
 
-  const board: Board =
-    isLiked !== undefined
-      ? { ...initialBoard, is_liked: isLiked }
-      : initialBoard;
+  const { likeCount, isLiked: displayLiked } = useBoardLikeDisplay({
+    boardId: initialBoard.id,
+    likeCount: initialBoard.like_count ?? 0,
+    isLiked: isLiked ?? initialBoard.is_liked ?? false,
+  });
+
+  const board: Board = {
+    ...initialBoard,
+    is_liked: displayLiked,
+    like_count: likeCount,
+  };
 
   const heroImages = previewImagesFromItems(items);
   const itemCount = board.item_count ?? items.length;
-  const likeCount = board.like_count ?? 0;
   const collaboratorCount = board.members?.length ?? 0;
   const canLike =
     isAuthReady && isAuthenticated && user != null && user.id !== board.owner_id;

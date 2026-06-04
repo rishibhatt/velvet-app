@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
 import { COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
-import { useToggleBoardLike } from "@/queries/likes/mutations";
+import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useModalStore } from "@/store/modal.store";
 import { velvetToast } from "@/lib/toast";
@@ -41,8 +41,13 @@ export function CollectionCard({
 }: CollectionCardProps) {
   const { user, profile, isAuthenticated, isAuthReady } = useAuth();
   const openShareSheet = useModalStore((s) => s.openShareSheet);
-  const toggleLike = useToggleBoardLike();
   const [heartBurst, setHeartBurst] = useState(false);
+  const { isLiked: displayLiked, isPending: likePending, toggleLike } =
+    useBoardLikeDisplay({
+      boardId: board.id,
+      likeCount: board.like_count ?? 0,
+      isLiked: board.is_liked ?? false,
+    });
 
   const boardHref = publicHref ?? ROUTES.board(board.id);
   const posterEmpty: CollectionPosterEmptyVariant =
@@ -93,20 +98,20 @@ export function CollectionCard({
   const triggerLikeBurst = useCallback(() => setHeartBurst(true), []);
 
   const handleDoubleTap = useCallback(() => {
-    if (!canLike) return;
+    if (!canLike || likePending) return;
     setHeartBurst(true);
     if (!isAuthReady) return;
     if (!isAuthenticated) {
       velvetToast.info("Sign in to like", "Create an account to save favorites.");
       return;
     }
-    if (!board.is_liked) toggleLike.mutate(board.id);
+    if (!displayLiked) toggleLike();
   }, [
-    board.id,
-    board.is_liked,
     canLike,
+    displayLiked,
     isAuthenticated,
     isAuthReady,
+    likePending,
     toggleLike,
   ]);
 
