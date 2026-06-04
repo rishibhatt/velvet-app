@@ -6,6 +6,7 @@ import type { BoardRole, CreateBoardInput } from "@/types/board.types";
 import { activityKeys } from "@/queries/activity/queries";
 import { collabRequestKeys } from "@/queries/collaboration/keys";
 import { notificationKeys } from "@/queries/notifications/keys";
+import { discoverKeys } from "@/queries/discover/keys";
 import { boardKeys } from "./keys";
 import { velvetToast } from "@/lib/toast";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
@@ -36,6 +37,7 @@ export function useUpdateBoard(boardId: string) {
     onSuccess: (board) => {
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
       queryClient.setQueryData(boardKeys.detail(boardId), board);
+      queryClient.invalidateQueries({ queryKey: discoverKeys.all });
     },
   });
 }

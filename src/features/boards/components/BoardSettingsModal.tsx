@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Trash2, Share2 } from "lucide-react";
 import { CollectionVisibilityToggle } from "@/components/molecules/CollectionVisibilityToggle";
 import { ModalShell } from "@/components/organisms/ModalShell";
@@ -36,7 +36,7 @@ export function BoardSettingsModal({
   onClose,
 }: BoardSettingsModalProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const openShareSheet = useModalStore((s) => s.openShareSheet);
   const updateBoard = useUpdateBoard(board.id);
   const deleteBoard = useDeleteBoard();
@@ -48,8 +48,18 @@ export function BoardSettingsModal({
   const canManage = canManageBoardSettings(board, user?.id);
   const canDelete = canDeleteBoard(board, user?.id);
 
+  const username = profile?.username ?? "";
   const publicUrl =
-    board.slug && canManage ? getPublicShareUrl("", board.slug) : null;
+    board.slug && canManage && isPublic && username
+      ? getPublicShareUrl(username, board.slug)
+      : null;
+
+  useEffect(() => {
+    if (!open) return;
+    setTitle(board.title);
+    setDescription(board.description ?? "");
+    setIsPublic(board.is_public);
+  }, [open, board.id, board.title, board.description, board.is_public]);
 
   const resetForm = () => {
     setTitle(board.title);
@@ -62,8 +72,19 @@ export function BoardSettingsModal({
     onClose();
   };
 
+  const persistVisibility = async (nextPublic: boolean) => {
+    const updated = await updateBoard.mutateAsync({ isPublic: nextPublic });
+    setIsPublic(updated.is_public);
+    velvetToast.success(
+      updated.is_public ? "Now public" : "Now private",
+      updated.is_public
+        ? "This collection appears in Explore and can be shared."
+        : "Hidden from Explore until you make it public again.",
+    );
+  };
+
   const requestVisibilityChange = async (nextPublic: boolean) => {
-    if (nextPublic === isPublic) return;
+    if (nextPublic === isPublic || updateBoard.isPending) return;
 
     if (nextPublic) {
       const ok = await confirmAction({
@@ -73,7 +94,12 @@ export function BoardSettingsModal({
         confirmLabel: "Make public",
         cancelLabel: "Cancel",
       });
-      if (ok) setIsPublic(true);
+      if (!ok) return;
+      try {
+        await persistVisibility(true);
+      } catch {
+        /* toast via mutation */
+      }
       return;
     }
 
@@ -85,7 +111,12 @@ export function BoardSettingsModal({
       cancelLabel: "Keep public",
       variant: "destructive",
     });
-    if (ok) setIsPublic(false);
+    if (!ok) return;
+    try {
+      await persistVisibility(false);
+    } catch {
+      /* toast via mutation */
+    }
   };
 
   const handleSave = async () => {
@@ -94,12 +125,8 @@ export function BoardSettingsModal({
       await updateBoard.mutateAsync({
         title: title.trim(),
         description: description.trim() || null,
-        ...(canManage ? { isPublic } : {}),
       });
-      velvetToast.success(
-        "Changes saved",
-        isPublic ? "Your collection is visible publicly." : "Your collection is now private.",
-      );
+      velvetToast.success("Saved", "Title and description were updated.");
       onClose();
     } catch {
       /* toast via mutation */
@@ -115,8 +142,12 @@ export function BoardSettingsModal({
       velvetToast.info("Collection is private", "Make it public to share a link.");
       return;
     }
+    if (!username) {
+      velvetToast.error("Username required", "Add a username in your profile to share.");
+      return;
+    }
     openShareSheet({
-      url: getPublicShareUrl("", board.slug),
+      url: getPublicShareUrl(username, board.slug),
       title: title.trim() || board.title,
       text: description.trim() || board.description || undefined,
       imageUrls: (board.preview_images ?? []).slice(0, 4),
@@ -161,7 +192,7 @@ export function BoardSettingsModal({
           >
             {UI_LABELS.saveChanges}
           </Button>
-          {canManage && isPublic && board.slug && (
+          {canManage && isPublic && board.slug && username && (
             <IconButton label="Share" onClick={handleShare}>
               <Share2 className="h-5 w-5" />
             </IconButton>
@@ -178,7 +209,7 @@ export function BoardSettingsModal({
       }
     >
       <div className="space-y-5 px-5 py-5 sm:px-6">
-        {publicUrl && isPublic && (
+        {publicUrl && (
           <div className="flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low px-3 py-2.5">
             <p className="min-w-0 flex-1 truncate font-mono text-[11px] text-on-surface-variant">
               {publicUrl}
@@ -230,6 +261,7 @@ export function BoardSettingsModal({
           <CollectionVisibilityToggle
             isPublic={isPublic}
             onChange={(next) => void requestVisibilityChange(next)}
+            disabled={updateBoard.isPending}
           />
         )}
       </div>

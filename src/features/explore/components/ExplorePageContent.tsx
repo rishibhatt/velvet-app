@@ -49,14 +49,12 @@ export function ExplorePageContent() {
 
   return (
     <main className="page-container py-4 pb-28 md:py-8 md:pb-12">
-      <header className="mb-4 sm:mb-5">
-        <p className="velvet-eyebrow text-primary">Discover</p>
-        <h1 className="font-display mt-1 text-2xl text-on-surface sm:text-3xl">
-          Explore public collections
+      <header className="mb-2 sm:mb-3">
+        <h1 className="font-display text-xl text-on-surface sm:text-2xl">
+          Explore
         </h1>
-        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-          Browse inspiration from the Velvet community. Filter by mood or see what&apos;s
-          trending — no account required.
+        <p className="mt-0.5 text-xs text-on-surface-variant sm:text-sm">
+          Public collections from the community
         </p>
       </header>
 

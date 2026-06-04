@@ -9,79 +9,81 @@ interface ExploreMoodRailProps {
   mood: Mood | null;
   onMoodChange: (mood: Mood | null) => void;
   className?: string;
+  compact?: boolean;
 }
 
-/** Instagram-style circular category rail — scroll horizontally on mobile. */
-export function ExploreMoodRail({ mood, onMoodChange, className }: ExploreMoodRailProps) {
+/** Horizontal mood filter — compact emoji chips on mobile. */
+export function ExploreMoodRail({
+  mood,
+  onMoodChange,
+  className,
+  compact = true,
+}: ExploreMoodRailProps) {
   return (
     <div
       className={cn(
-        "flex gap-3 overflow-x-auto pb-1 hide-scrollbar snap-x snap-mandatory",
+        "flex gap-1.5 overflow-x-auto hide-scrollbar snap-x snap-mandatory sm:gap-2",
         className,
       )}
       role="tablist"
       aria-label="Filter by mood"
     >
-      <MoodOrb
+      <MoodChip
         label="All"
         selected={mood === null}
         onClick={() => onMoodChange(null)}
+        compact={compact}
       >
-        <LayoutGrid className="h-5 w-5 text-primary" strokeWidth={2} aria-hidden />
-      </MoodOrb>
+        <LayoutGrid className="h-3.5 w-3.5 text-primary" strokeWidth={2} aria-hidden />
+      </MoodChip>
       {MOODS.map((m) => (
-        <MoodOrb
+        <MoodChip
           key={m.value}
           label={m.label}
           selected={mood === m.value}
           onClick={() => onMoodChange(mood === m.value ? null : m.value)}
+          compact={compact}
         >
-          <span className="text-xl leading-none" aria-hidden>
+          <span className="text-sm leading-none" aria-hidden>
             {m.emoji}
           </span>
-        </MoodOrb>
+        </MoodChip>
       ))}
     </div>
   );
 }
 
-function MoodOrb({
+function MoodChip({
   label,
   selected,
   onClick,
   children,
+  compact,
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       role="tab"
       aria-selected={selected}
+      aria-label={label}
+      title={label}
       onClick={onClick}
-      className="flex w-[4.25rem] shrink-0 snap-start flex-col items-center gap-1.5 sm:w-[4.75rem]"
+      className={cn(
+        "flex shrink-0 snap-start items-center justify-center rounded-full border transition-all",
+        compact ? "h-9 w-9 sm:h-10 sm:w-10" : "h-11 w-11",
+        selected
+          ? "border-primary bg-primary-fixed/55 shadow-sm"
+          : "border-outline-variant/30 bg-bg-elevated hover:border-primary/35",
+      )}
     >
-      <span
-        className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-full border-2 bg-bg-elevated shadow-sm transition-all sm:h-[3.75rem] sm:w-[3.75rem]",
-          selected
-            ? "border-primary bg-primary-fixed/50 ring-2 ring-primary/25"
-            : "border-outline-variant/30 hover:border-primary/35 hover:bg-primary-fixed/25",
-        )}
-      >
-        {children}
-      </span>
-      <span
-        className={cn(
-          "max-w-full truncate text-center text-[10px] font-semibold sm:text-[11px]",
-          selected ? "text-primary" : "text-on-surface-variant",
-        )}
-      >
-        {label}
-      </span>
+      {children}
+      <span className="sr-only">{label}</span>
     </button>
   );
 }
