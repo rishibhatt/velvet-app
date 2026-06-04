@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { VelvetLink } from "@/components/atoms/VelvetLink";
 import { BadgeCheck, Lock } from "lucide-react";
 import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGrid";
 import { Avatar } from "@/components/atoms/Avatar";
@@ -53,7 +54,7 @@ export function CollectionListRow({
         className,
       )}
     >
-      <Link
+      <VelvetLink
         href={href}
         onClick={onClick}
         className="relative block h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl sm:h-20 sm:w-20"
@@ -67,7 +68,7 @@ export function CollectionListRow({
           className="h-full w-full"
           imageSizes="80px"
         />
-      </Link>
+      </VelvetLink>
 
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
         <div className="flex items-start justify-between gap-2">
@@ -91,11 +92,11 @@ export function CollectionListRow({
                 {badge}
               </span>
             </div>
-            <Link href={href} onClick={onClick}>
+            <VelvetLink href={href} onClick={onClick}>
               <h3 className="font-display truncate text-base leading-tight text-on-surface sm:text-lg">
                 {board.title}
               </h3>
-            </Link>
+            </VelvetLink>
             {board.description && (
               <p className="line-clamp-1 text-[11px] text-on-surface-variant sm:text-xs">
                 {board.description}

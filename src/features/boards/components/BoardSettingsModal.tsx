@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Trash2, Share2 } from "lucide-react";
+import { Copy, Trash2, Share2, Link2, FileText } from "lucide-react";
 import { CollectionVisibilityToggle } from "@/components/molecules/CollectionVisibilityToggle";
 import { ModalShell } from "@/components/organisms/ModalShell";
 import { Button } from "@/components/atoms/Button";
@@ -53,6 +53,8 @@ export function BoardSettingsModal({
     board.slug && canManage && isPublic && username
       ? getPublicShareUrl(username, board.slug)
       : null;
+
+  const showShare = canManage && isPublic && Boolean(board.slug) && Boolean(username);
 
   useEffect(() => {
     if (!open) return;
@@ -181,19 +183,22 @@ export function BoardSettingsModal({
       open={open}
       onClose={handleClose}
       title="Collection settings"
-      className="w-full sm:max-w-md"
+      subtitle="Update your collection name, description, and visibility"
+      className="max-w-[520px] sm:mx-auto"
+      contentClassName="p-0"
       responsive
       footer={
         <div className="flex items-center gap-2">
           <Button
             onClick={() => void handleSave()}
+            size="lg"
             loading={updateBoard.isPending}
             className="min-w-0 flex-1"
           >
             {UI_LABELS.saveChanges}
           </Button>
-          {canManage && isPublic && board.slug && username && (
-            <IconButton label="Share" onClick={handleShare}>
+          {showShare && (
+            <IconButton label="Share collection" onClick={handleShare}>
               <Share2 className="h-5 w-5" />
             </IconButton>
           )}
@@ -208,54 +213,72 @@ export function BoardSettingsModal({
         </div>
       }
     >
-      <div className="space-y-5 px-5 py-5 sm:px-6">
-        {publicUrl && (
-          <div className="flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low px-3 py-2.5">
-            <p className="min-w-0 flex-1 truncate font-mono text-[11px] text-on-surface-variant">
-              {publicUrl}
-            </p>
-            <IconButton
-              label="Copy link"
-              onClick={() =>
-                void shareOrCopy({
-                  url: publicUrl,
-                  title: board.title,
-                  text: board.description ?? undefined,
-                })
-              }
-              className="!h-9 !w-9 !min-h-9 !min-w-9"
+      <div className="border-b border-outline-variant/15 bg-surface-container-low/40 p-4 sm:p-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="board-title"
+              className="flex items-center gap-2 text-sm font-semibold text-on-surface"
             >
-              <Copy className="h-4 w-4" />
-            </IconButton>
+              <FileText className="h-4 w-4 text-primary" />
+              Title
+            </label>
+            <input
+              id="board-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="velvet-field w-full rounded-xl px-4 py-3 text-sm"
+              autoComplete="off"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="board-desc"
+              className="text-sm font-semibold text-on-surface"
+            >
+              Description{" "}
+              <span className="font-normal text-on-surface-variant">(optional)</span>
+            </label>
+            <textarea
+              id="board-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="What is this collection about?"
+              className="velvet-field w-full resize-none rounded-xl px-4 py-3 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5 p-4 sm:space-y-6 sm:p-6 sm:pt-2">
+        {publicUrl && (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+              <Link2 className="h-4 w-4 text-primary" />
+              Public link
+            </label>
+            <div className="flex items-center gap-2 rounded-xl border border-outline-variant/40 bg-bg-elevated px-3 py-2.5">
+              <p className="min-w-0 flex-1 truncate font-mono text-[11px] text-on-surface-variant">
+                {publicUrl}
+              </p>
+              <IconButton
+                label="Copy link"
+                onClick={() =>
+                  void shareOrCopy({
+                    url: publicUrl,
+                    title: board.title,
+                    text: board.description ?? undefined,
+                  })
+                }
+                className="!h-9 !w-9 !min-h-9 !min-w-9"
+              >
+                <Copy className="h-4 w-4" />
+              </IconButton>
+            </div>
           </div>
         )}
-
-        <div className="space-y-1.5">
-          <label htmlFor="board-title" className="text-xs font-semibold text-on-surface-variant">
-            Title
-          </label>
-          <input
-            id="board-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="velvet-field w-full rounded-xl px-3 py-2.5 text-sm"
-            autoComplete="off"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="board-desc" className="text-xs font-semibold text-on-surface-variant">
-            Description
-          </label>
-          <textarea
-            id="board-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="Optional"
-            className="velvet-field w-full resize-none rounded-xl px-3 py-2.5 text-sm"
-          />
-        </div>
 
         {canManage && (
           <CollectionVisibilityToggle

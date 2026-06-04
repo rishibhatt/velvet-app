@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronRight, Sparkles } from "lucide-react";
+import { VelvetLink } from "@/components/atoms/VelvetLink";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,8 @@ interface DiscoverSectionHeaderProps {
   title?: string;
   subtitle?: string;
   showSeeAll?: boolean;
+  seeAllHref?: string;
+  seeAllLabel?: string;
   className?: string;
 }
 
@@ -16,6 +18,8 @@ export function DiscoverSectionHeader({
   title = "Discover",
   subtitle = "Trending public collections from the community",
   showSeeAll = true,
+  seeAllHref = ROUTES.explore,
+  seeAllLabel = "See all",
   className,
 }: DiscoverSectionHeaderProps) {
   return (
@@ -34,14 +38,14 @@ export function DiscoverSectionHeader({
           {subtitle}
         </p>
       </div>
-      {showSeeAll && (
-        <Link
-          href={ROUTES.explore}
+      {showSeeAll && seeAllHref && (
+        <VelvetLink
+          href={seeAllHref}
           className="flex shrink-0 items-center gap-0.5 rounded-full px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary-fixed/40"
         >
-          See all
+          {seeAllLabel}
           <ChevronRight className="h-4 w-4" />
-        </Link>
+        </VelvetLink>
       )}
     </div>
   );

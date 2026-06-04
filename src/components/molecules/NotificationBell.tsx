@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Check, CheckCheck, Heart, UserPlus, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Heart, MessageCircle, UserPlus, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar } from "@/components/atoms/Avatar";
 import { Button } from "@/components/atoms/Button";
@@ -45,6 +45,10 @@ function getNotificationDirection(notification: AppNotification) {
 }
 
 function getNotificationHref(notification: AppNotification) {
+  const boardId = notification.metadata?.boardId;
+  if (typeof boardId === "string") {
+    return ROUTES.board(boardId);
+  }
   if (notification.resource_type === "board" && notification.resource_id) {
     return ROUTES.board(notification.resource_id);
   }
@@ -54,6 +58,9 @@ function getNotificationHref(notification: AppNotification) {
 function NotificationIcon({ notification }: { notification: AppNotification }) {
   if (notification.type === "board_like") {
     return <Heart className="h-4 w-4 fill-current text-error" />;
+  }
+  if (notification.type === "item_comment") {
+    return <MessageCircle className="h-4 w-4 text-primary" />;
   }
   return <UserPlus className="h-4 w-4 text-primary" />;
 }

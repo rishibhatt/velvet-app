@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab";
+import { CollectionCreateCard } from "@/components/molecules/CollectionCreateCard";
 import { ShowcaseBoardCard } from "@/components/organisms/ShowcaseBoardCard";
-import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import { CollectionCardSkeletonRail } from "@/components/skeletons/CollectionCardSkeletonRail";
 import { HomeHero } from "@/components/organisms/HomeHero";
 import { DiscoverSectionHeader } from "@/components/molecules/DiscoverSectionHeader";
@@ -17,16 +17,16 @@ import { useModalStore } from "@/store/modal.store";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
-import { cn, isSupabaseConfigured } from "@/lib/utils";
+import { isSupabaseConfigured } from "@/lib/utils";
 import {
   HOME_DISCOVER_CARD_RAIL,
   HOME_DISCOVER_CARD_RAIL_ITEM,
   HOME_OWNED_CARD_RAIL,
   HOME_OWNED_CARD_RAIL_ITEM,
+  HOME_OWNED_PREVIEW_COUNT,
 } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { UI_LABELS } from "@/constants/ui-labels";
-import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 
 export default function HomePage() {
   const router = useRouter();
@@ -40,11 +40,10 @@ export default function HomePage() {
       excludeOwnerId: user?.id,
     });
 
-  const {
-    visible: visibleBoards,
-    sentinelRef: boardsSentinelRef,
-    hasMore: hasMoreBoards,
-  } = useInfiniteSlice(boards ?? [], 8);
+  const ownedPreview = useMemo(
+    () => (boards ?? []).slice(0, HOME_OWNED_PREVIEW_COUNT),
+    [boards],
+  );
 
   useEffect(() => {
     if (!isSupabaseConfigured() || isLoading || isError || !user) return;
@@ -101,36 +100,33 @@ export default function HomePage() {
         <DiscoverSectionHeader
           title="Your collections"
           subtitle="Collections you own and curate"
-          showSeeAll={false}
+          seeAllHref={ROUTES.profileCollections}
+          seeAllLabel="View all"
+          showSeeAll={Boolean(boards && boards.length > 0)}
         />
 
         {isLoading ? (
           <CollectionCardSkeletonRail />
         ) : boards && boards.length > 0 ? (
-          <>
-            <motion.div
-              className={cn(HOME_OWNED_CARD_RAIL, "pb-2")}
-              variants={stagger}
-              initial="initial"
-              animate="animate"
-            >
-              {visibleBoards.map((board) => (
-                <motion.div key={board.id} variants={fadeUp} className={HOME_OWNED_CARD_RAIL_ITEM}>
-                  <ShowcaseBoardCard board={board} variant="owned" />
-                </motion.div>
-              ))}
+          <motion.div
+            className={`${HOME_OWNED_CARD_RAIL} pb-2`}
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+          >
+            {ownedPreview.map((board) => (
+              <motion.div
+                key={board.id}
+                variants={fadeUp}
+                className={HOME_OWNED_CARD_RAIL_ITEM}
+              >
+                <ShowcaseBoardCard board={board} variant="owned" />
+              </motion.div>
+            ))}
+            <motion.div variants={fadeUp} className={HOME_OWNED_CARD_RAIL_ITEM}>
+              <CollectionCreateCard onClick={openCreateBoard} />
             </motion.div>
-            {hasMoreBoards && (
-              <div ref={boardsSentinelRef} className={cn(HOME_OWNED_CARD_RAIL, "mt-2")}>
-                <div className={HOME_OWNED_CARD_RAIL_ITEM}>
-                  <CollectionCardSkeleton />
-                </div>
-                <div className={HOME_OWNED_CARD_RAIL_ITEM}>
-                  <CollectionCardSkeleton />
-                </div>
-              </div>
-            )}
-          </>
+          </motion.div>
         ) : (
           <EmptyState
             title="Your velvet world starts here"

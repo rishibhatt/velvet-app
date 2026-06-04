@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { UI_LABELS } from "@/constants/ui-labels";
@@ -20,6 +20,7 @@ interface ProfileBoardsSectionProps {
   boardsLoading: boolean;
   likedLoading: boolean;
   onCreateBoard: () => void;
+  initialTab?: ProfileBoardTab;
 }
 
 function ProfileBoardsEmpty({
@@ -64,9 +65,14 @@ export function ProfileBoardsSection({
   boardsLoading,
   likedLoading,
   onCreateBoard,
+  initialTab = "yours",
 }: ProfileBoardsSectionProps) {
   const { profile } = useAuth();
-  const [tab, setTab] = useState<ProfileBoardTab>("yours");
+  const [tab, setTab] = useState<ProfileBoardTab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const activeBoards = tab === "yours" ? boards : likedBoards;
   const loading = tab === "yours" ? boardsLoading : likedLoading;

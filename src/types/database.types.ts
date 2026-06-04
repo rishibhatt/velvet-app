@@ -406,6 +406,10 @@ export interface Database {
         Args: { p_request_id: string; p_accept: boolean };
         Returns: string;
       };
+      create_item_comment_notification: {
+        Args: { p_item_id: string };
+        Returns: undefined;
+      };
       create_board_like_notification: {
         Args: { p_board_id: string };
         Returns: undefined;

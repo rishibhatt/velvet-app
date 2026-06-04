@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import type { ProfileBoardTab } from "@/features/profile/components/ProfileBoardTabs";
 import { Skeleton } from "@/components/atoms/Skeleton";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { ProfileEditor } from "@/features/profile/components/ProfileEditor";
@@ -30,11 +32,15 @@ function ProfilePageSkeleton() {
 }
 
 export default function ProfilePage() {
+  const searchParams = useSearchParams();
   const { profile, isLoading: profileLoading } = useAuth();
   const { data: boards = [], isLoading: boardsLoading } = useBoards();
   const { data: likedBoards = [], isLoading: likedLoading } = useLikedBoards();
   const { openCreateBoard } = useModalStore();
   const [editing, setEditing] = useState(false);
+
+  const initialTab: ProfileBoardTab =
+    searchParams.get("tab") === "liked" ? "liked" : "yours";
 
   const stats = useMemo(() => {
     const totalItems = boards.reduce((acc, b) => acc + (b.item_count ?? 0), 0);
@@ -103,6 +109,7 @@ export default function ProfilePage() {
         boardsLoading={boardsLoading}
         likedLoading={likedLoading}
         onCreateBoard={openCreateBoard}
+        initialTab={initialTab}
       />
 
       <CollectionCreateFab onClick={openCreateBoard} />

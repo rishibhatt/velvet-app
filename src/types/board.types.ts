@@ -15,7 +15,11 @@ export type BoardInvitationStatus =
   | "denied"
   | "cancelled";
 
-export type NotificationType = "board_invite" | "board_like" | "collab_request";
+export type NotificationType =
+  | "board_invite"
+  | "board_like"
+  | "collab_request"
+  | "item_comment";
 
 export type CollaborationRequestStatus = "pending" | "accepted" | "denied";
 

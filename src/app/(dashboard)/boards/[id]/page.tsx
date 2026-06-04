@@ -319,6 +319,7 @@ export default function BoardDetailPage({
         activities={activities}
         canManage={canInvite}
         ownerId={board.owner_id}
+        isPublic={board.is_public}
       />
 
       {canEditBoardMeta(board, user?.id) && (

@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import { Button } from "@/components/atoms/Button";
-import { CollaboratorSearchInput } from "@/components/molecules/CollaboratorSearchInput";
+import { ClientPortal } from "@/components/atoms/ClientPortal";
+import { CollaboratorInviteFields } from "@/components/molecules/CollaboratorInviteFields";
 import { slideInRight } from "@/lib/animations";
 import { formatMemberRole } from "@/lib/collaborators";
 import { formatRelativeTime } from "@/utils/format";
-import type { ActivityLog, BoardMember, BoardRole } from "@/types/board.types";
+import type { ActivityLog, BoardMember } from "@/types/board.types";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { useInviteMember, useRemoveMember } from "@/queries/board/mutations";
+import { useRemoveMember } from "@/queries/board/mutations";
 import { usePendingCollaborationRequests } from "@/queries/collaboration/queries";
 import { useRespondCollaborationRequest } from "@/queries/collaboration/mutations";
-import { useModalStore } from "@/store/modal.store";
 import { confirmAction } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,37 @@ interface CollabPanelProps {
   activities: ActivityLog[];
   canManage?: boolean;
   ownerId?: string;
+  isPublic?: boolean;
+}
+
+function PanelCloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      className="flex shrink-0 min-h-10 min-w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface ring-1 ring-outline-variant/25 transition hover:bg-primary/10 hover:text-primary"
+      aria-label="Close collaboration panel"
+    >
+      <X className="h-5 w-5" />
+    </button>
+  );
+}
+
+function SectionHeading({
+  children,
+  action,
+}: {
+  children: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h3 className="min-w-0 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+        {children}
+      </h3>
+      {action}
+    </div>
+  );
 }
 
 export function CollabPanel({
@@ -36,28 +67,20 @@ export function CollabPanel({
   activities,
   canManage = false,
   ownerId,
+  isPublic = true,
 }: CollabPanelProps) {
   useBodyScrollLock(open);
-  const { openInviteModal } = useModalStore();
-  const invite = useInviteMember(boardId);
   const removeMember = useRemoveMember(boardId);
   const respondRequest = useRespondCollaborationRequest();
   const { data: pendingRequests = [] } = usePendingCollaborationRequests(
     boardId,
     canManage,
   );
-  const [username, setUsername] = useState("");
-  const [role, setRole] = useState<BoardRole>("editor");
 
-  const handleInlineInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await invite.mutateAsync({ username, role });
-      setUsername("");
-    } catch {
-      /* toast */
-    }
-  };
+  const memberUsernames =
+    members
+      .map((m) => m.profile?.username)
+      .filter((u): u is string => Boolean(u)) ?? [];
 
   const handleRemove = async (member: BoardMember) => {
     if (member.user_id === ownerId) return;
@@ -82,33 +105,25 @@ export function CollabPanel({
   if (!open) return null;
 
   return (
-    <>
+    <ClientPortal>
       <div
-        className="fixed inset-0 z-[90] bg-overlay-dark md:bg-transparent"
+        className="fixed inset-0 z-[100] bg-overlay-dark md:bg-transparent"
         onClick={onClose}
         aria-hidden
       />
       <motion.aside
         {...slideInRight}
-        className="fixed top-0 right-0 z-[95] flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col overflow-hidden border-l border-outline-variant/30 bg-bg-elevated shadow-modal sm:max-w-[min(100%,360px)]"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Collaboration"
+        className="fixed top-0 right-0 z-[100] flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col overflow-hidden border-l border-outline-variant/30 bg-bg-elevated shadow-modal sm:max-w-[min(100%,360px)]"
       >
-        <div className="flex items-center justify-between border-b border-outline-variant/20 px-5 py-4">
-          <h2 className="font-display text-lg text-on-surface">Collaboration</h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-on-surface hover:bg-surface-container-low"
-            aria-label="Close panel"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] sm:px-5 sm:pt-4">
           {canManage && pendingRequests.length > 0 && (
             <section className="mb-8">
-              <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+              <SectionHeading>
                 Pending requests ({pendingRequests.length})
-              </h3>
+              </SectionHeading>
               <ul className="space-y-3">
                 {pendingRequests.map((request) => (
                   <li
@@ -173,50 +188,23 @@ export function CollabPanel({
 
           {canManage && (
             <section className="mb-8">
-              <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+              <SectionHeading action={<PanelCloseButton onClose={onClose} />}>
                 Invite
-              </h3>
-              <form onSubmit={handleInlineInvite} className="space-y-3">
-                <CollaboratorSearchInput
-                  value={username}
-                  onChange={setUsername}
-                  placeholder="username"
-                  inputClassName="text-sm"
-                />
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as BoardRole)}
-                  className="w-full rounded-2xl border border-outline-variant/40 bg-surface-container-low px-3 py-2.5 text-sm text-on-surface focus:border-primary focus:outline-none"
-                  aria-label="Collaborator role"
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <Button
-                  type="submit"
-                  size="sm"
-                  icon={UserPlus}
-                  className="w-full"
-                  loading={invite.isPending}
-                >
-                  Invite
-                </Button>
-              </form>
-              <button
-                type="button"
-                onClick={() => openInviteModal(boardId)}
-                className="mt-2 text-xs font-semibold text-primary hover:underline"
-              >
-                Open full invite dialog
-              </button>
+              </SectionHeading>
+              <CollaboratorInviteFields
+                boardId={boardId}
+                isPublic={isPublic}
+                existingUsernames={memberUsernames}
+              />
             </section>
           )}
 
           <section className="mb-8">
-            <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
+            <SectionHeading
+              action={!canManage ? <PanelCloseButton onClose={onClose} /> : undefined}
+            >
               Members ({members.length})
-            </h3>
+            </SectionHeading>
             <ul className="space-y-3">
               {members.map((member) => {
                 const isOwner = member.user_id === ownerId;
@@ -263,9 +251,7 @@ export function CollabPanel({
           </section>
 
           <section>
-            <h3 className="mb-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase">
-              Activity
-            </h3>
+            <SectionHeading>Activity</SectionHeading>
             <ul className="space-y-4">
               {activities.map((activity) => (
                 <li key={activity.id} className="flex gap-3">
@@ -296,6 +282,6 @@ export function CollabPanel({
           </section>
         </div>
       </motion.aside>
-    </>
+    </ClientPortal>
   );
 }

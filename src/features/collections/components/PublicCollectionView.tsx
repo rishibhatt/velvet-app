@@ -233,7 +233,9 @@ export function PublicCollectionView({
           boardId={board.id}
           members={board.members ?? []}
           activities={activities}
+          canManage={isOwner}
           ownerId={board.owner_id}
+          isPublic={board.is_public}
         />
       )}
 

@@ -293,6 +293,36 @@ body {
   color: #8c5e58;
 }
 
+@keyframes velvet-nav-indeterminate {
+  0% {
+    transform: translateX(-100%) scaleX(0.35);
+  }
+  50% {
+    transform: translateX(60%) scaleX(0.65);
+  }
+  100% {
+    transform: translateX(280%) scaleX(0.35);
+  }
+}
+
+/* Inner inputs in VelvetInputShell — never show browser / primary focus rings */
+.velvet-input-shell input,
+.velvet-input-shell textarea {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.velvet-input-shell input:focus,
+.velvet-input-shell input:focus-visible,
+.velvet-input-shell textarea:focus,
+.velvet-input-shell textarea:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 @keyframes velvet-toast-in {
   from {
     opacity: 0;
@@ -319,11 +349,16 @@ body {
   opacity: 0.75;
 }
 
-.velvet-field:focus {
+.velvet-field:focus,
+.velvet-field:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--primary) 50%, var(--outline-variant));
   background-color: var(--bg-elevated);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.velvet-field:focus:not(:focus-visible) {
+  box-shadow: none;
 }
 
 .velvet-modal-danger-zone {

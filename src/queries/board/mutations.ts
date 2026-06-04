@@ -54,14 +54,22 @@ export function useDeleteBoard() {
   });
 }
 
+export type InviteMemberInput = {
+  username: string;
+  role: BoardRole;
+  /** Suppress per-invite toast when sending a batch. */
+  silent?: boolean;
+};
+
 export function useInviteMember(boardId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { username: string; role: BoardRole }) =>
-      boardsService.inviteMember(boardId, input.username, input.role),
+    mutationFn: ({ username, role }: InviteMemberInput) =>
+      boardsService.inviteMember(boardId, username, role),
     meta: { errorContext: "board" },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: activityKeys.board(boardId) });
+      if (variables.silent) return;
       velvetToast.success(
         "Invite sent",
         "They'll get a notification to accept or deny the collaboration.",

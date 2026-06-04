@@ -20,6 +20,7 @@ export const ROUTES = {
   search: "/search",
   explore: "/explore",
   profile: "/profile",
+  profileCollections: "/profile?tab=yours",
   settings: "/settings",
   setup: "/setup",
 } as const;

@@ -78,6 +78,10 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
+    if (!user && pathname === "/") {
+      return redirectWithCookies(request, "/explore", supabaseResponse);
+    }
+
     if (!user && isProtected(pathname)) {
       return redirectWithCookies(request, "/login", supabaseResponse);
     }

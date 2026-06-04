@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { VelvetLink } from "@/components/atoms/VelvetLink";
+import { useNavigationProgress } from "@/providers/NavigationProgressProvider";
 import { Search, Home, Compass, User } from "lucide-react";
 import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { ProfileMenu } from "@/components/molecules/ProfileMenu";
@@ -42,10 +44,12 @@ const desktopNavLinkClass = (active: boolean) =>
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { startNavigation } = useNavigationProgress();
   const [searchQuery, setSearchQuery] = useState("");
 
   const goToSearch = (query: string) => {
     const q = query.trim();
+    startNavigation();
     router.push(q ? `${ROUTES.search}?q=${encodeURIComponent(q)}` : ROUTES.search);
   };
 
@@ -64,14 +68,14 @@ export function Navbar() {
               {navLinks.map((link) => {
                 const active = isNavLinkActive(pathname, link.href);
                 return (
-                  <Link
+                  <VelvetLink
                     key={link.label}
                     href={link.href}
                     aria-current={active ? "page" : undefined}
                     className={desktopNavLinkClass(active)}
                   >
                     {link.label}
-                  </Link>
+                  </VelvetLink>
                 );
               })}
             </nav>
@@ -89,13 +93,13 @@ export function Navbar() {
                 aria-label="Search collections"
               />
             </form>
-            <Link
+            <VelvetLink
               href={ROUTES.search}
               className="rounded-full p-2 text-primary transition-colors hover:bg-surface-container-low md:hidden"
               aria-label="Search"
             >
               <Search className="h-5 w-5" />
-            </Link>
+            </VelvetLink>
             <NotificationBell />
             <ProfileMenu />
           </div>
@@ -107,7 +111,7 @@ export function Navbar() {
           const Icon = item.icon;
           const active = isNavLinkActive(pathname, item.href);
           return (
-            <Link
+            <VelvetLink
               key={item.label}
               href={item.href}
               className={cn(
@@ -130,7 +134,7 @@ export function Navbar() {
               >
                 {item.label}
               </span>
-            </Link>
+            </VelvetLink>
           );
         })}
       </nav>

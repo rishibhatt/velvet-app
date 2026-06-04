@@ -31,6 +31,9 @@ export const HOME_DISCOVER_CARD_RAIL_ITEM =
 export const HOME_OWNED_CARD_RAIL = HOME_DISCOVER_CARD_RAIL;
 export const HOME_OWNED_CARD_RAIL_ITEM = HOME_DISCOVER_CARD_RAIL_ITEM;
 
+/** Preview count on home (full list lives on profile). */
+export const HOME_OWNED_PREVIEW_COUNT = 4;
+
 /** Save / item tiles inside collection boards */
 export const ITEM_CARD_SHELL =
   "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-bg-elevated shadow-[var(--shadow-card)] ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-0.5 hover:ring-primary/25 hover:shadow-[var(--shadow-hover)] active:scale-[0.99]";

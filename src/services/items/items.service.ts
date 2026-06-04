@@ -268,6 +268,19 @@ export const commentsService = {
       });
     }
 
+    const { error: notificationError } = await supabase.rpc(
+      "create_item_comment_notification",
+      { p_item_id: itemId },
+    );
+    if (
+      notificationError &&
+      !parseSupabaseError(notificationError).includes(
+        "create_item_comment_notification",
+      )
+    ) {
+      throw new Error(parseSupabaseError(notificationError));
+    }
+
     return comment;
   },
 };

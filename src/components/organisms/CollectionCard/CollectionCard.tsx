@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
@@ -40,7 +39,6 @@ export function CollectionCard({
   className,
   onClick,
 }: CollectionCardProps) {
-  const router = useRouter();
   const { user, profile, isAuthenticated, isAuthReady } = useAuth();
   const openShareSheet = useModalStore((s) => s.openShareSheet);
   const toggleLike = useToggleBoardLike();
@@ -112,27 +110,33 @@ export function CollectionCard({
     toggleLike,
   ]);
 
-  const handleTap = useCollectionCardTap(boardHref, {
+  const { handleTap, openCollection, isPending } = useCollectionCardTap(boardHref, {
     onNavigate: onClick,
     onDoubleTap: handleDoubleTap,
   });
 
   const handleView = useCallback(() => {
-    onClick?.();
-    router.push(boardHref);
-  }, [boardHref, onClick, router]);
+    openCollection();
+  }, [openCollection]);
 
   return (
     <motion.article
-      whileHover={{ y: -4, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
-      whileTap={{ scale: 0.98, transition: { type: "spring", stiffness: 420, damping: 28 } }}
-      className={cn("group", COLLECTION_CARD_SHELL, className)}
+      whileHover={isPending ? undefined : { y: -4, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } }}
+      whileTap={isPending ? undefined : { scale: 0.98, transition: { type: "spring", stiffness: 420, damping: 28 } }}
+      aria-busy={isPending}
+      className={cn(
+        "group",
+        COLLECTION_CARD_SHELL,
+        isPending && "pointer-events-none opacity-[0.88] saturate-[0.92]",
+        className,
+      )}
     >
       <div className="relative">
         <CollectionCardMedia
           board={board}
           emptyVariant={posterEmpty}
           onTap={handleTap}
+          isPending={isPending}
         />
         <CollectionCardOverlay
           board={board}
