@@ -8,13 +8,19 @@ import {
   Globe,
   Pencil,
   Settings,
+  Share2,
 } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
-import { Button } from "@/components/atoms/Button";
-import { ShareButton } from "@/components/molecules/ShareButton";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
+import {
+  ProfileActionGroup,
+  ProfileActionIconButton,
+  ProfileActionItem,
+  profileActionIconClass,
+} from "@/components/molecules/ProfileActionGroup";
 import { ROUTES } from "@/constants/routes";
 import { getCreatorProfileUrl } from "@/lib/app-url";
+import { useModalStore } from "@/store/modal.store";
 import { formatJoinedDate } from "@/utils/format";
 import type { Profile } from "@/types/board.types";
 import { cn } from "@/lib/utils";
@@ -24,10 +30,8 @@ interface ProfileHeroCardProps {
   onEdit: () => void;
 }
 
-export function ProfileHeroCard({
-  profile,
-  onEdit,
-}: ProfileHeroCardProps) {
+export function ProfileHeroCard({ profile, onEdit }: ProfileHeroCardProps) {
+  const openShareSheet = useModalStore((s) => s.openShareSheet);
   const displayName = profile.full_name ?? "Your profile";
   const websiteLabel = profile.website
     ? profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")
@@ -37,9 +41,20 @@ export function ProfileHeroCard({
     ? getCreatorProfileUrl(profile.username)
     : null;
 
+  const handleShare = () => {
+    if (!profileShareUrl) return;
+    openShareSheet({
+      url: profileShareUrl,
+      title: `${displayName} on Velvet`,
+      text: profile.bio ?? undefined,
+      imageUrl: profile.avatar_url ?? profile.banner_url,
+      eyebrow: "Velvet profile",
+    });
+  };
+
   return (
     <section className="overflow-hidden rounded-3xl border border-outline-variant/25 bg-bg-elevated shadow-[var(--shadow-card)]">
-      <div className="relative h-36 w-full sm:h-44 md:h-52">
+      <div className="relative h-36 w-full overflow-hidden rounded-t-3xl sm:h-44 md:h-48">
         {profile.banner_url ? (
           <VelvetImage
             src={profile.banner_url}
@@ -56,18 +71,17 @@ export function ProfileHeroCard({
           />
         )}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg-elevated/80 via-transparent to-transparent"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg-elevated via-bg-elevated/20 to-transparent"
           aria-hidden
         />
       </div>
 
-      <div className="relative px-4 pb-6 sm:px-6">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-5 md:items-end">
+      <div className="relative -mt-5 rounded-t-3xl bg-bg-elevated px-4 pb-5 pt-1 sm:-mt-6 sm:px-6 sm:pb-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-5 lg:min-w-0 lg:flex-1">
             <div
               className={cn(
-                "-mt-12 shrink-0 rounded-full bg-gradient-to-br from-[#9333ea] via-[#db2777] to-[#fb7185] p-[3px] shadow-md sm:-mt-14",
-                "md:-mt-16",
+                "-mt-12 shrink-0 rounded-full bg-gradient-to-br from-[#9333ea] via-[#db2777] to-[#fb7185] p-[3px] shadow-md sm:-mt-14 lg:-mt-16",
               )}
             >
               <div className="rounded-full bg-bg-elevated p-[3px]">
@@ -75,14 +89,14 @@ export function ProfileHeroCard({
                   src={profile.avatar_url}
                   name={displayName}
                   size="xl"
-                  className="!h-20 !w-20 ring-0 sm:!h-24 sm:!w-24 md:!h-28 md:!w-28"
+                  className="!h-20 !w-20 ring-0 sm:!h-24 sm:!w-24 lg:!h-28 lg:!w-28"
                 />
               </div>
             </div>
 
             <div className="min-w-0 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                <h1 className="font-display text-2xl text-on-surface sm:text-3xl md:text-[2rem] md:leading-tight">
+                <h1 className="font-display text-2xl text-on-surface sm:text-3xl">
                   {displayName}
                 </h1>
                 {profile.username && profile.full_name && (
@@ -93,20 +107,20 @@ export function ProfileHeroCard({
                 )}
               </div>
               {profile.username && (
-                <p className="mt-0.5 text-sm font-medium text-on-surface-variant sm:text-base">
+                <p className="mt-0.5 text-sm font-medium text-on-surface-variant">
                   @{profile.username}
                 </p>
               )}
               {profile.bio && (
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-on-surface sm:mx-0 sm:text-[15px]">
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-on-surface sm:mx-0">
                   {profile.bio}
                 </p>
               )}
               {(websiteLabel || profile.created_at) && (
-                <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-on-surface-variant sm:justify-start sm:text-sm">
+                <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-on-surface-variant sm:justify-start">
                   {websiteLabel && profile.website && (
                     <li className="flex items-center gap-1">
-                      <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                      <Globe className="h-3.5 w-3.5 opacity-70" aria-hidden />
                       <a
                         href={
                           profile.website.startsWith("http")
@@ -128,7 +142,7 @@ export function ProfileHeroCard({
                           •
                         </span>
                       )}
-                      <Calendar className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                      <Calendar className="h-3.5 w-3.5 opacity-70" aria-hidden />
                       <span>Joined {formatJoinedDate(profile.created_at)}</span>
                     </li>
                   )}
@@ -137,58 +151,41 @@ export function ProfileHeroCard({
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto md:shrink-0 md:items-end">
-            {profile.username && (
-              <Link
-                href={ROUTES.creator(profile.username)}
-                className="w-full sm:w-auto"
-              >
-                <Button
-                  variant="gradient"
-                  size="sm"
-                  type="button"
-                  icon={ExternalLink}
-                  className="w-full shadow-md sm:w-auto"
-                >
-                  View public page
-                </Button>
-              </Link>
-            )}
-            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                icon={Pencil}
-                onClick={onEdit}
-                className="w-full border-outline-variant/50 bg-bg-elevated sm:w-auto"
-              >
-                Edit profile
-              </Button>
-              <Link href={ROUTES.settings} className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  icon={Settings}
-                  className="w-full border-outline-variant/50 bg-bg-elevated sm:w-auto"
-                >
-                  Settings
-                </Button>
-              </Link>
-              {profileShareUrl && (
-                <ShareButton
-                  url={profileShareUrl}
-                  title={`${displayName} on Velvet`}
-                  text={profile.bio ?? undefined}
-                  imageUrl={profile.avatar_url ?? profile.banner_url}
-                  eyebrow="Velvet profile"
-                  preview
-                  label="Share"
-                  className="col-span-2 w-full sm:col-span-1 sm:w-auto"
-                />
+          <div className="flex w-full shrink-0 justify-center lg:w-auto lg:justify-end">
+            <ProfileActionGroup>
+              {profile.username && (
+                <ProfileActionItem label="Public page">
+                  <Link
+                    href={ROUTES.creator(profile.username)}
+                    className={profileActionIconClass}
+                    aria-label="View public page"
+                  >
+                    <ExternalLink className="h-4 w-4" strokeWidth={2.25} />
+                  </Link>
+                </ProfileActionItem>
               )}
-            </div>
+              {profileShareUrl && (
+                <ProfileActionItem label="Share">
+                  <ProfileActionIconButton label="Share profile" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" strokeWidth={2.25} />
+                  </ProfileActionIconButton>
+                </ProfileActionItem>
+              )}
+              <ProfileActionItem label="Edit">
+                <ProfileActionIconButton label="Edit profile" onClick={onEdit}>
+                  <Pencil className="h-4 w-4" strokeWidth={2.25} />
+                </ProfileActionIconButton>
+              </ProfileActionItem>
+              <ProfileActionItem label="Settings">
+                <Link
+                  href={ROUTES.settings}
+                  className={profileActionIconClass}
+                  aria-label="Settings"
+                >
+                  <Settings className="h-4 w-4" strokeWidth={2.25} />
+                </Link>
+              </ProfileActionItem>
+            </ProfileActionGroup>
           </div>
         </div>
       </div>

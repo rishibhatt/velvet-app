@@ -10,10 +10,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ProfileSearchCard } from "@/components/molecules/ProfileSearchCard";
 import { VelvetGradientTabs } from "@/components/molecules/VelvetGradientTabs";
-import {
-  BoardCard,
-  BoardCardSkeleton,
-} from "@/components/organisms/BoardCard";
+import { BoardCard } from "@/components/organisms/BoardCard";
+import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
+import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { CollectionPosterGrid } from "@/components/molecules/CollectionPosterGrid";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
@@ -231,11 +230,7 @@ function SearchContent() {
             </Link>
           </div>
           {publicLoading ? (
-            <div className={COLLECTION_CARD_GRID}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <BoardCardSkeleton key={i} />
-              ))}
-            </div>
+            <CollectionCardSkeletonGrid count={4} />
           ) : publicBoards.length > 0 ? (
             <>
               <div className={COLLECTION_CARD_GRID}>
@@ -268,8 +263,8 @@ function SearchContent() {
                   ref={publicSentinel}
                   className={`${COLLECTION_CARD_GRID} mt-3`}
                 >
-                  <BoardCardSkeleton />
-                  <BoardCardSkeleton />
+                  <CollectionCardSkeleton />
+                  <CollectionCardSkeleton />
                 </div>
               )}
             </>

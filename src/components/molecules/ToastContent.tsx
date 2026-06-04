@@ -13,38 +13,27 @@ export type ToastVariant = "success" | "error" | "info" | "loading";
 
 const variantConfig: Record<
   ToastVariant,
-  {
-    Icon: typeof CheckCircle2;
-    accentBar: string;
-    iconWrap: string;
-    glow: string;
-  }
+  { Icon: typeof CheckCircle2; border: string; icon: string }
 > = {
   success: {
     Icon: CheckCircle2,
-    accentBar: "bg-gradient-to-b from-primary-container via-accent-coral to-primary-fixed-dim",
-    iconWrap:
-      "bg-gradient-to-br from-primary-fixed to-primary-container/40 text-on-primary-container ring-1 ring-primary/10",
-    glow: "shadow-[0_8px_32px_rgba(107,61,50,0.12)]",
+    border: "border-l-[3px] border-l-[#2d6a4f]",
+    icon: "text-[#2d6a4f]",
   },
   error: {
     Icon: AlertCircle,
-    accentBar: "bg-gradient-to-b from-error/80 to-[#c97a7a]",
-    iconWrap: "bg-[#fce8e8] text-error ring-1 ring-error/15",
-    glow: "shadow-[0_8px_32px_rgba(186,26,26,0.1)]",
+    border: "border-l-[3px] border-l-error",
+    icon: "text-error",
   },
   info: {
     Icon: Info,
-    accentBar: "bg-gradient-to-b from-tertiary-container to-accent-lavender",
-    iconWrap:
-      "bg-gradient-to-br from-tertiary-fixed/90 to-secondary-fixed/50 text-tertiary ring-1 ring-tertiary/10",
-    glow: "shadow-[var(--shadow-card)]",
+    border: "border-l-[3px] border-l-primary",
+    icon: "text-primary",
   },
   loading: {
     Icon: Loader2,
-    accentBar: "bg-gradient-to-b from-accent-coral to-primary-container",
-    iconWrap: "bg-primary-fixed/80 text-primary ring-1 ring-primary/10",
-    glow: "shadow-[var(--shadow-card)]",
+    border: "border-l-[3px] border-l-outline-variant",
+    icon: "text-on-surface-variant",
   },
 };
 
@@ -61,54 +50,45 @@ export function ToastContent({
   description,
   onDismiss,
 }: ToastContentProps) {
-  const { Icon, accentBar, iconWrap, glow } = variantConfig[variant];
+  const { Icon, border, icon } = variantConfig[variant];
 
   return (
     <div
       className={cn(
-        "velvet-toast pointer-events-auto relative flex w-full max-w-[min(100vw-2rem,400px)] overflow-hidden rounded-2xl border border-outline-variant/25 bg-bg-elevated/98 backdrop-blur-xl",
-        glow,
+        "pointer-events-auto flex w-full max-w-[min(100vw-2rem,380px)] items-start gap-3 rounded-xl border border-outline-variant/30 bg-bg-elevated px-4 py-3.5 shadow-md",
+        border,
       )}
       role="status"
     >
-      <div className={cn("w-1 shrink-0", accentBar)} aria-hidden />
+      <Icon
+        className={cn(
+          "mt-0.5 h-5 w-5 shrink-0",
+          icon,
+          variant === "loading" && "animate-spin",
+        )}
+        strokeWidth={2}
+        aria-hidden
+      />
 
-      <div className="flex min-w-0 flex-1 items-start gap-3 p-4 pr-3">
-        <div
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-            iconWrap,
-          )}
-        >
-          <Icon
-            className={cn("h-5 w-5", variant === "loading" && "animate-spin")}
-            strokeWidth={2}
-            aria-hidden
-          />
-        </div>
-
-        <div className="min-w-0 flex-1 pt-0.5">
-          <p className="font-display text-[0.9375rem] leading-snug font-semibold text-on-surface">
-            {title}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold leading-snug text-on-surface">{title}</p>
+        {description && (
+          <p className="mt-0.5 text-xs leading-relaxed text-on-surface-variant">
+            {description}
           </p>
-          {description && (
-            <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
-              {description}
-            </p>
-          )}
-        </div>
-
-        {onDismiss && variant !== "loading" && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="shrink-0 rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
-            aria-label="Dismiss notification"
-          >
-            <X className="h-4 w-4" />
-          </button>
         )}
       </div>
+
+      {onDismiss && variant !== "loading" && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 rounded-md p-1 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+          aria-label="Dismiss"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }

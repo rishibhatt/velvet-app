@@ -2,11 +2,13 @@
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { resolveHeroPreviewImages } from "@/lib/collection-previews";
-import { Share2, Plus } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { IconButton } from "@/components/atoms/IconButton";
+import { CollectionSaveFab } from "@/components/molecules/CollectionSaveFab";
+import { BoardDetailPageSkeleton } from "@/components/skeletons/BoardDetailPageSkeleton";
+import { SKELETON_BOARD_ITEMS_COUNT } from "@/constants/skeleton-layout";
 import { CollectionCoverToolbar } from "@/components/molecules/CollectionCoverToolbar";
 import { CollectionHeroStatsRow } from "@/components/molecules/CollectionHeroStatsRow";
-import { UI_LABELS } from "@/constants/ui-labels";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
 import {
@@ -16,7 +18,6 @@ import {
 } from "@/lib/board-permissions";
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
-import { Button } from "@/components/atoms/Button";
 import { CollectionBoardActions } from "@/components/molecules/CollectionBoardActions";
 import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
@@ -131,16 +132,7 @@ export default function BoardDetailPage({
   );
 
   if (boardLoading) {
-    return (
-      <div className="pb-32">
-        <div className="skeleton-shimmer h-[353px] w-full md:h-[442px]" />
-        <div className="mx-auto max-w-7xl px-margin-mobile pt-stack-lg md:px-margin-desktop">
-          <div className="masonry-grid">
-            <ItemCardSkeleton />
-          </div>
-        </div>
-      </div>
-    );
+    return <BoardDetailPageSkeleton />;
   }
 
   if (boardError) {
@@ -257,7 +249,7 @@ export default function BoardDetailPage({
 
       <section
         ref={itemsSectionRef}
-        className="page-container mt-stack-lg scroll-mt-24 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] md:scroll-mt-8 md:pb-32"
+        className="page-container mt-stack-lg scroll-mt-24 pb-28 md:scroll-mt-8 md:pb-24"
       >
         {itemsError && (
           <ErrorAlert
@@ -269,7 +261,7 @@ export default function BoardDetailPage({
         )}
         {itemsLoading ? (
           <CollectionItemsGrid>
-            <ItemCardSkeleton count={8} />
+            <ItemCardSkeleton count={SKELETON_BOARD_ITEMS_COUNT} />
           </CollectionItemsGrid>
         ) : items && items.length > 0 ? (
           <CollectionItemsGrid
@@ -316,19 +308,7 @@ export default function BoardDetailPage({
       </section>
 
       {canEditItems && (
-        <div className="fixed bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] left-0 z-40 flex w-full flex-col items-center md:bottom-0">
-          <div className="flex min-h-[72px] w-full items-center justify-center border-t border-outline-variant/20 bg-bg-elevated/98 px-4 shadow-[0_-4px_24px_rgba(46,42,39,0.06)] sm:px-margin-mobile md:pb-safe">
-            <Button
-              size="lg"
-              variant="gradient"
-              icon={Plus}
-              className="w-full max-w-md"
-              onClick={() => openSaveModal(id)}
-            >
-              {UI_LABELS.saveToCollection}
-            </Button>
-          </div>
-        </div>
+        <CollectionSaveFab onClick={() => openSaveModal(id)} />
       )}
 
       <CollabPanel

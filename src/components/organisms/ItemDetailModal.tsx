@@ -12,10 +12,13 @@ import {
   Link2,
   Pencil,
   Check,
+  XCircle,
 } from "lucide-react";
 import { confirmAction } from "@/lib/confirm";
 import { shareOrCopy } from "@/lib/share";
 import { Button } from "@/components/atoms/Button";
+import { IconButton } from "@/components/atoms/IconButton";
+import { DestructiveIconButton } from "@/components/atoms/DestructiveIconButton";
 import { Avatar } from "@/components/atoms/Avatar";
 import { SourceBadge } from "@/components/molecules/SourceBadge";
 import { useItemDetail } from "@/queries/item/queries";
@@ -235,54 +238,10 @@ export function ItemDetailModal() {
             {/* Content column */}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <header className="flex shrink-0 items-center justify-end gap-2 border-b border-outline-variant/15 px-4 py-3 sm:px-6 lg:px-8">
-                {canEdit && !editing && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    icon={Pencil}
-                    onClick={startEditing}
-                  >
-                    Edit
-                  </Button>
-                )}
-                {editing && (
-                  <div className="mr-auto flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="gradient"
-                      size="sm"
-                      icon={Check}
-                      onClick={() => void handleSaveEdit()}
-                      loading={updateItem.isPending}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelEditing}
-                      disabled={updateItem.isPending}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  icon={Share2}
-                  onClick={() => void handleShare()}
-                  className="hidden sm:inline-flex"
-                >
-                  Share
-                </Button>
                 <button
                   type="button"
                   onClick={() => void handleShare()}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface transition hover:bg-primary/10 hover:text-primary sm:hidden"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface transition hover:bg-primary/10 hover:text-primary"
                   aria-label="Share"
                 >
                   <Share2 className="h-5 w-5" />
@@ -480,38 +439,50 @@ export function ItemDetailModal() {
               </div>
 
               {!readOnly && (
-                <footer className="shrink-0 border-t border-outline-variant/15 bg-surface-container-low/40 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    {canEdit ? (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        icon={editing ? Check : Pencil}
-                        className="w-full shrink-0 sm:w-auto"
-                        onClick={
-                          editing
-                            ? () => void handleSaveEdit()
-                            : startEditing
-                        }
-                        loading={updateItem.isPending}
-                      >
-                        {editing ? "Save changes" : "Edit save"}
-                      </Button>
-                    ) : (
-                      <p className="text-xs text-on-surface-variant">
-                        You can view this save, but only collection editors can change it.
+                <footer className="shrink-0 border-t border-outline-variant/15 bg-surface-container-low/40 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10">
+                  <div className="flex items-center justify-end gap-2">
+                    {!canEdit ? (
+                      <p className="mr-auto text-xs text-on-surface-variant">
+                        View only — editors can change this save.
                       </p>
-                    )}
-                    {canEdit && (
-                      <Button
-                        variant="secondary"
-                        icon={Trash2}
-                        className="w-full shrink-0 !border-error/35 !text-error sm:w-auto"
-                        onClick={handleDelete}
-                        loading={deleteItem.isPending}
-                      >
-                        Remove from collection
-                      </Button>
+                    ) : (
+                      <>
+                        {editing ? (
+                          <>
+                            <IconButton
+                              label="Cancel editing"
+                              onClick={cancelEditing}
+                              disabled={updateItem.isPending}
+                              className="!border-outline-variant/40 !bg-bg-elevated !text-on-surface-variant hover:!bg-surface-container-low disabled:opacity-50"
+                            >
+                              <XCircle className="h-5 w-5" />
+                            </IconButton>
+                            <IconButton
+                              label="Save changes"
+                              onClick={() => void handleSaveEdit()}
+                              disabled={updateItem.isPending}
+                              className="!border-primary/40 !bg-primary-fixed/40 !text-primary hover:!bg-primary-fixed/60 disabled:opacity-50"
+                            >
+                              <Check className="h-5 w-5" />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <IconButton
+                            label="Edit save"
+                            onClick={startEditing}
+                            className="!border-outline-variant/40 !bg-bg-elevated !text-primary hover:!bg-primary-fixed/50"
+                          >
+                            <Pencil className="h-5 w-5" />
+                          </IconButton>
+                        )}
+                        <DestructiveIconButton
+                          label="Remove from collection"
+                          onClick={handleDelete}
+                          disabled={deleteItem.isPending}
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </DestructiveIconButton>
+                      </>
                     )}
                   </div>
                 </footer>

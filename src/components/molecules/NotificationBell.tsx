@@ -200,7 +200,7 @@ function NotificationItem({
                   onClick={() => markRead.mutate(notification.id)}
                   className="text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
-                  Mark read
+                  Mark as Read
                 </button>
               )}
             </div>

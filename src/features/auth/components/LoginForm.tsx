@@ -19,6 +19,7 @@ import {
 import { authService } from "@/services/auth/auth.service";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
 import { ROUTES } from "@/constants/routes";
+import { getSafeReturnPath } from "@/lib/auth-redirect-path";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { ANALYTICS_EVENTS, track, trackError } from "@/lib/analytics";
 
@@ -52,8 +53,9 @@ export function LoginForm() {
       await authService.signIn(data.email, data.password);
       track(ANALYTICS_EVENTS.LOGIN_COMPLETED, { method: "password" });
       velvetToast.success("Welcome back!", "Your inspiration space is waiting.");
+      const next = getSafeReturnPath(searchParams.get("next"));
       router.refresh();
-      window.location.assign(ROUTES.home);
+      window.location.assign(next);
     } catch (err) {
       trackError(err, { area: "login", method: "password" });
       velvetToast.error("Sign in failed", getErrorMessage(err, "auth"));

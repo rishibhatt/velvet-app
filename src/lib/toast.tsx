@@ -4,6 +4,16 @@ import { toast } from "sonner";
 import { ToastContent, type ToastVariant } from "@/components/molecules/ToastContent";
 import { getErrorMessage, type ErrorContext } from "@/lib/errors";
 
+const errorTitles: Record<ErrorContext, string> = {
+  auth: "Sign-in failed",
+  board: "Collection couldn't be updated",
+  item: "Save couldn't be updated",
+  upload: "Upload failed",
+  profile: "Profile couldn't be updated",
+  comment: "Comment couldn't be posted",
+  generic: "Something went wrong",
+};
+
 function show(
   variant: ToastVariant,
   title: string,
@@ -46,15 +56,8 @@ export const velvetToast = {
 
   fromError(error: unknown, context: ErrorContext = "generic") {
     const message = getErrorMessage(error, context);
-    const titles: Partial<Record<ErrorContext, string>> = {
-      auth: "Sign-in issue",
-      board: "Collection error",
-      item: "Couldn't update save",
-      upload: "Upload failed",
-      profile: "Profile error",
-      generic: "Something went wrong",
-    };
-    return velvetToast.error(titles[context] ?? "Something went wrong", message);
+    const title = errorTitles[context] ?? errorTitles.generic;
+    return velvetToast.error(title, message);
   },
 
   promise<T>(
@@ -62,6 +65,7 @@ export const velvetToast = {
     messages: {
       loading: string;
       success: string;
+      successDescription?: string;
       context?: ErrorContext;
     },
   ) {
@@ -69,7 +73,7 @@ export const velvetToast = {
     return promise
       .then((result) => {
         velvetToast.dismiss(id);
-        velvetToast.success(messages.success);
+        velvetToast.success(messages.success, messages.successDescription);
         return result;
       })
       .catch((err) => {

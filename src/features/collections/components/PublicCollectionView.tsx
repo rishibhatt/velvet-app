@@ -16,7 +16,7 @@ import { getMoodEmoji } from "@/constants/moods";
 import { getMoodDisplayLabel } from "@/constants/moods";
 import { PublicItemGrid } from "@/features/collections/components/PublicItemGrid";
 import { VelvetLogo } from "@/components/atoms/VelvetLogo";
-import { Navbar } from "@/components/organisms/Navbar";
+import { AdaptiveNavbar } from "@/components/organisms/AdaptiveNavbar";
 import { CollectionLinks } from "@/components/seo/CollectionLinks";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -84,7 +84,7 @@ export function PublicCollectionView({
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Navbar />
+      <AdaptiveNavbar />
       <CollectionCoverHero
         size="public"
         overlay={
@@ -238,7 +238,10 @@ export function PublicCollectionView({
       )}
 
       <footer className="flex flex-col items-center gap-3 border-t border-outline-variant/20 py-8 text-center text-sm text-on-surface-variant">
-        <VelvetLogo variant="footer" href={ROUTES.home} />
+        <VelvetLogo
+          variant="footer"
+          href={isAuthenticated ? ROUTES.home : ROUTES.explore}
+        />
         <p>Your velvet world.</p>
       </footer>
     </div>

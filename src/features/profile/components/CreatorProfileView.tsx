@@ -1,12 +1,13 @@
 "use client";
 
-import { Navbar } from "@/components/organisms/Navbar";
+import { AdaptiveNavbar } from "@/components/organisms/AdaptiveNavbar";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
 import { ShareButton } from "@/components/molecules/ShareButton";
 import { Avatar } from "@/components/atoms/Avatar";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { VelvetLogo } from "@/components/atoms/VelvetLogo";
-import { BoardCard, BoardCardSkeleton } from "@/components/organisms/BoardCard";
+import { BoardCard } from "@/components/organisms/BoardCard";
+import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { getCreatorProfileUrl } from "@/lib/app-url";
@@ -39,7 +40,7 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
 
   return (
     <div className="relative min-h-screen bg-background pb-24 md:pb-0">
-      <Navbar />
+      <AdaptiveNavbar />
 
       <div className="relative h-32 w-full overflow-hidden sm:h-40 md:h-48">
         {profile.banner_url ? (
@@ -140,9 +141,9 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
               ))}
             </div>
             {hasMore && (
-              <div ref={sentinelRef} className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-4">
-                <BoardCardSkeleton />
-                <BoardCardSkeleton />
+              <div ref={sentinelRef} className={`${COLLECTION_CARD_GRID} mt-3`}>
+                <CollectionCardSkeleton />
+                <CollectionCardSkeleton />
               </div>
             )}
           </>

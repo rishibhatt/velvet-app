@@ -5,10 +5,9 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { VelvetGradientTabs } from "@/components/molecules/VelvetGradientTabs";
 import { UI_LABELS } from "@/constants/ui-labels";
-import {
-  BoardCard,
-  BoardCardSkeleton,
-} from "@/components/organisms/BoardCard";
+import { BoardCard } from "@/components/organisms/BoardCard";
+import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
+import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
@@ -112,11 +111,7 @@ export function ProfileBoardsSection({
 
       <div className="mt-6 sm:mt-8" role="tabpanel">
         {loading ? (
-          <div className={COLLECTION_CARD_GRID}>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <BoardCardSkeleton key={i} />
-            ))}
-          </div>
+          <CollectionCardSkeletonGrid count={4} />
         ) : activeBoards.length > 0 ? (
           <>
             <div className={COLLECTION_CARD_GRID}>
@@ -144,8 +139,8 @@ export function ProfileBoardsSection({
                 ref={sentinelRef}
                 className={`${COLLECTION_CARD_GRID} mt-3`}
               >
-                <BoardCardSkeleton />
-                <BoardCardSkeleton />
+                <CollectionCardSkeleton />
+                <CollectionCardSkeleton />
               </div>
             )}
           </>

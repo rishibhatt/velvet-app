@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/organisms/Navbar";
+import { AdaptiveNavbar } from "@/components/organisms/AdaptiveNavbar";
 import { PublicCollectionList } from "@/components/seo/PublicCollectionList";
 import { getMoodLabel } from "@/constants/moods";
 import type { Board, Mood } from "@/types/board.types";
@@ -11,7 +11,7 @@ export function CategoryPage({ mood, boards }: { mood: Mood; boards: Board[] }) 
 
   return (
     <main className="min-h-screen bg-background pb-16">
-      <Navbar />
+      <AdaptiveNavbar />
       <div className="page-container py-10">
         <header className="mb-8">
           <h1 className="font-display text-3xl text-on-surface sm:text-4xl">{label} collections</h1>

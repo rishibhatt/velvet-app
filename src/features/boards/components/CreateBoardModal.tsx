@@ -5,21 +5,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { velvetToast } from "@/lib/toast";
+import { confirmAction } from "@/lib/confirm";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/atoms/Button";
-import { SegmentButton } from "@/components/atoms/SegmentButton";
 import { ModalShell } from "@/components/organisms/ModalShell";
-import { CUSTOM_MOOD_VALUE, MOODS, type MoodValue } from "@/constants/moods";
+import { CollectionVisibilityToggle } from "@/components/molecules/CollectionVisibilityToggle";
+import { MoodSelect, type MoodSelection } from "@/components/molecules/MoodSelect";
+import { CUSTOM_MOOD_VALUE } from "@/constants/moods";
 import { useCreateBoard } from "@/queries/board/mutations";
 import { useModalStore } from "@/store/modal.store";
 import {
   createBoardSchema,
   type CreateBoardInput,
 } from "@/schemas/board.schema";
-import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
-
-type MoodSelection = MoodValue | typeof CUSTOM_MOOD_VALUE;
 
 export function CreateBoardModal() {
   const router = useRouter();
@@ -39,12 +38,30 @@ export function CreateBoardModal() {
     defaultValues: { mood: "wedding", isPublic: false },
   });
 
+  const requestVisibilityChange = async (nextPublic: boolean) => {
+    if (nextPublic === isPublic) return;
+
+    if (nextPublic) {
+      const ok = await confirmAction({
+        title: "Make this collection public?",
+        description:
+          "It will appear in Explore and anyone with the link can view it. You can switch to private anytime in settings.",
+        confirmLabel: "Make public",
+        cancelLabel: "Keep private",
+      });
+      if (ok) setIsPublic(true);
+      return;
+    }
+
+    setIsPublic(false);
+  };
+
   const onSubmit = async (data: CreateBoardInput) => {
     const isCustom = moodSelection === CUSTOM_MOOD_VALUE;
     const trimmedCustom = customMoodLabel.trim();
 
     if (isCustom && !trimmedCustom) {
-      velvetToast.error("Name your mood", "Enter a custom mood or pick a preset.");
+      velvetToast.error("Add a mood name", "Enter a custom mood or pick a preset from the list.");
       return;
     }
 
@@ -55,10 +72,14 @@ export function CreateBoardModal() {
         moodLabel: isCustom ? trimmedCustom : undefined,
         isPublic,
       });
-      velvetToast.success("Collection created!", "Start saving inspiration.");
+      velvetToast.success(
+        "Collection created",
+        `"${board.title}" is ready — start saving inspiration.`,
+      );
       reset();
       setMoodSelection("wedding");
       setCustomMoodLabel("");
+      setIsPublic(false);
       closeCreateBoard();
       router.push(ROUTES.board(board.id));
     } catch {
@@ -71,14 +92,13 @@ export function CreateBoardModal() {
       open={createBoardModal}
       onClose={closeCreateBoard}
       title="New collection"
-      subtitle="Gather your inspirations in one curated space"
-      className="surface-panel w-full sm:max-w-lg"
-      contentClassName="p-4 sm:p-stack-lg md:p-12"
+      className="w-full sm:max-w-md"
+      scrollBody={false}
+      responsive
       footer={
         <Button
           type="submit"
           form="create-board-form"
-          size="lg"
           loading={createBoard.isPending}
           className="w-full"
         >
@@ -86,107 +106,61 @@ export function CreateBoardModal() {
         </Button>
       }
     >
-      <form id="create-board-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8 sm:space-y-10">
-        <div className="space-y-4">
+      <form
+        id="create-board-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-5 px-5 py-5 sm:px-6"
+      >
+        <div className="space-y-1.5">
+          <label htmlFor="new-board-title" className="text-xs font-semibold text-on-surface-variant">
+            Title
+          </label>
           <input
+            id="new-board-title"
             {...register("title")}
-            placeholder="Name your collection..."
-            className="velvet-input-title w-full border-0 border-b-2 border-outline-variant/50 bg-transparent py-4 font-display text-xl text-on-surface placeholder:text-outline/70 md:text-2xl"
-            aria-label="Collection name"
+            placeholder="Name your collection"
+            className="velvet-field w-full rounded-xl px-3 py-2.5 text-sm"
+            autoComplete="off"
           />
           {errors.title && (
-            <p className="text-sm text-error">{errors.title.message}</p>
+            <p className="text-xs text-error">{errors.title.message}</p>
           )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="new-board-desc" className="text-xs font-semibold text-on-surface-variant">
+            Description
+          </label>
           <textarea
+            id="new-board-desc"
             {...register("description")}
-            placeholder="What is this collection for? (optional)"
+            placeholder="Optional"
             rows={2}
-            className="velvet-field w-full resize-none rounded-xl px-4 py-3 text-sm"
-            aria-label="Description"
+            className="velvet-field w-full resize-none rounded-xl px-3 py-2.5 text-sm"
           />
         </div>
 
-        <section className="space-y-3">
-          <div>
-            <label className="block text-sm font-bold tracking-widest text-on-surface uppercase">
-              Choose a mood
-            </label>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Pick a preset or name your own vibe below.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {MOODS.map((mood) => {
-              const selected = moodSelection === mood.value;
-              return (
-                <button
-                  key={mood.value}
-                  type="button"
-                  onClick={() => setMoodSelection(mood.value)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.98]",
-                    selected
-                      ? "border-primary bg-primary-fixed/55 text-primary shadow-sm"
-                      : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
-                  )}
-                >
-                  <span
-                    className="velvet-icon-chip h-8 w-8 text-base leading-none"
-                    aria-hidden
-                  >
-                    {mood.emoji}
-                  </span>
-                  {mood.label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setMoodSelection(CUSTOM_MOOD_VALUE)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.98]",
-                moodSelection === CUSTOM_MOOD_VALUE
-                  ? "border-primary bg-primary-fixed/55 text-primary shadow-sm"
-                  : "border-outline-variant/40 bg-bg-elevated text-on-surface hover:border-primary/35 hover:bg-primary-fixed/25",
-              )}
-            >
-              <span className="velvet-icon-chip h-8 w-8 text-base leading-none" aria-hidden>
-                ✏️
-              </span>
-              Custom
-            </button>
-          </div>
-
-          {moodSelection === CUSTOM_MOOD_VALUE && (
-            <div className="space-y-1.5 pt-1">
-              <label htmlFor="custom-mood" className="text-sm font-semibold text-on-surface">
-                Your mood name
-              </label>
-              <input
-                id="custom-mood"
-                value={customMoodLabel}
-                onChange={(e) => setCustomMoodLabel(e.target.value)}
-                placeholder="e.g. Nursery, Recipes, Fitness, Date night..."
-                maxLength={48}
-                className="velvet-field w-full rounded-xl px-4 py-3 text-base sm:text-sm"
-              />
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3">
-          <label className="block text-sm font-bold tracking-widest text-on-surface uppercase">
-            Privacy
+        <div className="space-y-1.5">
+          <label htmlFor="collection-mood" className="text-xs font-semibold text-on-surface-variant">
+            Mood
           </label>
-          <SegmentButton
-            options={[
-              { value: "private", label: "Private" },
-              { value: "shared", label: "Shared" },
-            ]}
-            value={isPublic ? "shared" : "private"}
-            onChange={(v) => setIsPublic(v === "shared")}
-          />
-        </section>
+          <MoodSelect value={moodSelection} onChange={setMoodSelection} />
+          {moodSelection === CUSTOM_MOOD_VALUE && (
+            <input
+              value={customMoodLabel}
+              onChange={(e) => setCustomMoodLabel(e.target.value)}
+              placeholder="e.g. Nursery, Recipes, Date night"
+              maxLength={48}
+              className="velvet-field w-full rounded-xl px-3 py-2.5 text-sm"
+              aria-label="Custom mood name"
+            />
+          )}
+        </div>
+
+        <CollectionVisibilityToggle
+          isPublic={isPublic}
+          onChange={(next) => void requestVisibilityChange(next)}
+        />
       </form>
     </ModalShell>
   );

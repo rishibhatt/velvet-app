@@ -6,10 +6,9 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Button } from "@/components/atoms/Button";
-import {
-  ShowcaseBoardCard,
-  ShowcaseBoardCardSkeleton,
-} from "@/components/organisms/ShowcaseBoardCard";
+import { ShowcaseBoardCard } from "@/components/organisms/ShowcaseBoardCard";
+import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
+import { CollectionCardSkeletonRail } from "@/components/skeletons/CollectionCardSkeletonRail";
 import { HomeHero } from "@/components/organisms/HomeHero";
 import { DiscoverSectionHeader } from "@/components/molecules/DiscoverSectionHeader";
 import { EmptyState } from "@/components/molecules/EmptyState";
@@ -84,13 +83,7 @@ export default function HomePage() {
         <section className="velvet-panel mb-6 p-4 sm:p-6 md:mb-8">
           <DiscoverSectionHeader />
           {discoverLoading ? (
-            <div className={HOME_DISCOVER_CARD_RAIL}>
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className={HOME_DISCOVER_CARD_RAIL_ITEM}>
-                  <ShowcaseBoardCardSkeleton />
-                </div>
-              ))}
-            </div>
+            <CollectionCardSkeletonRail />
           ) : (
             <div className={HOME_DISCOVER_CARD_RAIL}>
               {discoverPreview.map((board) => (
@@ -122,13 +115,7 @@ export default function HomePage() {
         />
 
         {isLoading ? (
-          <div className={HOME_OWNED_CARD_RAIL}>
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className={HOME_OWNED_CARD_RAIL_ITEM}>
-                <ShowcaseBoardCardSkeleton />
-              </div>
-            ))}
-          </div>
+          <CollectionCardSkeletonRail />
         ) : boards && boards.length > 0 ? (
           <>
             <motion.div
@@ -146,10 +133,10 @@ export default function HomePage() {
             {hasMoreBoards && (
               <div ref={boardsSentinelRef} className={cn(HOME_OWNED_CARD_RAIL, "mt-2")}>
                 <div className={HOME_OWNED_CARD_RAIL_ITEM}>
-                  <ShowcaseBoardCardSkeleton />
+                  <CollectionCardSkeleton />
                 </div>
                 <div className={HOME_OWNED_CARD_RAIL_ITEM}>
-                  <ShowcaseBoardCardSkeleton />
+                  <CollectionCardSkeleton />
                 </div>
               </div>
             )}

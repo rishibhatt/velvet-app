@@ -13,7 +13,6 @@ const protectedRoutes = [
   "/settings",
   "/search",
   "/onboarding",
-  "/explore",
 ];
 const publicRoutes = ["/setup", "/auth/callback", "/c", "/u"];
 

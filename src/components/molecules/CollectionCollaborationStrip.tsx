@@ -18,7 +18,9 @@ import { useDuplicateBoard, useRequestCollaboration } from "@/queries/board/muta
 import { useUIStore } from "@/store/ui.store";
 import { velvetToast } from "@/lib/toast";
 import { ROUTES } from "@/constants/routes";
+import { loginWithReturn } from "@/lib/auth-redirect-path";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 import type { Board } from "@/types/board.types";
 
 interface CollectionCollaborationStripProps {
@@ -76,6 +78,7 @@ export function CollectionCollaborationStrip({
   className,
 }: CollectionCollaborationStripProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { setCollabPanelOpen } = useUIStore();
   const { collabState, isOwner, isMember, canEdit } = useCollectionCollaborationState(
     board,
@@ -231,7 +234,7 @@ export function CollectionCollaborationStrip({
           Request to collaborate
         </Button>
       ) : (
-        <Link href={ROUTES.login} className="w-full sm:w-auto">
+        <Link href={loginWithReturn(pathname || ROUTES.explore)} className="w-full sm:w-auto">
           <Button variant="gradient" size="sm" icon={Users} className="w-full">
             Sign in to collaborate
           </Button>

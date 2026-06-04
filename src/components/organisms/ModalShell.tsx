@@ -22,6 +22,8 @@ interface ModalShellProps {
   stackClassName?: string;
   hideClose?: boolean;
   responsive?: boolean;
+  /** When false, body does not scroll — keeps compact modals on one screen. */
+  scrollBody?: boolean;
 }
 
 export function ModalShell({
@@ -37,6 +39,7 @@ export function ModalShell({
   stackClassName = "z-[100]",
   hideClose = false,
   responsive = true,
+  scrollBody = true,
 }: ModalShellProps) {
   useBodyScrollLock(open);
   const isDesktop = useMediaQuery("(min-width: 640px)");
@@ -107,7 +110,10 @@ export function ModalShell({
 
             <div
               className={cn(
-                "min-h-0 flex-1 overflow-y-auto overscroll-y-contain custom-scrollbar",
+                "min-h-0 flex-1",
+                scrollBody
+                  ? "overflow-y-auto overscroll-y-contain custom-scrollbar"
+                  : "overflow-visible",
                 !footer && "pb-[max(1rem,env(safe-area-inset-bottom))]",
                 !title && !hideClose && "pt-12",
                 contentClassName,

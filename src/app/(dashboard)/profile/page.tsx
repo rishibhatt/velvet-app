@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/atoms/Skeleton";
+import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { ProfileEditor } from "@/features/profile/components/ProfileEditor";
 import { ProfileBoardsSection } from "@/features/profile/components/ProfileBoardsSection";
 import { ProfileHeroCard } from "@/features/profile/components/ProfileHeroCard";
@@ -20,10 +21,8 @@ function ProfilePageSkeleton() {
         ))}
       </div>
       <Skeleton className="mt-10 h-10 w-64 rounded-full" />
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-[4/5] rounded-3xl sm:aspect-[5/6]" />
-        ))}
+      <div className="mt-6">
+        <CollectionCardSkeletonGrid count={4} />
       </div>
     </main>
   );

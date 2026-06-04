@@ -94,7 +94,7 @@ export function useUpdateItem(boardId: string) {
         (old ?? []).map((i) => (i.id === updated.id ? updated : i)),
       );
       queryClient.setQueryData(itemKeys.detail(updated.id), updated);
-      velvetToast.success("Save updated");
+      velvetToast.success("Save updated", "Your changes were saved to this collection.");
     },
     onError: (err) => {
       velvetToast.error("Couldn't update", getErrorMessage(err, "item"));
@@ -162,7 +162,10 @@ export function useDeleteItem(boardId: string) {
       queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
     },
     onSuccess: () => {
-      velvetToast.success("Removed from collection");
+      velvetToast.success(
+        "Removed from collection",
+        "The save was deleted. You can add it again anytime.",
+      );
     },
   });
 }

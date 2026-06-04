@@ -7,8 +7,9 @@ import { useToggleBoardLike } from "@/queries/likes/mutations";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { velvetToast } from "@/lib/toast";
-import { ROUTES } from "@/constants/routes";
+import { loginWithReturn } from "@/lib/auth-redirect-path";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 interface CollectionCardLikePillProps {
   boardId: string;
@@ -29,6 +30,7 @@ export function CollectionCardLikePill({
   onLikeBurst,
   className,
 }: CollectionCardLikePillProps) {
+  const pathname = usePathname();
   const { isAuthenticated, isAuthReady } = useAuth();
   const toggle = useToggleBoardLike();
 
@@ -54,7 +56,7 @@ export function CollectionCardLikePill({
   if (isAuthReady && !isAuthenticated) {
     return (
       <Link
-        href={ROUTES.login}
+        href={loginWithReturn(pathname || "/explore")}
         onClick={(e) => e.stopPropagation()}
         className={shell}
         aria-label="Sign in to like"

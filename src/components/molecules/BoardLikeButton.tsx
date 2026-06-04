@@ -7,8 +7,9 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import { velvetToast } from "@/lib/toast";
-import { ROUTES } from "@/constants/routes";
+import { loginWithReturn } from "@/lib/auth-redirect-path";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface BoardLikeButtonProps {
   boardId: string;
@@ -30,8 +31,10 @@ export function BoardLikeButton({
   appearance = "overlay",
   className,
 }: BoardLikeButtonProps) {
+  const pathname = usePathname();
   const { isAuthenticated, isAuthReady } = useAuth();
   const toggle = useToggleBoardLike();
+  const loginHref = loginWithReturn(pathname || "/explore");
   const isFooter = appearance === "footer";
   const isToolbar = appearance === "toolbar";
 
@@ -62,7 +65,7 @@ export function BoardLikeButton({
     if (isAuthReady && !isAuthenticated) {
       return (
         <Link
-          href={ROUTES.login}
+          href={loginHref}
           onClick={(e) => e.stopPropagation()}
           className={shell}
           aria-label="Sign in to like"
@@ -136,7 +139,7 @@ export function BoardLikeButton({
   if (isAuthReady && !isAuthenticated) {
     return (
       <Link
-        href={ROUTES.login}
+        href={loginHref}
         onClick={(e) => e.stopPropagation()}
         className={cn(
           baseStyles,
