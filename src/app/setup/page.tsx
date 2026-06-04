@@ -99,6 +99,12 @@ export default async function SetupPage() {
               (owner-scoped public URLs)
             </li>
             <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/016_clean_collection_slugs.sql
+              </code>{" "}
+              (clean SEO-friendly collection slugs)
+            </li>
+            <li>
               <code className="rounded bg-primary/10 px-2 py-0.5 text-primary">
                 supabase/migrations/014_security_hardening.sql
               </code>{" "}

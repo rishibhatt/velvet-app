@@ -69,7 +69,7 @@ export function ModalShell({
             className={cn(
               "relative flex w-full flex-col overflow-hidden border border-outline-variant/20 bg-bg-elevated shadow-[var(--shadow-modal)]",
               useSheet
-                ? "max-h-[min(78dvh,calc(100dvh-env(safe-area-inset-bottom,0px)-5.5rem))] rounded-t-[1.75rem]"
+                ? "max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom,0px)-0.5rem))] rounded-t-[1.75rem]"
                 : "max-h-[min(90vh,calc(100dvh-2rem))] rounded-[1.75rem] sm:rounded-[2rem]",
               className,
             )}
@@ -126,9 +126,7 @@ export function ModalShell({
               <footer
                 className={cn(
                   "shrink-0 border-t border-outline-variant/20 bg-bg-elevated px-4 py-3 shadow-[0_-10px_28px_rgba(46,42,39,0.08)] sm:px-6 sm:py-4",
-                  useSheet
-                    ? "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]"
-                    : "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+                  "pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]",
                 )}
               >
                 {footer}

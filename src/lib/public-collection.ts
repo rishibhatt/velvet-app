@@ -89,7 +89,7 @@ export async function getPublicCollectionByOwnerSlug(
 
   if (error || !boardRow) return null;
 
-  const board = mapBoard(boardRow as never);
+  let board = mapBoard(boardRow as never);
   const { data: itemsData } = await supabase
     .from("items")
     .select(ITEM_SELECT)
@@ -103,14 +103,19 @@ export async function getPublicCollectionByOwnerSlug(
     .eq("board_id", board.id)
     .order("name", { ascending: true });
 
+  const items = (itemsData ?? []).map((row) =>
+    mapItem(row as Record<string, unknown>),
+  );
+
+  const [withPreviews] = await attachBoardPreviews([board], supabase);
+  board = withPreviews ?? board;
+
   const more = await getPublicBoardsByOwner(owner.id, board.id, 6);
   const related = await getPublicBoardsByMood(board.mood, board.id, 8);
 
   return {
     board,
-    items: (itemsData ?? []).map((row) =>
-      mapItem(row as Record<string, unknown>),
-    ),
+    items,
     owner,
     tags: tagsData ?? [],
     moreFromCreator: more,

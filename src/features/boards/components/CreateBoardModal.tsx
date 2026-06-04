@@ -93,7 +93,6 @@ export function CreateBoardModal() {
       onClose={closeCreateBoard}
       title="New collection"
       className="w-full sm:max-w-md"
-      scrollBody={false}
       responsive
       footer={
         <Button

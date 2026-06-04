@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
-import { VelvetGradientTabs } from "@/components/molecules/VelvetGradientTabs";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { BoardCard } from "@/components/organisms/BoardCard";
 import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
+import { ProfileBoardTabs, type ProfileBoardTab } from "@/features/profile/components/ProfileBoardTabs";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { Board } from "@/types/board.types";
-
-type ProfileBoardTab = "yours" | "liked";
 
 interface ProfileBoardsSectionProps {
   boards: Board[];
@@ -82,32 +80,9 @@ export function ProfileBoardsSection({
       }
     : undefined;
 
-  const tabs = [
-    { id: "yours" as const, label: UI_LABELS.yourCollections },
-    { id: "liked" as const, label: UI_LABELS.likedCollections },
-  ];
-
   return (
     <section className="mt-8 sm:mt-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <VelvetGradientTabs
-          tabs={tabs}
-          value={tab}
-          onChange={setTab}
-          aria-label="Board collections"
-          className="w-full sm:max-w-md"
-        />
-        <Button
-          variant="gradient"
-          size="sm"
-          type="button"
-          icon={Plus}
-          onClick={onCreateBoard}
-          className="w-full shrink-0 shadow-md sm:w-auto"
-        >
-          {UI_LABELS.newCollection}
-        </Button>
-      </div>
+      <ProfileBoardTabs value={tab} onChange={setTab} />
 
       <div className="mt-6 sm:mt-8" role="tabpanel">
         {loading ? (
@@ -121,14 +96,12 @@ export function ProfileBoardsSection({
                   board={board}
                   variant={tab === "yours" ? "owned" : "liked"}
                   emptyVariant={tab === "yours" ? "own" : "other"}
-                  owner={
-                    tab === "liked"
-                      ? undefined
-                      : owner
-                  }
+                  owner={tab === "liked" ? undefined : owner}
                   publicHref={
-                    tab === "liked" && board.slug && board.is_public
-                      ? ROUTES.legacyPublicCollection(board.slug)
+                    board.slug && board.is_public
+                      ? profile?.username
+                        ? ROUTES.publicCollection(profile.username, board.slug)
+                        : ROUTES.legacyPublicCollection(board.slug)
                       : undefined
                   }
                 />

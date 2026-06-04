@@ -23,3 +23,13 @@ export function uniqueSlug(base: string, suffix: string): string {
 export function incrementSlug(base: string, index: number): string {
   return index <= 1 ? base : `${base}-${index}`;
 }
+
+/** Strips migration-004 style `title-abc12def` suffixes for display / regen. */
+export function stripLegacySlugSuffix(slug: string): string {
+  const cleaned = slug.replace(/-[0-9a-f]{8}$/i, "");
+  return cleaned || slug;
+}
+
+export function isLegacyUuidSlugSuffix(slug: string): boolean {
+  return /-[0-9a-f]{8}$/i.test(slug);
+}

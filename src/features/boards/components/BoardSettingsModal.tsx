@@ -151,7 +151,6 @@ export function BoardSettingsModal({
       onClose={handleClose}
       title="Collection settings"
       className="w-full sm:max-w-md"
-      scrollBody={false}
       responsive
       footer={
         <div className="flex items-center gap-2">

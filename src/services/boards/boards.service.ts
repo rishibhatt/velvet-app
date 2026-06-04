@@ -2,7 +2,7 @@ import { BOARD_SELECT, mapBoard } from "@/lib/board-mapper";
 import { attachBoardPreviews } from "@/lib/collection-previews";
 import { itemsService, ITEMS_PAGE_SIZE } from "@/services/items/items.service";
 import { likesService } from "@/services/likes/likes.service";
-import { incrementSlug, slugifyTitle } from "@/lib/slug";
+import { incrementSlug, slugifyTitle, stripLegacySlugSuffix } from "@/lib/slug";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
@@ -37,7 +37,8 @@ async function resolveOwnerScopedSlug(
     (data ?? [])
       .filter((row) => row.id !== excludeBoardId)
       .map((row) => row.slug)
-      .filter((slug): slug is string => Boolean(slug)),
+      .filter((slug): slug is string => Boolean(slug))
+      .map(stripLegacySlugSuffix),
   );
 
   for (let index = 1; index < 1000; index += 1) {

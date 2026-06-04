@@ -9,6 +9,7 @@ import { ProfileHeroCard } from "@/features/profile/components/ProfileHeroCard";
 import { ProfileStatsGrid } from "@/features/profile/components/ProfileStatsGrid";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBoards, useLikedBoards } from "@/queries/board/queries";
+import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab";
 import { useModalStore } from "@/store/modal.store";
 
 function ProfilePageSkeleton() {
@@ -103,6 +104,8 @@ export default function ProfilePage() {
         likedLoading={likedLoading}
         onCreateBoard={openCreateBoard}
       />
+
+      <CollectionCreateFab onClick={openCreateBoard} />
     </main>
   );
 }

@@ -48,11 +48,17 @@ export function collectionMetadata(
   items: Item[],
   owner: Pick<Profile, "username" | "full_name">,
 ): Metadata {
+  const path = ROUTES.publicCollection(owner.username, board.slug ?? "");
+  const creator = owner.full_name ?? owner.username;
+  const description =
+    board.description?.trim() ||
+    `Curated by @${owner.username} on ${BRAND.name}. ${items.length} saves to explore.`;
+
   return pageMetadata({
-    title: `${board.title} | ${BRAND.name}`,
-    description: board.description?.trim() || fallbackDescription(board.title),
-    path: ROUTES.publicCollection(owner.username, board.slug ?? ""),
-    image: board.cover_url ?? items.find((item) => item.image_url)?.image_url,
+    title: `${board.title} · @${owner.username} | ${BRAND.name}`,
+    description,
+    path,
+    image: generateCanonicalUrl(`${path}/opengraph-image`),
   });
 }
 
@@ -60,12 +66,14 @@ export function profileMetadata(
   profile: Pick<Profile, "username" | "full_name" | "bio" | "avatar_url">,
 ): Metadata {
   const name = profile.full_name ?? profile.username;
+  const path = ROUTES.creator(profile.username);
   return pageMetadata({
-    title: `${name} | ${BRAND.name}`,
+    title: `${name} (@${profile.username}) | ${BRAND.name}`,
     description:
-      profile.bio?.trim() || `Explore public collections by @${profile.username} on ${BRAND.name}.`,
-    path: ROUTES.creator(profile.username),
-    image: profile.avatar_url,
+      profile.bio?.trim() ||
+      `Explore public moodboards and curated collections by @${profile.username} on ${BRAND.name}.`,
+    path,
+    image: generateCanonicalUrl(`${path}/opengraph-image`),
     type: "profile",
   });
 }

@@ -1,4 +1,5 @@
 import { getPublicCollectionByOwnerSlug } from "@/lib/public-collection";
+import { previewImagesFromItems } from "@/lib/collection-previews";
 import { collectionOgImage } from "@/lib/seo/og";
 
 export const size = { width: 1200, height: 630 };
@@ -11,9 +12,13 @@ export default async function Image({
 }) {
   const { username, "collection-slug": slug } = await params;
   const data = await getPublicCollectionByOwnerSlug(username, slug);
+  const previewUrls = data
+    ? previewImagesFromItems(data.items)
+    : [];
+
   return collectionOgImage({
     title: data?.board.title ?? "Velvet collection",
     creator: data?.owner?.full_name ?? data?.owner?.username ?? "Velvet",
-    coverUrl: data?.board.cover_url ?? data?.items.find((item) => item.image_url)?.image_url,
+    previewUrls,
   });
 }

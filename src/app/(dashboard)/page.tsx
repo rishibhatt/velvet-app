@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Button } from "@/components/atoms/Button";
+import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab";
 import { ShowcaseBoardCard } from "@/components/organisms/ShowcaseBoardCard";
 import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import { CollectionCardSkeletonRail } from "@/components/skeletons/CollectionCardSkeletonRail";
@@ -19,7 +17,7 @@ import { useModalStore } from "@/store/modal.store";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getGreeting } from "@/utils/format";
 import { fadeUp, stagger } from "@/lib/animations";
-import { isSupabaseConfigured } from "@/lib/utils";
+import { cn, isSupabaseConfigured } from "@/lib/utils";
 import {
   HOME_DISCOVER_CARD_RAIL,
   HOME_DISCOVER_CARD_RAIL_ITEM,
@@ -33,7 +31,6 @@ import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 export default function HomePage() {
   const router = useRouter();
   const { data: boards, isLoading, isError, error, refetch } = useBoards();
-  const [compactCreate, setCompactCreate] = useState(false);
   const { openCreateBoard } = useModalStore();
   const { profile, user } = useAuth();
   const { data: discoverPreview = [], isLoading: discoverLoading } =
@@ -58,13 +55,6 @@ export default function HomePage() {
       }
     }
   }, [boards, isLoading, isError, router, user]);
-
-  useEffect(() => {
-    const handleScroll = () => setCompactCreate(window.scrollY > 120);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <main className="page-container py-stack-lg md:py-12">
@@ -152,21 +142,7 @@ export default function HomePage() {
         )}
       </section>
 
-      <Button
-        onClick={openCreateBoard}
-        variant="gradient"
-        size="lg"
-        icon={Plus}
-        className={cn(
-          "fixed right-4 bottom-20 z-40 shadow-xl transition-all duration-300 max-[380px]:right-3 max-[380px]:text-sm sm:right-6 md:bottom-12 md:right-12",
-          compactCreate && "h-14 w-14 !min-h-14 rounded-full px-0 sm:w-14",
-        )}
-        aria-label={UI_LABELS.newCollection}
-      >
-        <span className={cn(compactCreate && "sr-only")}>
-          {UI_LABELS.newCollection}
-        </span>
-      </Button>
+      <CollectionCreateFab onClick={openCreateBoard} />
     </main>
   );
 }
