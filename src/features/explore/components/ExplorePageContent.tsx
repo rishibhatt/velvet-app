@@ -1,26 +1,42 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { ExploreFiltersBar } from "@/components/organisms/ExploreFiltersBar";
-import { ExploreCollectionCard } from "@/components/organisms/ExploreCollectionCard";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { ExploreListSkeleton } from "@/components/skeletons/ExploreListRowSkeleton";
 import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import type { ExploreViewMode } from "@/components/molecules/ExploreViewToggle";
-import { ExploreBoardListRow } from "@/components/molecules/ExploreBoardListRow";
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { usePublicBoards } from "@/queries/discover/queries";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { Mood } from "@/types/board.types";
+import type { PublicBoard } from "@/services/discover/discover.service";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
-import { ROUTES } from "@/constants/routes";
-import { fadeUp, stagger } from "@/lib/animations";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
-export function ExplorePageContent() {
+const MotionGrid = dynamic(
+  () => import("@/features/explore/components/ExploreMotionGrid").then((m) => m.ExploreMotionGrid),
+  { ssr: false },
+);
+
+const MotionList = dynamic(
+  () => import("@/features/explore/components/ExploreMotionGrid").then((m) => m.ExploreMotionList),
+  { ssr: false },
+);
+
+interface ExplorePageContentProps {
+  initialBoards: PublicBoard[];
+  /** Server already rendered empty UI — skip duplicate on first paint */
+  hideEmptyState?: boolean;
+}
+
+export function ExplorePageContent({
+  initialBoards,
+  hideEmptyState = false,
+}: ExplorePageContentProps) {
   const { user } = useAuth();
   const [mood, setMood] = useState<Mood | null>(null);
   const [viewMode, setViewMode] = useState<ExploreViewMode>("grid");
@@ -35,10 +51,22 @@ export function ExplorePageContent() {
     [mood, user?.id],
   );
 
-  const { data: boards = [], isLoading, isError, error, refetch } =
-    usePublicBoards(filters);
+  const isDefaultFilters = mood === null;
+
+  const { data: boards = [], isLoading, isFetching, isError, error, refetch } =
+    usePublicBoards(filters, {
+      initialData: isDefaultFilters ? initialBoards : undefined,
+    });
 
   const { visible, sentinelRef, hasMore } = useInfiniteSlice(boards, 12);
+
+  const showLoading =
+    (isLoading || (isFetching && boards.length === 0)) && !isDefaultFilters;
+
+  const showEmpty =
+    !showLoading &&
+    boards.length === 0 &&
+    !(hideEmptyState && isDefaultFilters && !isFetching);
 
   useEffect(() => {
     track(ANALYTICS_EVENTS.EXPLORE_VIEWED, {
@@ -48,16 +76,7 @@ export function ExplorePageContent() {
   }, [boards.length, mood]);
 
   return (
-    <main className="page-container py-4 pb-28 md:py-8 md:pb-12">
-      <header className="mb-2 sm:mb-3">
-        <h1 className="font-display text-xl text-on-surface sm:text-2xl">
-          Explore
-        </h1>
-        <p className="mt-0.5 text-xs text-on-surface-variant sm:text-sm">
-          Public collections from the community
-        </p>
-      </header>
-
+    <>
       <ExploreFiltersBar
         mood={mood}
         onMoodChange={setMood}
@@ -75,7 +94,7 @@ export function ExplorePageContent() {
         />
       )}
 
-      {isLoading ? (
+      {showLoading ? (
         viewMode === "grid" ? (
           <CollectionCardSkeletonGrid />
         ) : (
@@ -84,32 +103,15 @@ export function ExplorePageContent() {
       ) : boards.length > 0 ? (
         viewMode === "grid" ? (
           <>
-            <motion.div
-              className={COLLECTION_CARD_GRID}
-              variants={stagger}
-              initial="initial"
-              animate="animate"
-            >
-              {visible.map((board) => (
-                <motion.div key={board.id} variants={fadeUp}>
-                  <ExploreCollectionCard
-                    board={board}
-                    owner={board.owner}
-                    onClick={() =>
-                      track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
-                        collection_id: board.id,
-                        category: board.mood,
-                      })
-                    }
-                    publicHref={
-                      board.slug && board.owner?.username
-                        ? ROUTES.publicCollection(board.owner.username, board.slug)
-                        : undefined
-                    }
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
+            <MotionGrid
+              boards={visible}
+              onBoardClick={(board) =>
+                track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
+                  collection_id: board.id,
+                  category: board.mood,
+                })
+              }
+            />
             {hasMore && (
               <div ref={sentinelRef} className={`${COLLECTION_CARD_GRID} mt-3`}>
                 <CollectionCardSkeleton />
@@ -118,34 +120,17 @@ export function ExplorePageContent() {
             )}
           </>
         ) : (
-          <motion.ul
-            className="space-y-3"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            {boards.map((board) => (
-              <motion.li key={board.id} variants={fadeUp}>
-                <ExploreBoardListRow
-                  board={board}
-                  owner={board.owner}
-                  onClick={() =>
-                    track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
-                      collection_id: board.id,
-                      category: board.mood,
-                    })
-                  }
-                  publicHref={
-                    board.slug && board.owner?.username
-                      ? ROUTES.publicCollection(board.owner.username, board.slug)
-                      : undefined
-                  }
-                />
-              </motion.li>
-            ))}
-          </motion.ul>
+          <MotionList
+            boards={boards}
+            onBoardClick={(board) =>
+              track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
+                collection_id: board.id,
+                category: board.mood,
+              })
+            }
+          />
         )
-      ) : (
+      ) : showEmpty ? (
         <EmptyState
           title={
             mood ? "No public collections in this mood yet" : "Nothing to explore yet"
@@ -156,7 +141,7 @@ export function ExplorePageContent() {
               : "When creators mark collections as public, they'll appear here."
           }
         />
-      )}
-    </main>
+      ) : null}
+    </>
   );
 }

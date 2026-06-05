@@ -7,10 +7,15 @@ import {
 } from "@/services/discover/discover.service";
 import { discoverKeys } from "./keys";
 
-export function usePublicBoards(filters: DiscoverFilters) {
+export function usePublicBoards(
+  filters: DiscoverFilters,
+  options?: { initialData?: Awaited<ReturnType<typeof discoverService.getPublicBoards>> },
+) {
   return useQuery({
     queryKey: discoverKeys.publicBoards(filters),
     queryFn: () => discoverService.getPublicBoards(filters),
+    initialData: options?.initialData,
+    staleTime: options?.initialData ? 60_000 : 0,
     meta: { skipErrorToast: true, errorContext: "board" },
   });
 }

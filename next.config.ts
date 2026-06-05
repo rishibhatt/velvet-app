@@ -43,6 +43,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["framer-motion", "lucide-react"],
+  },
   turbopack: {
     root: import.meta.dirname,
   },

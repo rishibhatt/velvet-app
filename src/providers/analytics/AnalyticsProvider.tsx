@@ -44,11 +44,21 @@ function AnalyticsRuntime() {
   const identifiedUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    initAnalytics();
-    if (!sessionStorage.getItem("velvet_session_started")) {
-      sessionStorage.setItem("velvet_session_started", "1");
-      track(ANALYTICS_EVENTS.SESSION_STARTED);
+    const boot = () => {
+      initAnalytics();
+      if (!sessionStorage.getItem("velvet_session_started")) {
+        sessionStorage.setItem("velvet_session_started", "1");
+        track(ANALYTICS_EVENTS.SESSION_STARTED);
+      }
+    };
+
+    if (typeof requestIdleCallback === "function") {
+      const id = requestIdleCallback(boot, { timeout: 4000 });
+      return () => cancelIdleCallback(id);
     }
+
+    const timer = setTimeout(boot, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

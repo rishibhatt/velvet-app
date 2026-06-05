@@ -12,7 +12,7 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
 export function ClarityProvider() {
   if (!CLARITY_ID || process.env.NODE_ENV !== "production") return null;
   return (
-    <Script id="velvet-clarity" strategy="afterInteractive">
+    <Script id="velvet-clarity" strategy="lazyOnload">
       {`
         (function(c,l,a,r,i,t,y){
           c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

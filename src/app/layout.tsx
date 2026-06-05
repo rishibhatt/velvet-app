@@ -21,6 +21,8 @@ export const metadata: Metadata = createSiteMetadata();
 
 
 
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+
 export default function RootLayout({
 
   children,
@@ -35,6 +37,12 @@ export default function RootLayout({
 
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
+        {supabaseOrigin ? (
+          <>
+            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseOrigin} />
+          </>
+        ) : null}
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
       <body className="min-h-screen bg-background font-body text-on-surface antialiased">
