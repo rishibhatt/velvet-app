@@ -293,7 +293,13 @@ export function SaveModal() {
         <div className="mt-4 flex gap-4">
           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container shadow-sm">
             {previewSrc ? (
-              <VelvetImage src={previewSrc} alt="" fill className="object-cover" />
+              <VelvetImage
+                src={previewSrc}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="96px"
+              />
             ) : mode === "note" && notes ? (
               <div className="flex h-full items-center justify-center p-2 text-center text-[10px] text-on-surface-variant line-clamp-4">
                 {notes}

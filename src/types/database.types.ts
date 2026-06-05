@@ -430,6 +430,10 @@ export interface Database {
         Args: Record<string, never>;
         Returns: undefined;
       };
+      get_platform_stats: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
     };
     Enums: Record<string, never>;
   };

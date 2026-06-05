@@ -2,14 +2,27 @@
 
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import { AUTH_HERO_IMAGE, AUTH_STATS } from "@/constants/auth";
+import { useEffect, useRef, useState } from "react";
+import { AUTH_HERO_IMAGE, AUTH_STAT_LABELS } from "@/constants/auth";
+import { formatPlatformCount } from "@/lib/format-count";
 import { cn } from "@/lib/utils";
 
 interface AuthHeroProps {
   variant?: "desktop" | "mobile";
   className?: string;
 }
+
+type PlatformStats = {
+  publicCollections: number;
+  creators: number;
+  itemsSaved: number;
+};
+
+const STAT_KEYS: (keyof PlatformStats)[] = [
+  "publicCollections",
+  "creators",
+  "itemsSaved",
+];
 
 export function AuthHero({ variant = "desktop", className }: AuthHeroProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -19,7 +32,31 @@ export function AuthHero({ variant = "desktop", className }: AuthHeroProps) {
   });
   const parallaxY = useTransform(scrollYProgress, [0, 1], ["0%", "8%"]);
 
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetch("/api/stats/platform")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: PlatformStats | null) => {
+        if (!cancelled && data) setStats(data);
+      })
+      .catch(() => {
+        /* keep labels without values */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const isMobile = variant === "mobile";
+
+  const statCards = AUTH_STAT_LABELS.map((label, i) => ({
+    label,
+    value: stats ? formatPlatformCount(stats[STAT_KEYS[i]!]) : "—",
+  }));
 
   return (
     <div
@@ -63,7 +100,7 @@ export function AuthHero({ variant = "desktop", className }: AuthHeroProps) {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#FFFCF8]/50 via-transparent to-transparent" />
           <div className="relative z-10 flex h-full flex-col justify-end p-10 xl:p-14">
             <div className="flex flex-wrap gap-3">
-              {AUTH_STATS.map((stat, i) => (
+              {statCards.map((stat, i) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}

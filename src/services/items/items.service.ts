@@ -1,4 +1,10 @@
 import { syncBoardCoverFromItems } from "@/lib/collection-previews";
+import { optimizeStoredImageUrl } from "@/lib/optimize-image-url";
+import { isSupabaseStorageUrl } from "@/lib/supabase-image";
+import {
+  ingestRemoteImage,
+} from "@/services/storage/storage.service";
+import type { ItemSource } from "@/types/board.types";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
@@ -13,6 +19,19 @@ const ITEM_SELECT = `
     tag:tags(id, board_id, name, color, created_at)
   )
 `;
+
+async function resolveItemImageUrl(
+  imageUrl: string | undefined | null,
+  source?: ItemSource | null,
+): Promise<string | null> {
+  if (!imageUrl) return null;
+  if (isSupabaseStorageUrl(imageUrl)) return imageUrl;
+
+  const stored = await ingestRemoteImage(imageUrl, "items");
+  if (stored) return stored;
+
+  return optimizeStoredImageUrl(imageUrl, source);
+}
 
 function mapItem(row: Record<string, unknown>): Item {
   const itemTags = (row.item_tags as Array<{ tag: unknown }>) ?? [];
@@ -78,6 +97,11 @@ export const itemsService = {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("You must be signed in to save items.");
 
+    const imageUrl = await resolveItemImageUrl(
+      input.imageUrl,
+      input.source ?? "web",
+    );
+
     const { data, error } = await supabase
       .from("items")
       .insert({
@@ -85,7 +109,7 @@ export const itemsService = {
         user_id: user.id,
         type: input.type,
         source_url: input.sourceUrl ?? null,
-        image_url: input.imageUrl ?? null,
+        image_url: imageUrl,
         title: input.title ?? null,
         description:
           input.description ??
@@ -119,8 +143,7 @@ export const itemsService = {
       }
     }
 
-    const firstItemImage = input.imageUrl;
-    if (firstItemImage) {
+    if (imageUrl) {
       const { data: board } = await supabase
         .from("boards")
         .select("cover_url")
@@ -130,7 +153,7 @@ export const itemsService = {
       if (boardRow && !boardRow.cover_url) {
         await supabase
           .from("boards")
-          .update({ cover_url: firstItemImage })
+          .update({ cover_url: imageUrl })
           .eq("id", input.boardId);
       }
     }

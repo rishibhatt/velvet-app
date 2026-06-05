@@ -54,8 +54,13 @@ const nextConfig: NextConfig = {
     "127.0.0.1",
   ],
   images: {
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [384, 640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "yt3.googleusercontent.com" },
       { protocol: "https", hostname: supabaseHost },
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "images.unsplash.com" },
@@ -70,6 +75,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.amazon.com" },
       { protocol: "https", hostname: "*.media-amazon.com" },
       { protocol: "https", hostname: "www.google.com" },
+      { protocol: "https", hostname: "maps.google.com" },
+      { protocol: "https", hostname: "s.microlink.io" },
     ],
   },
   async headers() {

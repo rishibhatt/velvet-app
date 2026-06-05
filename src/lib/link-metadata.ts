@@ -1,4 +1,11 @@
 import type { ItemSource } from "@/types/board.types";
+import {
+  extractYouTubeVideoId,
+  optimizeStoredImageUrl,
+  youTubeThumbnailUrl,
+} from "@/lib/optimize-image-url";
+
+export { extractYouTubeVideoId } from "@/lib/optimize-image-url";
 
 export interface ParsedLinkMetadata {
   title: string;
@@ -77,27 +84,9 @@ export function parseHtmlMetadata(html: string): {
   return { title, imageUrl, description };
 }
 
-export function extractYouTubeVideoId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) {
-      return parsed.pathname.slice(1).split("/")[0] || null;
-    }
-    if (parsed.pathname.startsWith("/shorts/")) {
-      return parsed.pathname.split("/")[2] ?? null;
-    }
-    if (parsed.pathname.startsWith("/embed/")) {
-      return parsed.pathname.split("/")[2] ?? null;
-    }
-    return parsed.searchParams.get("v");
-  } catch {
-    return null;
-  }
-}
-
 function youTubeThumbnail(url: string): string | null {
   const id = extractYouTubeVideoId(url);
-  return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+  return id ? youTubeThumbnailUrl(id) : null;
 }
 
 function googleMapsStaticImage(url: string): string | null {
@@ -328,6 +317,14 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
   }
 
   imageUrl = normalizeImageUrl(imageUrl, url);
+
+  if (source === "youtube") {
+    imageUrl = youTubeThumbnail(url) ?? imageUrl;
+  }
+
+  if (imageUrl) {
+    imageUrl = optimizeStoredImageUrl(imageUrl, source);
+  }
 
   return {
     title: title ?? url,

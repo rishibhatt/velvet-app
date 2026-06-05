@@ -128,6 +128,12 @@ export default async function SetupPage() {
               </code>{" "}
               (instant likes — single fast toggle RPC)
             </li>
+            <li>
+              <code className="rounded bg-white px-2 py-0.5">
+                supabase/migrations/020_platform_stats.sql
+              </code>{" "}
+              (real auth hero stats — public collections, creators, items)
+            </li>
           </ul>
         </li>
 
