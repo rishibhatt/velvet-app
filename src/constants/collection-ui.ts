@@ -41,3 +41,11 @@ export const ITEM_CARD_SHELL =
 export const ITEM_CARD_MEDIA = "relative aspect-square w-full overflow-hidden bg-surface-container-low";
 
 export const ITEM_CARD_BODY = "flex flex-col gap-2 border-t border-outline-variant/15 bg-bg-elevated p-3";
+
+/** Full-bleed poster tile (1-up layout) */
+export const COLLECTION_POSTER_SIZES_SINGLE =
+  "(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 320px";
+
+/** One cell in a 2×2 collection poster grid */
+export const COLLECTION_POSTER_SIZES_CELL =
+  "(max-width: 640px) 48vw, (max-width: 1024px) 24vw, 160px";

@@ -29,6 +29,8 @@ export interface CollectionCardProps {
   emptyVariant?: CollectionPosterEmptyVariant;
   className?: string;
   onClick?: () => void;
+  /** First visible card — improves LCP on discover grids */
+  priority?: boolean;
 }
 
 export function CollectionCard({
@@ -39,6 +41,7 @@ export function CollectionCard({
   emptyVariant,
   className,
   onClick,
+  priority = false,
 }: CollectionCardProps) {
   const { user, profile, isAuthenticated, isAuthReady } = useAuth();
   const openShareSheet = useModalStore((s) => s.openShareSheet);
@@ -146,6 +149,7 @@ export function CollectionCard({
           emptyVariant={posterEmpty}
           onTap={handleTap}
           isPending={isPending}
+          priority={priority}
         />
         <CollectionCardOverlay
           board={board}

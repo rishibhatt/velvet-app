@@ -6,12 +6,11 @@ import {
   optimizeImageUrlForDisplay,
   resolveImageWidth,
 } from "@/lib/optimize-image-url";
-import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 import { cn } from "@/lib/utils";
 
 /**
- * User images: compressed WebP in Supabase Storage on upload.
- * Supabase URLs skip Next optimizer (already sized WebP). External URLs use `/_next/image`.
+ * User images: WebP in Supabase Storage on upload; Next.js Image resizes to `sizes` at request time.
+ * Blob/data URLs and hosts outside the allowlist use a native `<img>`.
  */
 export function VelvetImage({
   src,
@@ -24,12 +23,12 @@ export function VelvetImage({
   height,
   priority,
   sizes,
-  quality = 75,
+  quality = 70,
   ...props
 }: ImageProps) {
   const srcString = typeof src === "string" ? src : "";
   const targetWidth = resolveImageWidth(sizes, width);
-  const numericQuality = typeof quality === "number" ? quality : 75;
+  const numericQuality = typeof quality === "number" ? quality : 70;
 
   const displaySrc = srcString
     ? optimizeImageUrlForDisplay(srcString, { width: targetWidth })
@@ -39,10 +38,8 @@ export function VelvetImage({
 
   const isBlobOrData =
     displaySrc.startsWith("blob:") || displaySrc.startsWith("data:");
-  const isStoredWebp = isSupabaseStorageUrl(displaySrc);
   const useNativeImg = isBlobOrData || !canUseNextImage(displaySrc);
-  const bypassNextOptimizer =
-    unoptimized === true || useNativeImg || isStoredWebp;
+  const bypassNextOptimizer = unoptimized === true || useNativeImg;
 
   if (bypassNextOptimizer) {
     if (fill) {

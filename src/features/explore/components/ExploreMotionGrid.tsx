@@ -20,12 +20,13 @@ export function ExploreMotionGrid({ boards, onBoardClick }: ExploreMotionGridPro
       initial="initial"
       animate="animate"
     >
-      {boards.map((board) => (
+      {boards.map((board, index) => (
         <motion.div key={board.id} variants={fadeUp}>
           <ExploreCollectionCard
             board={board}
             owner={board.owner}
             onClick={() => onBoardClick(board)}
+            priority={index === 0}
           />
         </motion.div>
       ))}

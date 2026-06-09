@@ -36,9 +36,9 @@ export function resolveImageWidth(
     return Math.min(maxPx * 2, 512);
   }
 
-  if (sizes?.includes("100vw")) return 828;
-  if (sizes?.includes("45vw") || sizes?.includes("50vw")) return 400;
-  if (sizes?.includes("30vw") || sizes?.includes("33vw")) return 384;
+  if (sizes?.includes("100vw") || sizes?.includes("92vw")) return 828;
+  if (sizes?.includes("48vw") || sizes?.includes("45vw") || sizes?.includes("50vw")) return 430;
+  if (sizes?.includes("30vw") || sizes?.includes("33vw") || sizes?.includes("24vw")) return 384;
   if (sizes?.includes("22vw")) return 320;
 
   return 640;

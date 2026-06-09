@@ -6,6 +6,10 @@ import {
   CollectionTextSavesPoster,
   type CollectionPosterEmptyVariant,
 } from "@/components/molecules/CollectionEmptyPoster";
+import {
+  COLLECTION_POSTER_SIZES_CELL,
+  COLLECTION_POSTER_SIZES_SINGLE,
+} from "@/constants/collection-ui";
 import { cn } from "@/lib/utils";
 
 export type { CollectionPosterEmptyVariant };
@@ -29,7 +33,7 @@ function PosterImage({
   src,
   title,
   className,
-  sizes = "(max-width: 640px) 45vw, 200px",
+  sizes = COLLECTION_POSTER_SIZES_CELL,
   priority = false,
 }: {
   src: string;
@@ -71,7 +75,8 @@ export function CollectionPosterGrid({
 }: CollectionPosterGridProps) {
   const urls = images.filter(Boolean).slice(0, 4);
   const count = urls.length;
-  const posterSizes = imageSizes;
+  const posterSizes =
+    imageSizes ?? (count === 1 ? COLLECTION_POSTER_SIZES_SINGLE : COLLECTION_POSTER_SIZES_CELL);
   const frame = variant === "hero" ? GRID_FRAME : cn(GRID_FRAME, "gap-0.5 p-0.5");
   const cellRadius = variant === "hero" ? "rounded-sm" : "rounded-none";
 

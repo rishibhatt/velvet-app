@@ -11,6 +11,7 @@ interface CollectionCardMediaProps {
   emptyVariant: CollectionPosterEmptyVariant;
   onTap: () => void;
   isPending?: boolean;
+  priority?: boolean;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export function CollectionCardMedia({
   emptyVariant,
   onTap,
   isPending = false,
+  priority = false,
   className,
 }: CollectionCardMediaProps) {
   const previewImages = board.preview_images ?? [];
@@ -42,6 +44,7 @@ export function CollectionCardMedia({
         title={board.title}
         emptyVariant={emptyVariant}
         itemCount={board.item_count ?? 0}
+        priority={priority}
         className={cn(
           "h-full transition-transform duration-700 ease-out group-hover:scale-[1.02]",
           isPending && "scale-[1.01]",
