@@ -20,6 +20,8 @@ import {
 import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { CollectionBoardActions } from "@/components/molecules/CollectionBoardActions";
+import { CollectionOwnerToolbar } from "@/components/molecules/CollectionOwnerToolbar";
+import { CollectionSavesHeader } from "@/components/molecules/CollectionSavesHeader";
 import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
 import { useBoardDetail } from "@/queries/board/queries";
@@ -265,9 +267,20 @@ export default function BoardDetailPage({
         }
       />
 
+      <div className="page-container mt-stack-lg">
+        <CollectionOwnerToolbar
+          board={board}
+          userId={user?.id}
+          likeCount={board.like_count ?? 0}
+          collaboratorCount={board.members?.length ?? 0}
+          onOpenSettings={() => setSettingsOpen(true)}
+          className="mb-6 sm:mb-8"
+        />
+      </div>
+
       <section
         ref={itemsSectionRef}
-        className="page-container mt-stack-lg scroll-mt-24 pb-28 md:scroll-mt-8 md:pb-24"
+        className="page-container scroll-mt-24 pb-28 md:scroll-mt-8 md:pb-24"
       >
         {itemsError && (
           <ErrorAlert
@@ -283,17 +296,13 @@ export default function BoardDetailPage({
           </CollectionItemsGrid>
         ) : items && items.length > 0 ? (
           <CollectionItemsGrid
-            header={
-              <p className="mb-4 text-sm font-medium text-on-surface-variant">
-                <span className="font-semibold text-on-surface">{items.length}</span>{" "}
-                {items.length === 1 ? "save" : "saves"}
-              </p>
-            }
+            header={<CollectionSavesHeader count={items.length} />}
           >
-            {items.map((item) => (
+            {items.map((item, index) => (
               <ItemCard
                 key={item.id}
                 item={item}
+                priority={index === 0}
                 onClick={() =>
                   openItemModal(item.id, {
                     snapshot: item,

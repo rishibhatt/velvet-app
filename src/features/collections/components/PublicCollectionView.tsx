@@ -182,6 +182,8 @@ export function PublicCollectionView({
           <CollectionCollaborationStrip
             board={board}
             userId={user?.id}
+            likeCount={likeCount}
+            collaboratorCount={collaboratorCount}
             className="mb-8"
           />
         )}

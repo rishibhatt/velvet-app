@@ -16,6 +16,8 @@ import type { Item } from "@/types/board.types";
 interface ItemCardProps {
   item: Item;
   onClick?: () => void;
+  /** First above-the-fold tile — improves LCP */
+  priority?: boolean;
 }
 
 function linkPlaceholderClass(source: Item["source"]) {
@@ -44,7 +46,7 @@ function ItemSourceButton({ item }: { item: Item }) {
   );
 }
 
-export function ItemCard({ item, onClick }: ItemCardProps) {
+export function ItemCard({ item, onClick, priority = false }: ItemCardProps) {
   const isNote = item.type === "note";
   const previewUrl = item.image_url;
   const title = item.title?.trim() || (isNote ? "Note" : "Saved link");
@@ -77,6 +79,7 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
                 src={previewUrl}
                 alt={title}
                 fill
+                priority={priority}
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                 sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
               />

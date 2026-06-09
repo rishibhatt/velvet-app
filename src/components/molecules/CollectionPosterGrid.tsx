@@ -122,7 +122,7 @@ export function CollectionPosterGrid({
             src={src}
             title={title}
             sizes={posterSizes}
-            priority={priority}
+            priority={priority && i === 0}
             className={cellRadius}
           />
         ))}
@@ -144,14 +144,14 @@ export function CollectionPosterGrid({
           src={urls[1]!}
           title={title}
           sizes={posterSizes}
-          priority={priority}
+          priority={false}
           className={cellRadius}
         />
         <PosterImage
           src={urls[2]!}
           title={title}
           sizes={posterSizes}
-          priority={priority}
+          priority={false}
           className={cellRadius}
         />
       </div>
@@ -166,7 +166,7 @@ export function CollectionPosterGrid({
           src={src}
           title={title}
           sizes={posterSizes}
-          priority={priority}
+          priority={priority && i === 0}
           className={cellRadius}
         />
       ))}
