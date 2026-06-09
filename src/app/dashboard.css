@@ -1,0 +1,71 @@
+/* Dashboard-only surfaces — not needed on guest explore landing */
+
+.velvet-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.velvet-hero-banner {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--hero-surface) 70%, var(--outline-variant));
+  background-color: var(--hero-surface);
+  background-image: linear-gradient(
+    100deg,
+    var(--hero-surface-soft) 0%,
+    var(--hero-surface) 48%,
+    var(--hero-surface) 100%
+  );
+  box-shadow: none;
+}
+
+.velvet-hero-banner__inner {
+  background-color: var(--hero-surface);
+}
+
+.velvet-hero-banner__media {
+  background-color: var(--hero-surface);
+}
+
+.velvet-hero-banner__fade {
+  background: linear-gradient(
+    to right,
+    var(--hero-surface) 0%,
+    color-mix(in srgb, var(--hero-surface) 88%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .velvet-hero-banner {
+    border-radius: 1.75rem;
+  }
+
+  .velvet-hero-banner__fade {
+    width: min(38%, 200px);
+  }
+}
+
+.velvet-hero-title-strong {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  color: #2d1b1b;
+  letter-spacing: -0.02em;
+}
+
+.velvet-hero-title-soft {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: #8c5e58;
+}
+
+.velvet-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow-card);
+}

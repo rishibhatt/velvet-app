@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import "@/app/collection-grid.css";
 import { PublicCollectionView } from "@/features/collections/components/PublicCollectionView";
 import { canEditBoardItems } from "@/lib/board-permissions";
 import { getPublicCollectionByOwnerSlug } from "@/lib/public-collection";

@@ -1,0 +1,39 @@
+/* Board / collection item grids — dashboard + public collection pages */
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .collection-grid {
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .collection-grid {
+    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.collection-grid--empty {
+  grid-template-columns: 1fr;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .collection-grid--empty {
+    max-width: 22rem;
+  }
+}
+
+.collection-grid-empty-card {
+  width: 100%;
+}

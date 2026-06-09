@@ -1,11 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ProfileBoardTab } from "@/features/profile/components/ProfileBoardTabs";
 import { Skeleton } from "@/components/atoms/Skeleton";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
-import { ProfileEditor } from "@/features/profile/components/ProfileEditor";
+
+const ProfileEditor = dynamic(
+  () =>
+    import("@/features/profile/components/ProfileEditor").then((m) => ({
+      default: m.ProfileEditor,
+    })),
+  { ssr: false },
+);
 import { ProfileBoardsSection } from "@/features/profile/components/ProfileBoardsSection";
 import { ProfileHeroCard } from "@/features/profile/components/ProfileHeroCard";
 import { ProfileStatsGrid } from "@/features/profile/components/ProfileStatsGrid";

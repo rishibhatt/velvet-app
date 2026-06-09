@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -7,7 +8,11 @@ import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab"
 import { CollectionCreateCard } from "@/components/molecules/CollectionCreateCard";
 import { ShowcaseBoardCard } from "@/components/organisms/ShowcaseBoardCard";
 import { CollectionCardSkeletonRail } from "@/components/skeletons/CollectionCardSkeletonRail";
-import { HomeHero } from "@/components/organisms/HomeHero";
+
+const HomeHero = dynamic(
+  () => import("@/components/organisms/HomeHero").then((m) => ({ default: m.HomeHero })),
+  { ssr: false },
+);
 import { DiscoverSectionHeader } from "@/components/molecules/DiscoverSectionHeader";
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";

@@ -9,7 +9,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { NotificationRealtimeProvider } from "@/providers/NotificationRealtimeProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
-import { GlobalModals } from "@/components/layouts/GlobalModals";
+import { DeferredGlobalModals } from "@/components/layouts/DeferredGlobalModals";
 import { JsonLd, organizationSchema, websiteSchema } from "@/lib/seo/schema";
 import { AnalyticsProvider } from "@/providers/analytics/AnalyticsProvider";
 import { NavigationProgressProvider } from "@/providers/NavigationProgressProvider";
@@ -35,7 +35,11 @@ export default function RootLayout({
 
   return (
 
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <head>
         {supabaseOrigin ? (
           <>
@@ -53,7 +57,7 @@ export default function RootLayout({
               <AnalyticsProvider>
                 <ToastProvider>
                   {children}
-                  <GlobalModals />
+                  <DeferredGlobalModals />
                 </ToastProvider>
               </AnalyticsProvider>
             </NavigationProgressProvider>

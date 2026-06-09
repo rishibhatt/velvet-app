@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -10,9 +11,17 @@ import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero"
 import { CollectionCoverToolbar } from "@/components/molecules/CollectionCoverToolbar";
 import { CollectionHeroStatsRow } from "@/components/molecules/CollectionHeroStatsRow";
 import { CollectionCollaborationStrip } from "@/components/molecules/CollectionCollaborationStrip";
-import { CollabPanel } from "@/components/organisms/CollabPanel";
 import { useBoardActivity } from "@/queries/activity/queries";
 import { useUIStore } from "@/store/ui.store";
+import { useLazyMount } from "@/hooks/useLazyMount";
+
+const CollabPanel = dynamic(
+  () =>
+    import("@/components/organisms/CollabPanel").then((m) => ({
+      default: m.CollabPanel,
+    })),
+  { ssr: false },
+);
 import { useCollectionCollaborationState } from "@/hooks/useCollectionCollaborationState";
 import { getMoodEmoji } from "@/constants/moods";
 import { getMoodDisplayLabel } from "@/constants/moods";
@@ -54,6 +63,7 @@ export function PublicCollectionView({
   const router = useRouter();
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
+  const showCollab = useLazyMount(collabPanelOpen);
 
   useEffect(() => {
     if (!isAuthReady || !user) return;
@@ -246,7 +256,7 @@ export function PublicCollectionView({
         )}
       </main>
 
-      {isMember && user && (
+      {isMember && user && showCollab ? (
         <CollabPanel
           open={collabPanelOpen}
           onClose={() => setCollabPanelOpen(false)}
@@ -257,7 +267,7 @@ export function PublicCollectionView({
           ownerId={board.owner_id}
           isPublic={board.is_public}
         />
-      )}
+      ) : null}
 
       <footer className="flex flex-col items-center gap-3 border-t border-outline-variant/20 py-8 text-center text-sm text-on-surface-variant">
         <VelvetLogo

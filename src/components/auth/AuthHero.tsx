@@ -84,7 +84,11 @@ export function AuthHero({ variant = "desktop", className }: AuthHeroProps) {
               "object-cover",
               isMobile ? "object-[18%_center]" : "object-[12%_center]",
             )}
-            sizes={isMobile ? "100vw" : "55vw"}
+            sizes={
+              isMobile
+                ? "(max-width: 1023px) 100vw, 0px"
+                : "(min-width: 1024px) 55vw, 0px"
+            }
           />
         </motion.div>
       </motion.div>

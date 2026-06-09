@@ -1,9 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AuthHero } from "./AuthHero";
+import dynamic from "next/dynamic";
 import { AuthCard } from "./AuthCard";
 import { cn } from "@/lib/utils";
+
+const AuthHero = dynamic(() => import("./AuthHero").then((m) => ({ default: m.AuthHero })), {
+  ssr: false,
+  loading: () => <div className="h-48 w-full bg-surface-container-low sm:h-56 lg:min-h-[320px] lg:h-full" />,
+});
 
 interface AuthLayoutProps {
   children: ReactNode;

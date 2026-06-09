@@ -1,4 +1,6 @@
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import "../dashboard.css";
+import "../collection-grid.css";
 
 export default function DashboardRootLayout({
   children,

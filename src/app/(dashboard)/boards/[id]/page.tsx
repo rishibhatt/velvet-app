@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { resolveHeroPreviewImages } from "@/lib/collection-previews";
 import { Share2 } from "lucide-react";
@@ -21,7 +22,6 @@ import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { CollectionBoardActions } from "@/components/molecules/CollectionBoardActions";
 import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
-import { CollabPanel } from "@/components/organisms/CollabPanel";
 import { useBoardDetail } from "@/queries/board/queries";
 import { useItems } from "@/queries/item/queries";
 import { useBoardActivity } from "@/queries/activity/queries";
@@ -33,11 +33,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { itemKeys } from "@/queries/board/keys";
 import { activityKeys } from "@/queries/activity/queries";
 import { isSupabaseConfigured } from "@/lib/utils";
-import { BoardSettingsModal } from "@/features/boards/components/BoardSettingsModal";
 import { CollectionAddCard } from "@/components/molecules/CollectionAddCard";
 import { CollectionCoverHero } from "@/components/molecules/CollectionCoverHero";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useLazyMount } from "@/hooks/useLazyMount";
+
+const CollabPanel = dynamic(
+  () =>
+    import("@/components/organisms/CollabPanel").then((m) => ({
+      default: m.CollabPanel,
+    })),
+  { ssr: false },
+);
+
+const BoardSettingsModal = dynamic(
+  () =>
+    import("@/features/boards/components/BoardSettingsModal").then((m) => ({
+      default: m.BoardSettingsModal,
+    })),
+  { ssr: false },
+);
 
 export default function BoardDetailPage({
   params,
@@ -82,6 +98,8 @@ export default function BoardDetailPage({
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const showCollab = useLazyMount(collabPanelOpen);
+  const showSettings = useLazyMount(settingsOpen);
   const itemsSectionRef = useRef<HTMLElement>(null);
   const prevItemCountRef = useRef<number | null>(null);
 
@@ -305,24 +323,26 @@ export default function BoardDetailPage({
         <CollectionSaveFab onClick={() => openSaveModal(id)} />
       )}
 
-      <CollabPanel
-        open={collabPanelOpen}
-        onClose={() => setCollabPanelOpen(false)}
-        boardId={board.id}
-        members={board.members ?? []}
-        activities={activities}
-        canManage={canInvite}
-        ownerId={board.owner_id}
-        isPublic={board.is_public}
-      />
+      {showCollab ? (
+        <CollabPanel
+          open={collabPanelOpen}
+          onClose={() => setCollabPanelOpen(false)}
+          boardId={board.id}
+          members={board.members ?? []}
+          activities={activities}
+          canManage={canInvite}
+          ownerId={board.owner_id}
+          isPublic={board.is_public}
+        />
+      ) : null}
 
-      {canEditBoardMeta(board, user?.id) && (
+      {canEditBoardMeta(board, user?.id) && showSettings ? (
         <BoardSettingsModal
           board={board}
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
         />
-      )}
+      ) : null}
     </>
   );
 }
