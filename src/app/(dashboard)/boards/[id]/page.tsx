@@ -266,16 +266,10 @@ export default function BoardDetailPage({
         ) : items && items.length > 0 ? (
           <CollectionItemsGrid
             header={
-              <div className="mb-5 flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="font-display text-xl text-on-surface md:text-2xl">
-                    Your saves
-                  </h2>
-                  <p className="mt-1 text-sm text-on-surface-variant">
-                    {items.length} {items.length === 1 ? "item" : "items"} in this collection
-                  </p>
-                </div>
-              </div>
+              <p className="mb-4 text-sm font-medium text-on-surface-variant">
+                <span className="font-semibold text-on-surface">{items.length}</span>{" "}
+                {items.length === 1 ? "save" : "saves"}
+              </p>
             }
           >
             {items.map((item) => (

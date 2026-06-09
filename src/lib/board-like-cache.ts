@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { boardKeys } from "@/queries/board/keys";
 import { discoverKeys } from "@/queries/discover/keys";
 import { likeKeys } from "@/queries/likes/keys";
@@ -6,6 +6,24 @@ import type { Board } from "@/types/board.types";
 import type { PublicBoard } from "@/services/discover/discover.service";
 
 type BoardLikeSlice = Pick<Board, "id" | "is_liked" | "like_count">;
+
+function isBoardLikeSlice(value: unknown): value is BoardLikeSlice {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof (value as BoardLikeSlice).id === "string"
+  );
+}
+
+function findBoardInQueryData(
+  data: unknown,
+  boardId: string,
+): BoardLikeSlice | undefined {
+  if (!Array.isArray(data)) return undefined;
+  const hit = data.find((entry) => isBoardLikeSlice(entry) && entry.id === boardId);
+  return hit;
+}
 
 function patchBoard<T extends BoardLikeSlice>(
   board: T,
@@ -25,7 +43,7 @@ function patchBoardList<T extends BoardLikeSlice>(
   liked: boolean,
   likeCount: number,
 ): T[] | undefined {
-  if (!boards) return boards;
+  if (!Array.isArray(boards)) return boards;
   return boards.map((b) =>
     b.id === boardId ? patchBoard(b, liked, likeCount) : b,
   );
@@ -43,6 +61,10 @@ function deriveLikeState(
   return { liked: nextLiked, likeCount: nextCount };
 }
 
+function isPublicBoardsQueryKey(key: QueryKey): boolean {
+  return key[0] === discoverKeys.all[0] && key[1] === "public-boards";
+}
+
 /** Apply optimistic/server like state everywhere this board appears in React Query. */
 export function setBoardLikeAcrossCache(
   queryClient: QueryClient,
@@ -56,13 +78,16 @@ export function setBoardLikeAcrossCache(
     old ? patchBoard(old, liked, likeCount) : old,
   );
 
-  queryClient.setQueriesData<Board[]>(
-    { queryKey: boardKeys.all },
-    (old) => patchBoardList(old, boardId, liked, likeCount),
+  queryClient.setQueryData<Board[]>(boardKeys.list(), (old) =>
+    patchBoardList(old, boardId, liked, likeCount),
+  );
+
+  queryClient.setQueryData<Board[]>(boardKeys.liked(), (old) =>
+    patchBoardList(old, boardId, liked, likeCount),
   );
 
   queryClient.setQueriesData<PublicBoard[]>(
-    { queryKey: discoverKeys.all },
+    { queryKey: discoverKeys.all, predicate: (q) => isPublicBoardsQueryKey(q.queryKey) },
     (old) => patchBoardList(old, boardId, liked, likeCount),
   );
 }
@@ -74,17 +99,19 @@ function findBoardLikeCount(
   const detail = queryClient.getQueryData<Board>(boardKeys.detail(boardId));
   if (detail?.like_count != null) return detail.like_count;
 
-  for (const [, data] of queryClient.getQueriesData<Board[] | PublicBoard[]>({
-    queryKey: boardKeys.all,
-  })) {
-    const hit = data?.find((b) => b.id === boardId);
+  for (const [, data] of [
+    [boardKeys.list(), queryClient.getQueryData(boardKeys.list())],
+    [boardKeys.liked(), queryClient.getQueryData(boardKeys.liked())],
+  ] as const) {
+    const hit = findBoardInQueryData(data, boardId);
     if (hit?.like_count != null) return hit.like_count;
   }
 
   for (const [, data] of queryClient.getQueriesData<PublicBoard[]>({
     queryKey: discoverKeys.all,
+    predicate: (q) => isPublicBoardsQueryKey(q.queryKey),
   })) {
-    const hit = data?.find((b) => b.id === boardId);
+    const hit = findBoardInQueryData(data, boardId);
     if (hit?.like_count != null) return hit.like_count;
   }
 
@@ -96,10 +123,15 @@ export function applyOptimisticBoardLike(
   boardId: string,
 ) {
   const detail = queryClient.getQueryData<Board>(boardKeys.detail(boardId));
-  const discoverEntry = queryClient
-    .getQueriesData<PublicBoard[]>({ queryKey: discoverKeys.all })
-    .flatMap(([, data]) => data ?? [])
-    .find((b) => b.id === boardId);
+
+  let discoverEntry: BoardLikeSlice | undefined;
+  for (const [, data] of queryClient.getQueriesData<PublicBoard[]>({
+    queryKey: discoverKeys.all,
+    predicate: (q) => isPublicBoardsQueryKey(q.queryKey),
+  })) {
+    discoverEntry = findBoardInQueryData(data, boardId);
+    if (discoverEntry) break;
+  }
 
   const source = detail ?? discoverEntry;
   if (!source) {
@@ -131,10 +163,11 @@ export function readBoardLikeFromCache(
     };
   }
 
-  for (const [, data] of queryClient.getQueriesData<Board[] | PublicBoard[]>({
-    queryKey: boardKeys.all,
-  })) {
-    const hit = data?.find((b) => b.id === boardId);
+  for (const data of [
+    queryClient.getQueryData(boardKeys.list()),
+    queryClient.getQueryData(boardKeys.liked()),
+  ]) {
+    const hit = findBoardInQueryData(data, boardId);
     if (hit) {
       return {
         likeCount: hit.like_count ?? fallback.likeCount,
@@ -145,8 +178,9 @@ export function readBoardLikeFromCache(
 
   for (const [, data] of queryClient.getQueriesData<PublicBoard[]>({
     queryKey: discoverKeys.all,
+    predicate: (q) => isPublicBoardsQueryKey(q.queryKey),
   })) {
-    const hit = data?.find((b) => b.id === boardId);
+    const hit = findBoardInQueryData(data, boardId);
     if (hit) {
       return {
         likeCount: hit.like_count ?? fallback.likeCount,

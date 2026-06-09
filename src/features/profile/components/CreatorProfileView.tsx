@@ -43,23 +43,25 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
       <AdaptiveNavbar />
 
       <div className="relative h-32 w-full overflow-hidden sm:h-40 md:h-48">
-        {profile.banner_url ? (
-          <VelvetImage
-            src={profile.banner_url}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-        ) : (
-          <div
-            className="h-full w-full bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender"
-            aria-hidden
-          />
-        )}
+        <div className="absolute inset-0 z-0">
+          {profile.banner_url ? (
+            <VelvetImage
+              src={profile.banner_url}
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="100vw"
+              priority
+            />
+          ) : (
+            <div
+              className="h-full w-full bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender"
+              aria-hidden
+            />
+          )}
+        </div>
         <div
-          className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-20 bg-gradient-to-b from-black/15 to-transparent sm:h-24"
           aria-hidden
         />
         <div className="page-container absolute inset-x-0 top-0 z-20 pt-4">
@@ -85,13 +87,15 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
         </div>
       </div>
 
-      <header className="page-container relative -mt-10 pb-6 text-center sm:-mt-12">
-        <Avatar
-          src={profile.avatar_url}
-          name={profile.full_name ?? profile.username}
-          size="xl"
-          className="mx-auto mb-3 ring-4 ring-background shadow-md"
-        />
+      <header className="page-container relative z-10 pb-6 text-center">
+        <div className="-mt-12 sm:-mt-14">
+          <Avatar
+            src={profile.avatar_url}
+            name={profile.full_name ?? profile.username}
+            size="xl"
+            className="mx-auto mb-3 ring-4 ring-background shadow-md"
+          />
+        </div>
         <h1 className="font-display text-2xl text-on-surface sm:text-3xl">
           {profile.full_name ?? profile.username}
         </h1>
@@ -134,9 +138,6 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
                   owner={owner}
                   showLike
                   emptyVariant="other"
-                  publicHref={
-                    board.slug ? ROUTES.publicCollection(profile.username, board.slug) : undefined
-                  }
                 />
               ))}
             </div>

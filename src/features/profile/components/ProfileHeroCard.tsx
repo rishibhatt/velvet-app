@@ -23,6 +23,7 @@ import { getCreatorProfileUrl } from "@/lib/app-url";
 import { useModalStore } from "@/store/modal.store";
 import { formatJoinedDate } from "@/utils/format";
 import type { Profile } from "@/types/board.types";
+import { CoverImageScrim } from "@/components/molecules/CoverImageScrim";
 import { cn } from "@/lib/utils";
 
 interface ProfileHeroCardProps {
@@ -54,29 +55,28 @@ export function ProfileHeroCard({ profile, onEdit }: ProfileHeroCardProps) {
 
   return (
     <section className="overflow-hidden rounded-3xl border border-outline-variant/25 bg-bg-elevated shadow-[var(--shadow-card)]">
-      <div className="relative h-36 w-full overflow-hidden rounded-t-3xl sm:h-44 md:h-48">
-        {profile.banner_url ? (
-          <VelvetImage
-            src={profile.banner_url}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 896px"
-            priority
-          />
-        ) : (
-          <div
-            className="h-full w-full bg-gradient-to-br from-accent-blush via-accent-coral to-accent-lavender"
-            aria-hidden
-          />
-        )}
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg-elevated via-bg-elevated/20 to-transparent"
-          aria-hidden
-        />
+      <div className="relative z-0 h-36 w-full overflow-hidden rounded-t-3xl sm:h-44 md:h-48">
+        <div className="absolute inset-0">
+          {profile.banner_url ? (
+            <VelvetImage
+              src={profile.banner_url}
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 768px) 100vw, 896px"
+              priority
+            />
+          ) : (
+            <div
+              className="h-full w-full bg-gradient-to-br from-accent-blush via-accent-coral to-accent-lavender"
+              aria-hidden
+            />
+          )}
+        </div>
+        <CoverImageScrim tone="elevated" />
       </div>
 
-      <div className="relative -mt-5 rounded-t-3xl bg-bg-elevated px-4 pb-5 pt-1 sm:-mt-6 sm:px-6 sm:pb-6">
+      <div className="relative z-10 -mt-5 rounded-t-3xl bg-bg-elevated px-4 pb-5 pt-1 sm:-mt-6 sm:px-6 sm:pb-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-5 lg:min-w-0 lg:flex-1">
             <div

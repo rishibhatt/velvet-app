@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/atoms/Button";
 import { PageBackButton } from "@/components/molecules/PageBackButton";
@@ -20,6 +22,7 @@ import { AdaptiveNavbar } from "@/components/organisms/AdaptiveNavbar";
 import { CollectionLinks } from "@/components/seo/CollectionLinks";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canEditBoardItems } from "@/lib/board-permissions";
 import { likesService } from "@/services/likes/likes.service";
 import { likeKeys } from "@/queries/likes/keys";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
@@ -48,8 +51,16 @@ export function PublicCollectionView({
   moreFromCreator = [],
   relatedCollections = [],
 }: PublicCollectionViewProps) {
+  const router = useRouter();
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
+
+  useEffect(() => {
+    if (!isAuthReady || !user) return;
+    if (canEditBoardItems(initialBoard, user.id)) {
+      router.replace(ROUTES.board(initialBoard.id));
+    }
+  }, [initialBoard, isAuthReady, router, user]);
   const { isMember, isOwner } = useCollectionCollaborationState(
     initialBoard,
     user?.id,

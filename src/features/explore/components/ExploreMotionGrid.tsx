@@ -6,7 +6,6 @@ import { ExploreBoardListRow } from "@/components/molecules/ExploreBoardListRow"
 import type { PublicBoard } from "@/services/discover/discover.service";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { fadeUp, stagger } from "@/lib/animations";
-import { boardPublicHref } from "@/features/explore/explore-utils";
 
 interface ExploreMotionGridProps {
   boards: PublicBoard[];
@@ -27,7 +26,6 @@ export function ExploreMotionGrid({ boards, onBoardClick }: ExploreMotionGridPro
             board={board}
             owner={board.owner}
             onClick={() => onBoardClick(board)}
-            publicHref={boardPublicHref(board)}
           />
         </motion.div>
       ))}
@@ -54,7 +52,6 @@ export function ExploreMotionList({ boards, onBoardClick }: ExploreMotionListPro
             board={board}
             owner={board.owner}
             onClick={() => onBoardClick(board)}
-            publicHref={boardPublicHref(board)}
           />
         </motion.li>
       ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { StickyNote } from "lucide-react";
+import { ExternalLink, StickyNote } from "lucide-react";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { SourceBadge } from "@/components/molecules/SourceBadge";
 import {
@@ -9,6 +9,7 @@ import {
   ITEM_CARD_MEDIA,
   ITEM_CARD_SHELL,
 } from "@/constants/collection-ui";
+import { getItemSourceUrl } from "@/lib/item-source";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types/board.types";
 
@@ -24,10 +25,30 @@ function linkPlaceholderClass(source: Item["source"]) {
   return "from-surface-container to-primary-fixed/25";
 }
 
+function ItemSourceButton({ item }: { item: Item }) {
+  const sourceUrl = getItemSourceUrl(item);
+  if (!sourceUrl) return null;
+
+  return (
+    <a
+      href={sourceUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant ring-1 ring-outline-variant/25 transition hover:bg-surface-container-high hover:text-primary"
+      aria-label="View source"
+      title="View source"
+    >
+      <ExternalLink className="h-4 w-4" strokeWidth={2} />
+    </a>
+  );
+}
+
 export function ItemCard({ item, onClick }: ItemCardProps) {
   const isNote = item.type === "note";
   const previewUrl = item.image_url;
   const title = item.title?.trim() || (isNote ? "Note" : "Saved link");
+  const hasSource = Boolean(getItemSourceUrl(item));
 
   return (
     <motion.article
@@ -93,9 +114,12 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
           </div>
 
           <div className={ITEM_CARD_BODY}>
-            <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-on-surface">
-              {title}
-            </h3>
+            <div className="flex items-start gap-2">
+              <h3 className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug text-on-surface">
+                {title}
+              </h3>
+              {hasSource && <ItemSourceButton item={item} />}
+            </div>
             {item.tags && item.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {item.tags.slice(0, 2).map((tag) => (

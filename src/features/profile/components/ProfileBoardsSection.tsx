@@ -9,7 +9,6 @@ import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { ProfileBoardTabs, type ProfileBoardTab } from "@/features/profile/components/ProfileBoardTabs";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
-import { ROUTES } from "@/constants/routes";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { Board } from "@/types/board.types";
@@ -103,13 +102,6 @@ export function ProfileBoardsSection({
                   variant={tab === "yours" ? "owned" : "liked"}
                   emptyVariant={tab === "yours" ? "own" : "other"}
                   owner={tab === "liked" ? undefined : owner}
-                  publicHref={
-                    board.slug && board.is_public
-                      ? profile?.username
-                        ? ROUTES.publicCollection(profile.username, board.slug)
-                        : ROUTES.legacyPublicCollection(board.slug)
-                      : undefined
-                  }
                 />
               ))}
             </div>

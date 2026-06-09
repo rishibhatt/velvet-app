@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
+import { getCollectionHref } from "@/lib/collection-href";
 import { COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -49,12 +50,6 @@ export function CollectionCard({
       isLiked: board.is_liked ?? false,
     });
 
-  const boardHref = publicHref ?? ROUTES.board(board.id);
-  const posterEmpty: CollectionPosterEmptyVariant =
-    emptyVariant ?? (variant === "owned" ? "own" : "other");
-  const canLike =
-    variant !== "owned" && board.is_public && user?.id !== board.owner_id;
-
   const shareOwner =
     owner ??
     (variant === "owned" && profile
@@ -64,6 +59,15 @@ export function CollectionCard({
           avatar_url: profile.avatar_url,
         }
       : undefined);
+
+  const boardHref = getCollectionHref(board, {
+    userId: user?.id,
+    ownerUsername: shareOwner?.username ?? owner?.username,
+  });
+  const posterEmpty: CollectionPosterEmptyVariant =
+    emptyVariant ?? (variant === "owned" ? "own" : "other");
+  const canLike =
+    variant !== "owned" && board.is_public && user?.id !== board.owner_id;
 
   const shareUrl = useMemo(() => {
     const path =

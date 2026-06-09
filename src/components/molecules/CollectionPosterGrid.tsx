@@ -16,30 +16,41 @@ interface CollectionPosterGridProps {
   className?: string;
   emptyVariant?: CollectionPosterEmptyVariant;
   compactEmpty?: boolean;
-  /** When > 0 but no preview images, show “N saves” instead of empty */
   itemCount?: number;
-  /** Passed to VelvetImage `sizes` (e.g. hero uses `100vw`) */
   imageSizes?: string;
+  priority?: boolean;
+  /** Hero banners use tighter gaps and full-bleed cells */
+  variant?: "card" | "hero";
 }
+
+const GRID_FRAME = "h-full w-full gap-1 bg-outline-variant/15 p-1";
 
 function PosterImage({
   src,
   title,
   className,
   sizes = "(max-width: 640px) 45vw, 200px",
+  priority = false,
 }: {
   src: string;
   title: string;
   className?: string;
   sizes?: string;
+  priority?: boolean;
 }) {
   return (
-    <div className={cn("relative min-h-0 overflow-hidden bg-surface-container-low", className)}>
+    <div
+      className={cn(
+        "relative h-full min-h-0 w-full overflow-hidden rounded-sm bg-surface-container-low",
+        className,
+      )}
+    >
       <VelvetImage
         src={src}
         alt=""
         fill
-        className="object-cover"
+        priority={priority}
+        className="object-cover object-center"
         sizes={sizes}
       />
       <span className="sr-only">{title}</span>
@@ -55,9 +66,14 @@ export function CollectionPosterGrid({
   compactEmpty = false,
   itemCount = 0,
   imageSizes,
+  priority = false,
+  variant = "card",
 }: CollectionPosterGridProps) {
   const urls = images.filter(Boolean).slice(0, 4);
   const count = urls.length;
+  const posterSizes = imageSizes;
+  const frame = variant === "hero" ? GRID_FRAME : cn(GRID_FRAME, "gap-0.5 p-0.5");
+  const cellRadius = variant === "hero" ? "rounded-sm" : "rounded-none";
 
   if (count === 0) {
     if (itemCount > 0) {
@@ -80,34 +96,29 @@ export function CollectionPosterGrid({
     );
   }
 
-  const posterSizes = imageSizes;
-
   if (count === 1) {
     return (
       <PosterImage
         src={urls[0]!}
         title={title}
         sizes={posterSizes}
-        className={cn("h-full w-full", className)}
+        priority={priority}
+        className={cn("h-full w-full", cellRadius, className)}
       />
     );
   }
 
   if (count === 2) {
     return (
-      <div
-        className={cn(
-          "grid h-full w-full grid-cols-2 gap-0.5 bg-outline-variant/20 p-0.5",
-          className,
-        )}
-      >
+      <div className={cn("grid grid-cols-2", frame, className)}>
         {urls.map((src, i) => (
           <PosterImage
             key={i}
             src={src}
             title={title}
             sizes={posterSizes}
-            className="h-full min-h-[80px]"
+            priority={priority}
+            className={cellRadius}
           />
         ))}
       </div>
@@ -116,38 +127,42 @@ export function CollectionPosterGrid({
 
   if (count === 3) {
     return (
-      <div
-        className={cn(
-          "grid h-full w-full grid-cols-2 grid-rows-2 gap-0.5 bg-outline-variant/20 p-0.5",
-          className,
-        )}
-      >
-        <PosterImage src={urls[0]!} title={title} sizes={posterSizes} className="row-span-1" />
-        <PosterImage src={urls[1]!} title={title} sizes={posterSizes} className="row-span-1" />
+      <div className={cn("grid grid-cols-2 grid-rows-2", frame, className)}>
+        <PosterImage
+          src={urls[0]!}
+          title={title}
+          sizes={posterSizes}
+          priority={priority}
+          className={cn("row-span-2", cellRadius)}
+        />
+        <PosterImage
+          src={urls[1]!}
+          title={title}
+          sizes={posterSizes}
+          priority={priority}
+          className={cellRadius}
+        />
         <PosterImage
           src={urls[2]!}
           title={title}
           sizes={posterSizes}
-          className="col-span-2 row-span-1"
+          priority={priority}
+          className={cellRadius}
         />
       </div>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "grid h-full w-full grid-cols-2 grid-rows-2 gap-0.5 bg-outline-variant/20 p-0.5",
-        className,
-      )}
-    >
+    <div className={cn("grid grid-cols-2 grid-rows-2", frame, className)}>
       {urls.map((src, i) => (
         <PosterImage
           key={i}
           src={src}
           title={title}
           sizes={posterSizes}
-          className="min-h-[72px]"
+          priority={priority}
+          className={cellRadius}
         />
       ))}
     </div>

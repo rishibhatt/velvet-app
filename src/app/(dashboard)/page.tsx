@@ -81,13 +81,6 @@ export default function HomePage() {
                     board={board}
                     variant="discover"
                     owner={board.owner}
-                    publicHref={
-                      board.slug
-                        ? board.owner?.username
-                          ? ROUTES.publicCollection(board.owner.username, board.slug)
-                          : ROUTES.legacyPublicCollection(board.slug)
-                        : undefined
-                    }
                   />
                 </div>
               ))}

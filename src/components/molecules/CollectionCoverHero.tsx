@@ -6,23 +6,22 @@ import {
 import { cn } from "@/lib/utils";
 
 interface CollectionCoverHeroProps {
-  /** Up to 4 live item image URLs (same layout as collection cards) */
   images?: string[];
   title: string;
   description?: string | null;
   badge?: ReactNode;
   meta?: ReactNode;
   actions?: ReactNode;
-  /** Top bar (e.g. back) overlaid on the cover */
   overlay?: ReactNode;
   className?: string;
   size?: "board" | "public";
   emptyVariant?: CollectionPosterEmptyVariant;
-  /** For text-only saves when images is empty */
   itemCount?: number;
 }
 
-/** Readable collection header — multi-image poster + strong bottom scrim. */
+/**
+ * Collection header — reference layout: copy on the left, 1–4 image poster on the right.
+ */
 export function CollectionCoverHero({
   images = [],
   title,
@@ -36,63 +35,84 @@ export function CollectionCoverHero({
   emptyVariant = "own",
   itemCount = 0,
 }: CollectionCoverHeroProps) {
-  const heights =
-    size === "public"
-      ? "h-[min(56vh,420px)] md:h-[min(52vh,480px)]"
-      : "h-[min(48vh,320px)] sm:h-[360px] md:h-[400px]";
-  const maxWidth = size === "public" ? "max-w-6xl" : "max-w-7xl";
+  const isPublic = size === "public";
 
   return (
-    <header className={cn("relative w-full overflow-hidden", heights, className)}>
-      <div className="absolute inset-0">
-        <CollectionPosterGrid
-          images={images}
-          title={title}
-          itemCount={itemCount}
-          emptyVariant={emptyVariant}
-          imageSizes="100vw"
-          className="h-full w-full"
-        />
-      </div>
-
-      {/* Scrim: solid readable band at bottom, light tint at top */}
-      <div
-        className="absolute inset-0 bg-gradient-to-t from-background from-[28%] via-background/88 via-[55%] to-background/15"
-        aria-hidden
-      />
-
+    <header
+      className={cn(
+        "relative border-b border-outline-variant/15 bg-background",
+        className,
+      )}
+    >
       {overlay && (
-        <div className="absolute inset-x-0 top-0 z-20 px-4 pt-4 sm:px-margin-mobile sm:pt-5 md:px-margin-desktop">
-          <div className={cn("mx-auto flex w-full items-center justify-between gap-3", maxWidth)}>
+        <div className="absolute inset-x-0 top-0 z-30 px-4 pt-4 sm:px-margin-mobile sm:pt-5 md:px-margin-desktop">
+          <div className={cn("flex w-full max-w-7xl items-center justify-between gap-3")}>
             {overlay}
           </div>
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-6 sm:px-margin-mobile sm:pb-8 md:px-margin-desktop">
-        <div className={cn("mx-auto w-full", maxWidth)}>
+      <div
+        className={cn(
+          "flex w-full flex-col md:flex-row",
+          isPublic
+            ? "min-h-[min(56vh,420px)] md:min-h-[min(52vh,480px)]"
+            : "min-h-[min(48vh,320px)] sm:min-h-[360px] md:min-h-[400px]",
+        )}
+      >
+        {/* Copy — left on desktop */}
+        <div className="relative z-20 order-2 flex flex-1 flex-col justify-end bg-background px-4 pb-6 pt-20 sm:px-margin-mobile sm:pb-8 sm:pt-24 md:order-1 md:max-w-[min(48%,520px)] md:justify-center md:py-10 md:pr-8 md:pl-margin-desktop lg:max-w-[44%]">
           {badge && <div className="mb-3">{badge}</div>}
           <h1
             className={cn(
               "font-display leading-tight text-on-surface",
-              size === "public"
-                ? "text-3xl md:text-5xl"
-                : "text-2xl sm:text-3xl md:text-5xl",
+              isPublic ? "text-3xl md:text-4xl lg:text-5xl" : "text-2xl sm:text-3xl md:text-4xl",
             )}
           >
             {title}
           </h1>
           {description && (
-            <p className="mt-2 max-w-2xl text-base text-on-surface md:text-lg">
+            <p className="mt-2 max-w-xl text-sm text-on-surface-variant md:text-base">
               {description}
             </p>
           )}
-          {meta && <div className="mt-3">{meta}</div>}
+          {meta && <div className="mt-4">{meta}</div>}
           {actions && (
-            <div className="mt-5 flex flex-wrap items-center gap-2 sm:gap-2.5 md:flex-nowrap md:gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-2 sm:gap-2.5">
               {actions}
             </div>
           )}
+        </div>
+
+        {/* Poster grid — right on desktop, top on mobile */}
+        <div
+          className={cn(
+            "relative order-1 w-full shrink-0 overflow-hidden md:order-2 md:min-h-0 md:flex-1",
+            isPublic
+              ? "h-[min(44vw,260px)] sm:h-[min(40vw,300px)] md:h-auto"
+              : "h-[min(42vw,240px)] sm:h-[280px] md:h-auto",
+          )}
+        >
+          <CollectionPosterGrid
+            images={images}
+            title={title}
+            itemCount={itemCount}
+            emptyVariant={emptyVariant}
+            variant="hero"
+            imageSizes="(max-width: 768px) 100vw, 50vw"
+            priority
+            className="h-full w-full"
+          />
+          {/* Fade into text panel (desktop) */}
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-[38%] bg-gradient-to-r from-background via-background/70 to-transparent md:block"
+            aria-hidden
+          />
+          {/* Fade into copy below (mobile) */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-background to-transparent md:hidden"
+            aria-hidden
+          />
         </div>
       </div>
     </header>

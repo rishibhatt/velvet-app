@@ -92,7 +92,7 @@ export function ProfileEditor({ profile, onCancel, onSaved }: ProfileEditorProps
             src={bannerUrl}
             alt=""
             fill
-            className="object-cover"
+            className="object-cover object-center"
             sizes="(max-width: 768px) 100vw, 896px"
           />
         ) : (
