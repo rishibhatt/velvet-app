@@ -233,20 +233,16 @@ export function ItemDetailModal() {
     if (!item || !canEdit) return;
     const nextTitle = editTitle.trim() || null;
     const nextNotes = editNotes.trim() || null;
-    const linkChanged =
-      isLinkEditable &&
-      editSourceUrl.trim() !== (item.source_url ?? "").trim();
-
     let imageUrl = editImageUrl;
     let source = editSource;
     let description =
       editDescription.trim() || item.description;
 
-    if (linkChanged && editSourceUrl.trim()) {
+    if (isLinkEditable && editSourceUrl.trim()) {
       setMetadataLoading(true);
       try {
         const meta = await fetchUrlMetadata(editSourceUrl.trim());
-        imageUrl = meta.imageUrl;
+        if (meta.imageUrl) imageUrl = meta.imageUrl;
         source = meta.source;
         if (meta.description) description = meta.description;
       } finally {

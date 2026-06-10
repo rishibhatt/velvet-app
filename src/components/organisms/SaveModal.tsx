@@ -92,6 +92,8 @@ export function SaveModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagsSectionRef = useRef<HTMLDivElement>(null);
   const metadataRequestRef = useRef(0);
+  const metadataUrlRef = useRef<string | null>(null);
+  const wasOpenRef = useRef(false);
 
   const debouncedUrl = useDebounce(url, 500);
   const saveItem = useSaveItem(boardId || boards[0]?.id || "");
@@ -100,6 +102,15 @@ export function SaveModal() {
     if (saveModal.boardId) setBoardId(saveModal.boardId);
     else if (boards[0]) setBoardId(boards[0].id);
   }, [saveModal.boardId, boards]);
+
+  useEffect(() => {
+    if (saveModal.open && !wasOpenRef.current) {
+      setSaved(false);
+      clearModeContent();
+      setMode("link");
+    }
+    wasOpenRef.current = saveModal.open;
+  }, [saveModal.open]);
 
   useEffect(() => {
     if (mode !== "link" || !debouncedUrl) {
@@ -115,6 +126,7 @@ export function SaveModal() {
     fetchUrlMetadata(debouncedUrl)
       .then((meta) => {
         if (requestId !== metadataRequestRef.current) return;
+        metadataUrlRef.current = debouncedUrl;
         setTitle(meta.title);
         setImageUrl(meta.imageUrl);
         setLinkDescription(meta.description ?? "");
@@ -198,19 +210,43 @@ export function SaveModal() {
       return;
     }
 
+    let finalImageUrl = imageUrl;
+    let finalSource = source;
+    let finalDescription = linkDescription;
+    let finalTitle = title;
+
+    if (mode === "link" && url.trim()) {
+      setMetadataLoading(true);
+      try {
+        const meta = await fetchUrlMetadata(url.trim());
+        metadataUrlRef.current = url.trim();
+        finalImageUrl = meta.imageUrl;
+        finalSource = meta.source;
+        if (meta.description) finalDescription = meta.description;
+        if (meta.title) finalTitle = meta.title;
+      } catch {
+        velvetToast.info(
+          "Couldn't refresh preview",
+          "Saving with the preview already on screen.",
+        );
+      } finally {
+        setMetadataLoading(false);
+      }
+    }
+
     try {
       await saveItem.mutateAsync({
         boardId: targetBoardId,
         type: mode === "note" ? "note" : mode === "upload" ? "image" : "url",
-        sourceUrl: mode === "link" ? url || undefined : undefined,
-        imageUrl: imageUrl ?? undefined,
-        title: title.trim(),
+        sourceUrl: mode === "link" ? url.trim() || undefined : undefined,
+        imageUrl: finalImageUrl ?? undefined,
+        title: finalTitle.trim(),
         description:
           mode === "note"
             ? notes.trim()
-            : linkDescription.trim() || undefined,
+            : finalDescription.trim() || undefined,
         notes: mode === "note" ? notes.trim() : notes,
-        source: mode === "note" ? "web" : (source as never),
+        source: mode === "note" ? "web" : (finalSource as never),
         tags: selectedTags,
       });
       setSaved(true);
@@ -244,6 +280,7 @@ export function SaveModal() {
     setSource("web");
     setLinkDescription("");
     setMetadataLoading(false);
+    metadataUrlRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -327,7 +364,18 @@ export function SaveModal() {
             <input
               type="url"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setUrl(next);
+                if (
+                  metadataUrlRef.current &&
+                  next.trim() !== metadataUrlRef.current
+                ) {
+                  setImageUrl(null);
+                  setLinkDescription("");
+                  setMetadataLoading(Boolean(next.trim()));
+                }
+              }}
               placeholder="https://instagram.com/..."
               className="w-full rounded-xl border border-outline-variant/40 bg-bg-elevated py-3 pr-4 pl-11 text-sm focus:border-primary focus:outline-none"
               aria-label="URL to save"

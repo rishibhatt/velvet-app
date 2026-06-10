@@ -19,14 +19,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 
+  const revision = request.nextUrl.searchParams.get("v");
   const width = Math.min(Math.max(Number.isFinite(widthParam) ? widthParam : 640, 32), 1920);
   const quality = Math.min(Math.max(Number.isFinite(qualityParam) ? qualityParam : 70, 40), 90);
+  const cacheControl = revision
+    ? "public, max-age=31536000, immutable"
+    : "public, max-age=3600, stale-while-revalidate=86400";
 
   try {
     const upstream = await fetch(rawUrl, {
       headers: { Accept: "image/*" },
       signal: AbortSignal.timeout(12_000),
-      cache: "force-cache",
+      cache: "no-store",
     });
 
     if (!upstream.ok) {
@@ -50,7 +54,7 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": "image/webp",
-          "Cache-Control": "public, max-age=31536000, immutable",
+          "Cache-Control": cacheControl,
         },
       });
     } catch {
@@ -58,7 +62,7 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": upstream.headers.get("content-type") ?? "image/webp",
-          "Cache-Control": "public, max-age=31536000, immutable",
+          "Cache-Control": cacheControl,
         },
       });
     }

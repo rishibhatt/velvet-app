@@ -8,6 +8,19 @@ const BROWSER_UA =
   "Mozilla/5.0 (compatible; Velvet/1.0; +https://the-velvet.netlify.app)";
 const MAX_BYTES = 8 * 1024 * 1024;
 
+function looksLikeImage(bytes: Uint8Array): boolean {
+  if (bytes.byteLength < 4) return false;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) return true;
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return true;
+  }
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return true;
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    return true;
+  }
+  return false;
+}
+
 type VelvetSupabase = SupabaseClient<Database>;
 
 /** Server-side download, compress, and store a link-preview image in Supabase. */
@@ -27,11 +40,11 @@ export async function serverIngestRemoteImage(
     });
     if (!upstream.ok) return null;
 
-    const contentType = upstream.headers.get("content-type") ?? "";
-    if (!contentType.startsWith("image/")) return null;
-
     let bytes = new Uint8Array(await upstream.arrayBuffer());
     if (bytes.byteLength === 0 || bytes.byteLength > MAX_BYTES) return null;
+
+    const contentType = upstream.headers.get("content-type") ?? "";
+    if (!contentType.startsWith("image/") && !looksLikeImage(bytes)) return null;
 
     try {
       const sharp = (await import("sharp")).default;

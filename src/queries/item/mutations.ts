@@ -85,6 +85,21 @@ export function useSaveItem(boardId: string) {
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
     },
     onSuccess: (item) => {
+      queryClient.setQueryData<InfiniteData<ItemsPage>>(
+        itemsListQueryKey(boardId),
+        (old) => {
+          if (!old?.pages.length) return old;
+          const [first, ...rest] = old.pages;
+          const withoutTemp = first.items.filter((i) => !i.id.startsWith("temp-"));
+          const withoutDup = withoutTemp.filter((i) => i.id !== item.id);
+          return {
+            ...old,
+            pages: [{ ...first, items: [item, ...withoutDup] }, ...rest],
+          };
+        },
+      );
+      queryClient.setQueryData(itemKeys.detail(item.id), item);
+
       if (item.type === "image") {
         track(ANALYTICS_EVENTS.IMAGE_SAVED, {
           collection_id: boardId,

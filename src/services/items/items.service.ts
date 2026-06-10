@@ -25,13 +25,20 @@ const ITEM_SELECT = `
   )
 `;
 
+type ResolveImageOptions = {
+  /** Link saves must ingest a fresh preview — never reuse an unrelated stored blob. */
+  rejectStoredPreview?: boolean;
+};
+
 async function resolveItemImageUrl(
   imageUrl: string | undefined | null,
   source?: ItemSource | null,
   sourceUrl?: string | null,
+  options?: ResolveImageOptions,
 ): Promise<string | null> {
   let url = imageUrl ?? null;
   if (url && isWeakPreviewImage(url)) url = null;
+  if (url && isSupabaseStorageUrl(url) && options?.rejectStoredPreview) url = null;
 
   if (!url && source === "youtube" && sourceUrl) {
     const id = extractYouTubeVideoId(sourceUrl);
@@ -115,6 +122,9 @@ export const itemsService = {
       input.imageUrl,
       input.source ?? "web",
       input.sourceUrl,
+      {
+        rejectStoredPreview: input.type === "url" || input.type === "video",
+      },
     );
 
     let sourceUrl = input.sourceUrl ?? null;
@@ -263,6 +273,7 @@ export const itemsService = {
         nextImage,
         input.source ?? row.source ?? "web",
         sourceUrl ?? input.sourceUrl ?? undefined,
+        { rejectStoredPreview: sourceChanged },
       );
     }
 

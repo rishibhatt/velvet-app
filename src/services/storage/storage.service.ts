@@ -129,11 +129,28 @@ export async function ingestRemoteImage(
     return imageUrl || null;
   }
 
+  if (folder === "items") {
+    try {
+      const res = await fetch("/api/images/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: imageUrl }),
+        credentials: "same-origin",
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { url?: string };
+      return data.url ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const proxyRes = await fetch("/api/images/proxy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: imageUrl }),
+      credentials: "same-origin",
     });
 
     if (!proxyRes.ok) return null;
