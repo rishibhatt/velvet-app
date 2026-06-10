@@ -88,10 +88,12 @@ export function exploreMetadata(): Metadata {
 
 export function categoryMetadata(mood: Mood): Metadata {
   const label = getMoodLabel(mood);
+  const ogImage = `/og-${mood}.png`;
   return pageMetadata({
     title: `${label} Collections | ${BRAND.name}`,
     description: `Explore top, trending, and newest ${label.toLowerCase()} collections curated on ${BRAND.name}.`,
     path: ROUTES.category(mood),
+    image: ogImage,
   });
 }
 

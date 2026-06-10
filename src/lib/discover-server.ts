@@ -45,6 +45,16 @@ export async function getExploreBoardsServer(
 
   if (sort === "new") {
     request = request.order("created_at", { ascending: false }).limit(fetchLimit);
+  } else if (sort === "trending") {
+    request = request
+      .order("trending_score", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: false })
+      .limit(fetchLimit);
+  } else if (sort === "most_viewed") {
+    request = request
+      .order("view_count", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: false })
+      .limit(fetchLimit);
   } else {
     request = request.order("updated_at", { ascending: false }).limit(fetchLimit);
   }
@@ -106,13 +116,29 @@ function sortPublicBoards(
       return (b.like_count ?? 0) - (a.like_count ?? 0);
     });
   }
+  if (sort === "most_liked") {
+    return copy.sort((a, b) => {
+      const likesA = a.like_count ?? 0;
+      const likesB = b.like_count ?? 0;
+      if (likesB !== likesA) return likesB - likesA;
+      return (b.item_count ?? 0) - (a.item_count ?? 0);
+    });
+  }
+  if (sort === "most_viewed") {
+    return copy.sort((a, b) => {
+      const viewsA = a.view_count ?? 0;
+      const viewsB = b.view_count ?? 0;
+      if (viewsB !== viewsA) return viewsB - viewsA;
+      return (b.trending_score ?? 0) - (a.trending_score ?? 0);
+    });
+  }
   return copy.sort((a, b) => {
+    const trendA = a.trending_score ?? 0;
+    const trendB = b.trending_score ?? 0;
+    if (trendB !== trendA) return trendB - trendA;
     const likesA = a.like_count ?? 0;
     const likesB = b.like_count ?? 0;
     if (likesB !== likesA) return likesB - likesA;
-    const itemsA = a.item_count ?? 0;
-    const itemsB = b.item_count ?? 0;
-    if (itemsB !== itemsA) return itemsB - itemsA;
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { ExploreFiltersBar } from "@/components/organisms/ExploreFiltersBar";
+import { ExploreCollectionsToolbar } from "@/components/organisms/ExploreCollectionsToolbar";
 import { CollectionCardSkeletonGrid } from "@/components/skeletons/CollectionCardSkeletonGrid";
 import { ExploreListSkeleton } from "@/components/skeletons/ExploreListRowSkeleton";
 import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
@@ -12,13 +12,17 @@ import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { usePublicBoards } from "@/queries/discover/queries";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { Mood } from "@/types/board.types";
-import type { PublicBoard } from "@/services/discover/discover.service";
+import type { PublicBoard, PublicBoardSort } from "@/services/discover/discover.service";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { useInfiniteSlice } from "@/hooks/useInfiniteSlice";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
+import { ExploreLeaderboardSection } from "@/components/creator/ExploreLeaderboardSection";
+import { ExploreToolbarSkeleton } from "@/components/skeletons/ExploreToolbarSkeleton";
+import { useAds } from "@/queries/ads/queries";
 
-const MotionGrid = dynamic(
-  () => import("@/features/explore/components/ExploreMotionGrid").then((m) => m.ExploreMotionGrid),
+const ExploreFeedGrid = dynamic(
+  () =>
+    import("@/features/explore/components/ExploreFeedGrid").then((m) => m.ExploreFeedGrid),
   { ssr: false },
 );
 
@@ -29,7 +33,6 @@ const MotionList = dynamic(
 
 interface ExplorePageContentProps {
   initialBoards: PublicBoard[];
-  /** Server already rendered empty UI — skip duplicate on first paint */
   hideEmptyState?: boolean;
 }
 
@@ -39,19 +42,20 @@ export function ExplorePageContent({
 }: ExplorePageContentProps) {
   const { user } = useAuth();
   const [mood, setMood] = useState<Mood | null>(null);
+  const [sort, setSort] = useState<PublicBoardSort>("trending");
   const [viewMode, setViewMode] = useState<ExploreViewMode>("grid");
 
   const filters = useMemo(
     () => ({
       mood,
-      sort: "trending" as const,
+      sort,
       excludeOwnerId: user?.id,
       limit: 48,
     }),
-    [mood, user?.id],
+    [mood, sort, user?.id],
   );
 
-  const isDefaultFilters = mood === null;
+  const isDefaultFilters = mood === null && sort === "trending";
 
   const { data: boards = [], isLoading, isFetching, isError, error, refetch } =
     usePublicBoards(filters, {
@@ -59,9 +63,11 @@ export function ExplorePageContent({
     });
 
   const { visible, sentinelRef, hasMore } = useInfiniteSlice(boards, 12);
+  const { data: adsData } = useAds("explore_feed", mood ?? undefined);
+  const ads = adsData?.ads ?? [];
 
-  const showLoading =
-    (isLoading || (isFetching && boards.length === 0)) && !isDefaultFilters;
+  const showLoading = isLoading && boards.length === 0;
+  const isRefetching = isFetching && boards.length > 0;
 
   const showEmpty =
     !showLoading &&
@@ -71,19 +77,29 @@ export function ExplorePageContent({
   useEffect(() => {
     track(ANALYTICS_EVENTS.EXPLORE_VIEWED, {
       category: mood,
+      sort,
       result_count: boards.length,
     });
-  }, [boards.length, mood]);
+  }, [boards.length, mood, sort]);
+
+  const listBoards = viewMode === "list" ? visible : boards;
 
   return (
     <>
-      <ExploreFiltersBar
-        mood={mood}
-        onMoodChange={setMood}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        resultCount={boards.length}
-      />
+      <ExploreLeaderboardSection />
+
+      {showLoading ? (
+        <ExploreToolbarSkeleton />
+      ) : (
+        <ExploreCollectionsToolbar
+          sort={sort}
+          onSortChange={setSort}
+          mood={mood}
+          onMoodChange={setMood}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+      )}
 
       {isError && (
         <ErrorAlert
@@ -101,10 +117,15 @@ export function ExplorePageContent({
           <ExploreListSkeleton />
         )
       ) : boards.length > 0 ? (
-        viewMode === "grid" ? (
+        <div
+          className={isRefetching ? "opacity-60 transition-opacity duration-200" : undefined}
+          aria-busy={isRefetching}
+        >
+        {viewMode === "grid" ? (
           <>
-            <MotionGrid
+            <ExploreFeedGrid
               boards={visible}
+              ads={ads}
               onBoardClick={(board) =>
                 track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
                   collection_id: board.id,
@@ -120,16 +141,20 @@ export function ExplorePageContent({
             )}
           </>
         ) : (
-          <MotionList
-            boards={boards}
-            onBoardClick={(board) =>
-              track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
-                collection_id: board.id,
-                category: board.mood,
-              })
-            }
-          />
-        )
+          <>
+            <MotionList
+              boards={listBoards}
+              onBoardClick={(board) =>
+                track(ANALYTICS_EVENTS.EXPLORE_COLLECTION_CLICKED, {
+                  collection_id: board.id,
+                  category: board.mood,
+                })
+              }
+            />
+            {hasMore && <div ref={sentinelRef} className="h-4" aria-hidden />}
+          </>
+        )}
+        </div>
       ) : showEmpty ? (
         <EmptyState
           title={

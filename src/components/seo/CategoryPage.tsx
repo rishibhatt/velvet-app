@@ -1,4 +1,5 @@
 import { AdaptiveNavbar } from "@/components/organisms/AdaptiveNavbar";
+import { CreatorLeaderboard } from "@/components/creator/CreatorLeaderboard";
 import { PublicCollectionList } from "@/components/seo/PublicCollectionList";
 import { getMoodLabel } from "@/constants/moods";
 import type { Board, Mood } from "@/types/board.types";
@@ -19,6 +20,9 @@ export function CategoryPage({ mood, boards }: { mood: Mood; boards: Board[] }) 
             Browse public {label.toLowerCase()} inspiration curated by Velvet creators.
           </p>
         </header>
+        <div className="mb-10">
+          <CreatorLeaderboard defaultMood={mood} compact />
+        </div>
         <Section title="Trending collections" boards={trending} />
         <Section title="Top collections" boards={top} />
         <Section title="Newest collections" boards={newest} />

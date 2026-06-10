@@ -20,6 +20,12 @@ export interface Database {
           website: string | null;
           created_at: string;
           updated_at: string;
+          total_board_views: number | null;
+          weekly_reach: number | null;
+          is_verified: boolean | null;
+          verified_at: string | null;
+          creator_score: number | null;
+          email_digest_enabled: boolean | null;
         };
         Insert: {
           id: string;
@@ -134,6 +140,15 @@ export interface Database {
           deleted_at: string | null;
           created_at: string;
           updated_at: string;
+          view_count: number | null;
+          unique_view_count: number | null;
+          weekly_view_count: number | null;
+          last_viewed_at: string | null;
+          trending_score: number | null;
+          is_brand_collection: boolean | null;
+          brand_name: string | null;
+          brand_cta_url: string | null;
+          brand_cta_text: string | null;
         };
         Insert: {
           id?: string;
@@ -181,6 +196,9 @@ export interface Database {
           deleted_at: string | null;
           created_at: string;
           updated_at: string;
+          resave_count: number | null;
+          inspired_by_item_id: string | null;
+          inspired_by_board_id: string | null;
         };
         Insert: {
           id?: string;
@@ -197,6 +215,9 @@ export interface Database {
           deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          resave_count?: number | null;
+          inspired_by_item_id?: string | null;
+          inspired_by_board_id?: string | null;
         };
         Update: {
           id?: string;
@@ -213,6 +234,9 @@ export interface Database {
           deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          resave_count?: number | null;
+          inspired_by_item_id?: string | null;
+          inspired_by_board_id?: string | null;
         };
         Relationships: [];
       };
@@ -363,6 +387,179 @@ export interface Database {
         };
         Relationships: [];
       };
+      board_views: {
+        Row: {
+          id: string;
+          board_id: string;
+          viewer_id: string | null;
+          viewer_fingerprint: string;
+          viewed_at: string | null;
+          source: string | null;
+          referrer: string | null;
+        };
+        Insert: {
+          id?: string;
+          board_id: string;
+          viewer_id?: string | null;
+          viewer_fingerprint: string;
+          viewed_at?: string | null;
+          source?: string | null;
+          referrer?: string | null;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      item_resaves: {
+        Row: {
+          id: string;
+          original_item_id: string;
+          original_board_id: string;
+          original_owner_id: string;
+          resaved_item_id: string;
+          resaved_board_id: string;
+          resaved_by: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          original_item_id: string;
+          original_board_id: string;
+          original_owner_id: string;
+          resaved_item_id: string;
+          resaved_board_id: string;
+          resaved_by: string;
+          created_at?: string | null;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      creator_badges: {
+        Row: {
+          id: string;
+          profile_id: string;
+          badge_type: string;
+          mood: string | null;
+          awarded_at: string | null;
+          expires_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          badge_type: string;
+          mood?: string | null;
+          awarded_at?: string | null;
+          expires_at?: string | null;
+        };
+        Update: Partial<{
+          expires_at: string | null;
+        }>;
+        Relationships: [];
+      };
+      leaderboard_snapshots: {
+        Row: {
+          id: string;
+          week_start: string;
+          mood: string;
+          profile_id: string;
+          rank: number;
+          score: number;
+          week_views: number | null;
+          week_likes: number | null;
+          week_resaves: number | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          week_start: string;
+          mood: string;
+          profile_id: string;
+          rank: number;
+          score: number;
+          week_views?: number | null;
+          week_likes?: number | null;
+          week_resaves?: number | null;
+          created_at?: string | null;
+        };
+        Update: Partial<{
+          rank: number;
+          score: number;
+        }>;
+        Relationships: [];
+      };
+      ad_campaigns: {
+        Row: {
+          id: string;
+          brand_name: string;
+          brand_logo_url: string | null;
+          type: string;
+          target_moods: string[] | null;
+          status: string | null;
+          start_date: string | null;
+          end_date: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      ad_units: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          board_id: string | null;
+          headline: string | null;
+          cta_text: string | null;
+          cta_url: string;
+          image_url: string | null;
+          placement: string;
+          impressions: number | null;
+          clicks: number | null;
+          is_active: boolean | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      ad_events: {
+        Row: {
+          id: string;
+          ad_unit_id: string;
+          event_type: string;
+          user_id: string | null;
+          fingerprint: string | null;
+          mood_context: string | null;
+          occurred_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      affiliate_programs: {
+        Row: {
+          id: string;
+          name: string;
+          base_domains: string[];
+          tracking_param: string;
+          affiliate_value: string;
+          commission_notes: string | null;
+          is_active: boolean | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      affiliate_clicks: {
+        Row: {
+          id: string;
+          item_id: string | null;
+          affiliate_program_id: string | null;
+          original_url: string | null;
+          rewritten_url: string | null;
+          clicked_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -433,6 +630,18 @@ export interface Database {
       get_platform_stats: {
         Args: Record<string, never>;
         Returns: Json;
+      };
+      increment_board_view: {
+        Args: {
+          p_board_id: string;
+          p_is_unique: boolean;
+          p_owner_id: string;
+        };
+        Returns: undefined;
+      };
+      update_all_trending_scores: {
+        Args: Record<string, never>;
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

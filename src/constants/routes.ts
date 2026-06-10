@@ -19,10 +19,14 @@ export const ROUTES = {
   category: (slug: string) => `/${slug}`,
   search: "/search",
   explore: "/explore",
+  leaderboard: "/leaderboard",
   profile: "/profile",
   profileCollections: "/profile?tab=yours",
   settings: "/settings",
   setup: "/setup",
+  insights: "/insights",
+  notifications: "/notifications",
+  brands: "/brands",
 } as const;
 
 export { getPublicShareUrl } from "@/lib/app-url";

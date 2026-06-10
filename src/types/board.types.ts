@@ -19,7 +19,22 @@ export type NotificationType =
   | "board_invite"
   | "board_like"
   | "collab_request"
-  | "item_comment";
+  | "item_comment"
+  | "board_viewed_milestone"
+  | "item_resaved"
+  | "board_featured"
+  | "weekly_digest"
+  | "badge_earned"
+  | "collaborator_added";
+
+export type BadgeType =
+  | "verified_creator"
+  | "trending"
+  | "top_curator"
+  | "rising_star"
+  | "velvet_pick";
+
+export type InsightsPeriod = "this_week" | "last_week" | "last_30_days";
 
 export type CollaborationRequestStatus = "pending" | "accepted" | "denied";
 
@@ -43,6 +58,9 @@ export interface Profile {
   website: string | null;
   created_at: string;
   updated_at: string;
+  is_verified?: boolean;
+  total_board_views?: number;
+  weekly_reach?: number;
 }
 
 export interface BoardCollaborationRequest {
@@ -76,6 +94,13 @@ export interface Board {
   item_count?: number;
   like_count?: number;
   is_liked?: boolean;
+  view_count?: number;
+  unique_view_count?: number;
+  weekly_view_count?: number;
+  trending_score?: number;
+  is_brand_collection?: boolean;
+  brand_name?: string | null;
+  resave_count?: number;
   members?: BoardMember[];
   /** Up to 4 item images for poster-style cards */
   preview_images?: string[];
@@ -135,6 +160,85 @@ export interface Item {
   updated_at: string;
   tags?: Tag[];
   is_favorited?: boolean;
+  resave_count?: number;
+  inspired_by_item_id?: string | null;
+  inspired_by_board_id?: string | null;
+  inspired_by?: {
+    username?: string;
+    board_title?: string;
+    board_slug?: string;
+  };
+}
+
+export interface CreatorBadge {
+  id: string;
+  profile_id: string;
+  badge_type: BadgeType;
+  mood: string | null;
+  awarded_at: string;
+  expires_at: string | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  score: number;
+  week_views: number;
+  week_likes: number;
+  week_resaves: number;
+  profile: Pick<Profile, "id" | "username" | "full_name" | "avatar_url"> & {
+    is_verified?: boolean;
+  };
+  badges?: CreatorBadge[];
+}
+
+export interface AdUnit {
+  id: string;
+  campaign_id: string;
+  board_id: string | null;
+  headline: string | null;
+  cta_text: string | null;
+  cta_url: string;
+  image_url: string | null;
+  placement: string;
+  campaign?: {
+    brand_name: string;
+    brand_logo_url: string | null;
+  };
+}
+
+export interface InsightsData {
+  overview: {
+    total_views: number;
+    weekly_views: number;
+    weekly_change_pct: number;
+    total_resaves: number;
+    likes: number;
+    public_boards: number;
+    total_boards: number;
+  };
+  views_by_day: { date: string; count: number }[];
+  views_by_source: { source: string; count: number }[];
+  top_boards: Array<{
+    id: string;
+    title: string;
+    mood: Mood | null;
+    mood_label?: string | null;
+    cover_url: string | null;
+    view_count: number;
+    weekly_view_count: number;
+    created_at: string;
+  }>;
+  top_items: Array<{
+    id: string;
+    title: string | null;
+    image_url: string | null;
+    resave_count: number | null;
+    board_id: string;
+  }>;
+  recent_resaves: unknown[];
+  badges: CreatorBadge[];
+  leaderboard_ranks: Array<{ mood: string; rank: number; score: number }>;
+  username: string;
 }
 
 export interface Tag {

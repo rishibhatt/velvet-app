@@ -21,7 +21,6 @@ import { velvetToast } from "@/lib/toast";
 import { ErrorAlert } from "@/components/molecules/ErrorAlert";
 import { CollectionBoardActions } from "@/components/molecules/CollectionBoardActions";
 import { CollectionOwnerToolbar } from "@/components/molecules/CollectionOwnerToolbar";
-import { CollectionSavesHeader } from "@/components/molecules/CollectionSavesHeader";
 import { ItemCard, ItemCardSkeleton } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
 import { useBoardDetail } from "@/queries/board/queries";
@@ -272,6 +271,7 @@ export default function BoardDetailPage({
           board={board}
           userId={user?.id}
           likeCount={board.like_count ?? 0}
+          saveCount={board.item_count ?? items?.length ?? 0}
           collaboratorCount={board.members?.length ?? 0}
           onOpenSettings={() => setSettingsOpen(true)}
           className="mb-6 sm:mb-8"
@@ -295,9 +295,7 @@ export default function BoardDetailPage({
             <ItemCardSkeleton count={SKELETON_BOARD_ITEMS_COUNT} />
           </CollectionItemsGrid>
         ) : items && items.length > 0 ? (
-          <CollectionItemsGrid
-            header={<CollectionSavesHeader count={items.length} />}
-          >
+          <CollectionItemsGrid>
             {items.map((item, index) => (
               <ItemCard
                 key={item.id}

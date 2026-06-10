@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { useMemo, useState } from "react";
 import { Bell, Check, CheckCheck, Heart, MessageCircle, UserPlus, X } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
@@ -216,16 +218,18 @@ function NotificationItem({
 }
 
 export function NotificationBell() {
+  const router = useRouter();
   const { isAuthenticated, isAuthReady } = useAuth();
   const [open, setOpen] = useState(false);
   const { data: notifications = [], isLoading, isError } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const markAllRead = useMarkAllNotificationsRead();
 
-  const visibleCount = useMemo(
-    () => Math.min(unreadCount, 99),
-    [unreadCount],
-  );
+  const badgeLabel = useMemo(() => {
+    if (unreadCount > 99) return "99+";
+    if (unreadCount > 9) return "9+";
+    return String(unreadCount);
+  }, [unreadCount]);
 
   if (!isAuthReady || !isAuthenticated) return null;
 
@@ -233,7 +237,14 @@ export function NotificationBell() {
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          track(ANALYTICS_EVENTS.NOTIFICATION_BELL_TAPPED, { unread_count: unreadCount });
+          if (window.innerWidth < 768) {
+            router.push(ROUTES.notifications);
+            return;
+          }
+          setOpen((v) => !v);
+        }}
         className="relative flex h-10 w-10 items-center justify-center rounded-full text-primary transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label="Notifications"
         aria-expanded={open}
@@ -241,7 +252,7 @@ export function NotificationBell() {
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex h-4 min-w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#ff3040] px-1 text-[10px] font-bold leading-none text-white ring-2 ring-bg-elevated">
-            {unreadCount > 9 ? "9+" : visibleCount}
+            {badgeLabel}
           </span>
         )}
       </button>

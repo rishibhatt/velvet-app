@@ -2,7 +2,6 @@
 
 import { ItemCard } from "@/components/organisms/ItemCard";
 import { CollectionItemsGrid } from "@/components/organisms/CollectionItemsGrid";
-import { CollectionSavesHeader } from "@/components/molecules/CollectionSavesHeader";
 import { useModalStore } from "@/store/modal.store";
 import type { Item } from "@/types/board.types";
 
@@ -15,9 +14,7 @@ export function PublicItemGrid({ items, curatorLabel }: PublicItemGridProps) {
   const openItemModal = useModalStore((s) => s.openItemModal);
 
   return (
-    <CollectionItemsGrid
-      header={<CollectionSavesHeader count={items.length} />}
-    >
+    <CollectionItemsGrid>
       {items.map((item, index) => (
         <ItemCard
           key={item.id}

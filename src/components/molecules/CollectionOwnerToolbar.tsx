@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Settings, UserPlus, Users } from "lucide-react";
+import { Bookmark, Heart, Settings, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/atoms/Button";
 import { IconButton } from "@/components/atoms/IconButton";
 import { VelvetActionStatsBar } from "@/components/molecules/VelvetActionStatsBar";
@@ -16,6 +16,7 @@ interface CollectionOwnerToolbarProps {
   board: Board;
   userId: string | undefined;
   likeCount: number;
+  saveCount: number;
   collaboratorCount: number;
   onOpenSettings: () => void;
   className?: string;
@@ -26,6 +27,7 @@ export function CollectionOwnerToolbar({
   board,
   userId,
   likeCount,
+  saveCount,
   collaboratorCount,
   onOpenSettings,
   className,
@@ -73,6 +75,11 @@ export function CollectionOwnerToolbar({
         </>
       }
       stats={[
+        {
+          icon: Bookmark,
+          value: saveCount,
+          label: saveCount === 1 ? "Save" : "Saves",
+        },
         { icon: Heart, value: likeCount, label: "Likes" },
         { icon: Users, value: collaboratorCount, label: "Collaborators" },
       ]}

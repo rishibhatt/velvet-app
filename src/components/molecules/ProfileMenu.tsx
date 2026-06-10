@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, User } from "lucide-react";
+import { BarChart3, LogOut, Settings, User } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -77,6 +77,15 @@ export function ProfileMenu() {
           >
             <User className="h-4 w-4 text-primary" />
             Profile
+          </Link>
+          <Link
+            href={ROUTES.insights}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <BarChart3 className="h-4 w-4 text-primary" />
+            Insights
           </Link>
           <Link
             href={ROUTES.settings}

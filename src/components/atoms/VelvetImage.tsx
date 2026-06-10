@@ -6,6 +6,7 @@ import {
   optimizeImageUrlForDisplay,
   resolveImageWidth,
 } from "@/lib/optimize-image-url";
+import { velvetImageLoader } from "@/lib/velvet-image-loader";
 import { cn } from "@/lib/utils";
 
 /**
@@ -73,6 +74,7 @@ export function VelvetImage({
 
   return (
     <Image
+      loader={velvetImageLoader}
       src={displaySrc}
       alt={alt}
       className={className}

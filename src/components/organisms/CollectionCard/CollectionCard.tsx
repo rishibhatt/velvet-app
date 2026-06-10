@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { getCollectionHref } from "@/lib/collection-href";
 import { COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
@@ -81,10 +82,11 @@ export function CollectionCard({
           ? ROUTES.legacyPublicCollection(board.slug)
           : boardHref);
 
-    if (typeof window !== "undefined" && path.startsWith("/")) {
-      return `${window.location.origin}${path}`;
+    const base = getAppBaseUrl();
+    if (base && path.startsWith("/")) {
+      return `${base}${path}`;
     }
-    return getPublicShareUrl(shareOwner?.username ?? "", board.slug ?? "", undefined);
+    return getPublicShareUrl(shareOwner?.username ?? "", board.slug ?? "", base || undefined);
   }, [board.slug, boardHref, publicHref, shareOwner?.username]);
 
   const handleShare = useCallback(() => {

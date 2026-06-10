@@ -17,6 +17,7 @@ const ProfileEditor = dynamic(
 import { ProfileBoardsSection } from "@/features/profile/components/ProfileBoardsSection";
 import { ProfileHeroCard } from "@/features/profile/components/ProfileHeroCard";
 import { ProfileStatsGrid } from "@/features/profile/components/ProfileStatsGrid";
+import { ProfileInsightsTeaser } from "@/features/profile/components/ProfileInsightsTeaser";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBoards, useLikedBoards } from "@/queries/board/queries";
 import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab";
@@ -31,6 +32,7 @@ function ProfilePageSkeleton() {
           <Skeleton key={i} className="h-28 rounded-2xl sm:h-32" />
         ))}
       </div>
+      <Skeleton className="mt-4 h-[4.75rem] w-full rounded-2xl sm:h-20" />
       <Skeleton className="mt-10 h-10 w-64 rounded-full" />
       <div className="mt-6">
         <CollectionCardSkeletonGrid count={4} />
@@ -110,6 +112,8 @@ export default function ProfilePage() {
         collaboratorsCount={stats.collaborators}
         likesReceived={stats.likesReceived}
       />
+
+      <ProfileInsightsTeaser className="mt-4 sm:mt-5" />
 
       <ProfileBoardsSection
         boards={boards}

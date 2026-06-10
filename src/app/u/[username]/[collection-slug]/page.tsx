@@ -48,7 +48,10 @@ export default async function PublicCollectionPage({ params }: PageProps) {
         }}
       />
       <PublicCollectionView
-        board={data.board}
+        board={{
+          ...data.board,
+          view_count: data.board.view_count ?? 0,
+        }}
         items={data.items}
         owner={data.owner}
         tags={data.tags}

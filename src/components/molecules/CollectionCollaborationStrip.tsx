@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Bell,
+  Bookmark,
   CheckCircle2,
   Clock,
   Copy,
@@ -32,6 +33,7 @@ interface CollectionCollaborationStripProps {
   board: Board;
   userId: string | undefined;
   likeCount?: number;
+  saveCount?: number;
   collaboratorCount?: number;
   className?: string;
 }
@@ -119,6 +121,7 @@ export function CollectionCollaborationStrip({
   board,
   userId,
   likeCount = board.like_count ?? 0,
+  saveCount = board.item_count ?? 0,
   collaboratorCount = board.members?.length ?? 0,
   className,
 }: CollectionCollaborationStripProps) {
@@ -133,6 +136,11 @@ export function CollectionCollaborationStrip({
     useCollaborationActions(board, userId);
 
   const stats = [
+    {
+      icon: Bookmark,
+      value: saveCount,
+      label: saveCount === 1 ? "Save" : "Saves",
+    },
     { icon: Heart, value: likeCount, label: "Likes" },
     { icon: Users, value: collaboratorCount, label: "Collaborators" },
   ];

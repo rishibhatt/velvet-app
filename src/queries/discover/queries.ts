@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   discoverService,
   type DiscoverFilters,
@@ -15,7 +15,8 @@ export function usePublicBoards(
     queryKey: discoverKeys.publicBoards(filters),
     queryFn: () => discoverService.getPublicBoards(filters),
     initialData: options?.initialData,
-    staleTime: options?.initialData ? 60_000 : 0,
+    placeholderData: keepPreviousData,
+    staleTime: options?.initialData ? 60_000 : 30_000,
     meta: { skipErrorToast: true, errorContext: "board" },
   });
 }

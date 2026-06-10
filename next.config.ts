@@ -12,6 +12,13 @@ const posthogScriptSrc =
 const posthogConnectSrc =
   "https://app.posthog.com https://*.i.posthog.com https://*.posthog.com";
 
+const adsenseScriptSrc = process.env.NEXT_PUBLIC_ADSENSE_ID
+  ? "https://pagead2.googlesyndication.com https://www.googletagservices.com"
+  : "";
+const adsenseConnectSrc = process.env.NEXT_PUBLIC_ADSENSE_ID
+  ? "https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
+  : "";
+
 const clarityScriptSrc = "https://www.clarity.ms https://scripts.clarity.ms";
 const clarityConnectSrc = "https://www.clarity.ms https://*.clarity.ms";
 
@@ -19,6 +26,7 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
@@ -28,11 +36,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com ${clarityScriptSrc} ${posthogScriptSrc}`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com ${clarityScriptSrc} ${posthogScriptSrc} ${adsenseScriptSrc}`.trim(),
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob: https: ${supabaseUrl}`,
       "font-src 'self' data:",
-      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com ${posthogConnectSrc} ${clarityConnectSrc}`,
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com ${posthogConnectSrc} ${clarityConnectSrc} ${adsenseConnectSrc}`.trim(),
       "worker-src 'self' blob:",
       "frame-src 'self' https://accounts.google.com",
       "object-src 'none'",
@@ -61,6 +69,8 @@ const nextConfig: NextConfig = {
     deviceSizes: [384, 430, 640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 320, 384],
     qualities: [70, 75],
+    /** Fallback for non-Supabase `/_next/image` when DNS uses NAT64 (IPv4-in-IPv6) */
+    dangerouslyAllowLocalIP: true,
     minimumCacheTTL: 31536000,
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },

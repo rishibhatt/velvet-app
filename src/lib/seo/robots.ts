@@ -5,8 +5,21 @@ export function velvetRobots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
-      disallow: ["/dashboard", "/settings", "/admin", "/api", "/login", "/signup", "/forgot-password", "/auth"],
+      allow: ["/", "/explore", "/u/", "/wedding", "/travel", "/home", "/fashion", "/events", "/lifestyle", "/tag/", "/brands"],
+      disallow: [
+        "/api/",
+        "/boards/",
+        "/profile",
+        "/settings",
+        "/onboarding",
+        "/search",
+        "/insights",
+        "/notifications",
+        "/login",
+        "/signup",
+        "/forgot-password",
+        "/auth",
+      ],
     },
     sitemap: generateCanonicalUrl("/sitemap.xml"),
   };

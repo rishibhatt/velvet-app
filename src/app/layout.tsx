@@ -49,7 +49,10 @@ export default function RootLayout({
         ) : null}
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
-      <body className="min-h-screen bg-background font-body text-on-surface antialiased">
+      <body
+        className="min-h-screen bg-background font-body text-on-surface antialiased"
+        suppressHydrationWarning
+      >
         <QueryProvider>
           <AuthProvider>
             <NotificationRealtimeProvider>

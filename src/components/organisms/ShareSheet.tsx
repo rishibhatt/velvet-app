@@ -47,6 +47,7 @@ export function ShareSheet() {
   return (
     <AnimatePresence>
       <motion.div
+        key="share-sheet"
         className="fixed inset-0 z-[100] flex items-end justify-center bg-[#2a1f1f]/45 p-0 backdrop-blur-md sm:items-center sm:p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

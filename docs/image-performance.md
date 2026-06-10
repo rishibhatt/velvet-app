@@ -21,7 +21,11 @@ When you save a link with a preview image:
 If ingest fails (blocked CDN, timeout, etc.), the app falls back to a lighter external thumbnail URL (YouTube `hqdefault`, smaller Google `=s256-c`, etc.) — save still works.
 
 ### On display
-`VelvetImage` routes **all** allowlisted URLs (including Supabase Storage) through **Next.js Image** (`/_next/image`) so grid cards get ~430px AVIF/WebP instead of full 1280px uploads. Set accurate `sizes` on each layout (see `COLLECTION_POSTER_SIZES_*` in `collection-ui.ts`).
+`VelvetImage` uses a custom loader:
+- **Supabase Storage** → `/api/images/display` (same-origin resize via `sharp`; avoids Next optimizer DNS/NAT64 blocks)
+- **Other hosts** → `/_next/image`
+
+Set accurate `sizes` on each layout (see `COLLECTION_POSTER_SIZES_*` in `collection-ui.ts`).
 
 External URLs (legacy items) get display-time cleanup:
 - **YouTube:** `hqdefault.jpg` (not `maxresdefault`)

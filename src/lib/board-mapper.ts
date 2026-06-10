@@ -13,6 +13,12 @@ interface SupabaseBoardRow {
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+  view_count?: number | null;
+  unique_view_count?: number | null;
+  weekly_view_count?: number | null;
+  trending_score?: number | null;
+  is_brand_collection?: boolean | null;
+  brand_name?: string | null;
   items?: { count: number }[];
   board_likes?: { count: number }[];
   board_members?: Array<{
@@ -52,13 +58,22 @@ export function mapBoard(row: SupabaseBoardRow): Board {
     updated_at: row.updated_at,
     item_count: itemCount,
     like_count: likeCount,
+    view_count: row.view_count ?? 0,
+    unique_view_count: row.unique_view_count ?? 0,
+    weekly_view_count: row.weekly_view_count ?? 0,
+    trending_score: Number(row.trending_score ?? 0),
+    is_brand_collection: row.is_brand_collection ?? false,
+    brand_name: row.brand_name ?? null,
     members,
   };
 }
 
+/** Disambiguate items embed — migration 023 added inspired_by_board_id FK to boards. */
+const ITEMS_COUNT_EMBED = "items!items_board_id_fkey(count)";
+
 export const BOARD_SELECT = `
   *,
-  items(count),
+  ${ITEMS_COUNT_EMBED},
   board_likes(count),
   board_members(
     id,
@@ -73,6 +88,6 @@ export const BOARD_SELECT = `
 /** Lighter select for list views (explore, home cards). */
 export const BOARD_LIST_SELECT = `
   *,
-  items(count),
+  ${ITEMS_COUNT_EMBED},
   board_likes(count)
 `;

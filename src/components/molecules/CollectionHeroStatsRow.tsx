@@ -1,6 +1,7 @@
 "use client";
 
-import { Layers, Users } from "lucide-react";
+import { Eye, Layers, Repeat2, Users } from "lucide-react";
+import { formatViewCount } from "@/lib/format-view-count";
 import { formatCount } from "@/utils/format";
 import { CollectionHeroStatChip } from "./CollectionHeroStatChip";
 import { BoardLikeButton } from "./BoardLikeButton";
@@ -14,6 +15,8 @@ interface CollectionHeroStatsRowProps {
   canLike?: boolean;
   showLike?: boolean;
   collaboratorCount?: number;
+  viewCount?: number;
+  resaveCount?: number;
   /** Show like in stats row (public visitor) vs only in toolbar */
   showLikeChip?: boolean;
 }
@@ -26,6 +29,8 @@ export function CollectionHeroStatsRow({
   canLike = false,
   showLike = true,
   collaboratorCount = 0,
+  viewCount = 0,
+  resaveCount = 0,
   showLikeChip = false,
 }: CollectionHeroStatsRowProps) {
   const { likeCount: displayCount } = useBoardLikeDisplay({
@@ -39,6 +44,18 @@ export function CollectionHeroStatsRow({
       <CollectionHeroStatChip icon={<Layers className="h-3.5 w-3.5 text-primary" aria-hidden />}>
         {formatCount(itemCount)} {itemCount === 1 ? "item" : "items"}
       </CollectionHeroStatChip>
+
+      {viewCount > 0 && (
+        <CollectionHeroStatChip icon={<Eye className="h-3.5 w-3.5 text-primary" aria-hidden />}>
+          {formatViewCount(viewCount)} views
+        </CollectionHeroStatChip>
+      )}
+
+      {resaveCount > 0 && (
+        <CollectionHeroStatChip icon={<Repeat2 className="h-3.5 w-3.5 text-primary" aria-hidden />}>
+          {formatCount(resaveCount)} re-saves
+        </CollectionHeroStatChip>
+      )}
 
       {collaboratorCount > 0 && (
         <CollectionHeroStatChip icon={<Users className="h-3.5 w-3.5 text-primary" aria-hidden />}>

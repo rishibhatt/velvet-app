@@ -102,13 +102,28 @@ export const itemsService = {
       input.source ?? "web",
     );
 
+    let sourceUrl = input.sourceUrl ?? null;
+    if (sourceUrl) {
+      try {
+        const res = await fetch("/api/affiliate/rewrite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sourceUrl }),
+        });
+        const data = (await res.json()) as { url?: string };
+        if (data.url) sourceUrl = data.url;
+      } catch {
+        // keep original
+      }
+    }
+
     const { data, error } = await supabase
       .from("items")
       .insert({
         board_id: input.boardId,
         user_id: user.id,
         type: input.type,
-        source_url: input.sourceUrl ?? null,
+        source_url: sourceUrl,
         image_url: imageUrl,
         title: input.title ?? null,
         description:

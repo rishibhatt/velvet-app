@@ -385,7 +385,7 @@ export function SaveModal() {
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, i) => (
                 <button
-                  key={tag}
+                  key={`${tag || "tag"}-${i}`}
                   type="button"
                   onClick={() => toggleTag(tag)}
                   className={cn(

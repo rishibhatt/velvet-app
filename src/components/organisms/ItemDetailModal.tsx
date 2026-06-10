@@ -13,7 +13,10 @@ import {
   Pencil,
   Check,
   XCircle,
+  Repeat2,
 } from "lucide-react";
+import { ResaveToBoardSheet } from "@/features/resave/components/ResaveToBoardSheet";
+import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { confirmAction } from "@/lib/confirm";
 import { shareOrCopy } from "@/lib/share";
 import { Button } from "@/components/atoms/Button";
@@ -95,8 +98,9 @@ export function ItemDetailModal() {
   const itemId = itemModal.itemId ?? "";
   const { data: fetchedItem, isLoading } = useItemDetail(itemId);
   const addComment = useAddComment(itemId);
-  const { profile } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const [commentText, setCommentText] = useState("");
+  const [resaveOpen, setResaveOpen] = useState(false);
 
   const item =
     fetchedItem?.id === itemId
@@ -199,9 +203,11 @@ export function ItemDetailModal() {
   const showModal = itemModal.open && Boolean(item);
 
   return (
+    <>
     <AnimatePresence>
       {showModal && item && (
         <motion.div
+          key={item.id}
           className="fixed inset-0 z-[100] flex items-end justify-center bg-inverse-surface/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -209,7 +215,6 @@ export function ItemDetailModal() {
           onClick={closeItemModal}
         >
           <motion.article
-            key={item.id}
             className="flex h-[100dvh] max-h-[100dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[1.75rem] border border-outline-variant/25 bg-bg-elevated shadow-[var(--shadow-modal)] sm:h-auto sm:max-h-[min(90dvh,calc(100dvh-3rem))] sm:rounded-3xl lg:min-h-[min(640px,85vh)] lg:flex-row"
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
@@ -303,11 +308,39 @@ export function ItemDetailModal() {
                       type="button"
                       variant="gradient"
                       icon={ExternalLink}
-                      onClick={() =>
-                        window.open(item.source_url!, "_blank", "noopener,noreferrer")
-                      }
+                      onClick={() => {
+                        void fetch("/api/affiliate/click", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ item_id: item.id }),
+                        })
+                          .then((r) => r.json())
+                          .then((data: { url?: string }) => {
+                            track(ANALYTICS_EVENTS.AFFILIATE_LINK_CLICKED, {
+                              item_id: item.id,
+                            });
+                            window.open(
+                              data.url ?? item.source_url!,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                          })
+                          .catch(() =>
+                            window.open(item.source_url!, "_blank", "noopener,noreferrer"),
+                          );
+                      }}
                     >
                       View source
+                    </Button>
+                  )}
+                  {readOnly && isAuthenticated && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      icon={Repeat2}
+                      onClick={() => setResaveOpen(true)}
+                    >
+                      Save to my collection
                     </Button>
                   )}
                   <Button
@@ -438,6 +471,20 @@ export function ItemDetailModal() {
                 </section>
               </div>
 
+              {readOnly && isAuthenticated && (
+                <footer className="shrink-0 border-t border-outline-variant/15 bg-surface-container-low/40 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10">
+                  <Button
+                    type="button"
+                    variant="gradient"
+                    icon={Repeat2}
+                    className="w-full"
+                    onClick={() => setResaveOpen(true)}
+                  >
+                    Save to my collection
+                  </Button>
+                </footer>
+              )}
+
               {!readOnly && (
                 <footer className="shrink-0 border-t border-outline-variant/15 bg-surface-container-low/40 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 lg:px-10">
                   <div className="flex items-center justify-end gap-2">
@@ -492,5 +539,12 @@ export function ItemDetailModal() {
         </motion.div>
       )}
     </AnimatePresence>
+    <ResaveToBoardSheet
+      open={resaveOpen}
+      itemId={itemId}
+      sourceBoardId={boardId || item?.board_id}
+      onClose={() => setResaveOpen(false)}
+    />
+    </>
   );
 }

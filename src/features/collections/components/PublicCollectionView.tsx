@@ -37,6 +37,7 @@ import { likeKeys } from "@/queries/likes/keys";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
 import { previewImagesFromItems } from "@/lib/collection-previews";
+import { BoardViewTracker } from "@/features/collections/components/BoardViewTracker";
 import type { Board, Item, Tag } from "@/types/board.types";
 
 interface PublicCollectionViewProps {
@@ -112,8 +113,11 @@ export function PublicCollectionView({
   const shareUrl =
     owner && board.slug ? getPublicShareUrl(owner.username, board.slug) : undefined;
 
+  const totalResaves = items.reduce((sum, i) => sum + (i.resave_count ?? 0), 0);
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
+      <BoardViewTracker boardId={board.id} mood={board.mood} source="share" />
       <AdaptiveNavbar />
       <CollectionCoverHero
         size="public"
@@ -172,6 +176,9 @@ export function PublicCollectionView({
               isLiked={board.is_liked}
               canLike={canLike}
               collaboratorCount={collaboratorCount}
+              viewCount={board.view_count ?? 0}
+              resaveCount={totalResaves}
+              showLikeChip
             />
           </div>
         }

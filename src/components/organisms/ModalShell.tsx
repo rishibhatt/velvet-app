@@ -76,6 +76,7 @@ export function ModalShell({
       <AnimatePresence>
         {open && (
           <motion.div
+            key="modal-shell"
             className={cn(
               "fixed inset-0 flex justify-center",
               useSheet ? "items-end" : "items-center p-4",

@@ -20,6 +20,20 @@ export const ANALYTICS_EVENTS = {
   LOGIN_COMPLETED: "login_completed",
   LOGOUT: "logout",
   ERROR_TRACKED: "error_tracked",
+  BOARD_VIEWED_PUBLIC: "board_viewed_public",
+  VIEW_MILESTONE_REACHED: "view_milestone_reached",
+  ITEM_RESAVED: "item_resaved",
+  INSPIRED_BY_TAPPED: "inspired_by_tapped",
+  INSIGHTS_PAGE_VIEWED: "insights_page_viewed",
+  LEADERBOARD_VIEWED: "leaderboard_viewed",
+  NOTIFICATION_BELL_TAPPED: "notification_bell_tapped",
+  NOTIFICATION_TAPPED: "notification_tapped",
+  WEEKLY_DIGEST_OPENED: "weekly_digest_opened",
+  BADGE_EARNED: "badge_earned",
+  BADGE_TAPPED: "badge_tapped",
+  AD_IMPRESSION: "ad_impression",
+  AD_CLICKED: "ad_clicked",
+  AFFILIATE_LINK_CLICKED: "affiliate_link_clicked",
 } as const;
 
 export type AnalyticsEventName =

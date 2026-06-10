@@ -15,3 +15,22 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."update-trending"]
+  schedule = "0 */6 * * *"
+
+[functions."weekly-digest"]
+  schedule = "0 12 * * 0"
+
+[functions."compute-leaderboard"]
+  schedule = "0 0 * * 1"
+
+[functions."check-badges"]
+  schedule = "0 6 * * *"
+
+[functions."reset-weekly-views"]
+  schedule = "0 1 * * 1"

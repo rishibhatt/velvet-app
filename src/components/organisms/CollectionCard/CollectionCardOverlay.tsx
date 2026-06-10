@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Share2 } from "lucide-react";
+import { Eye, Lock, Share2 } from "lucide-react";
 import { Avatar } from "@/components/atoms/Avatar";
 import { CollaboratorChips } from "@/components/molecules/CollaboratorChips";
 import { COLLECTION_CARD_TITLE } from "@/constants/collection-ui";
 import { getMoodDisplayLabel, getMoodEmoji } from "@/constants/moods";
 import { ROUTES } from "@/constants/routes";
 import { formatCount } from "@/utils/format";
+import { formatViewCount } from "@/lib/format-view-count";
+import { BadgeChip, pickPrimaryBadge } from "@/components/creator/BadgeChip";
 import type { Board, Profile } from "@/types/board.types";
 import type { CollectionCardVariant } from "./collection-card.types";
 import { CollectionCardLikePill } from "./CollectionCardLikePill";
@@ -42,9 +44,26 @@ export function CollectionCardOverlay({
   const itemCount = board.item_count ?? 0;
   const isOwned = variant === "owned";
   const displayOwner = owner;
+  const viewLabel =
+    board.is_public && (board.view_count ?? 0) > 0
+      ? formatViewCount(board.view_count ?? 0)
+      : "";
+  const primaryBadge = pickPrimaryBadge(
+    ((board as Board & { badges?: import("@/types/board.types").CreatorBadge[] }).badges) ?? [],
+  );
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col">
+      {primaryBadge && !isOwned && (
+        <div className="absolute top-12 right-2 z-20">
+          <BadgeChip badge={primaryBadge} size="sm" />
+        </div>
+      )}
+      {board.is_brand_collection && (
+        <span className="absolute top-2 left-2 z-20 rounded-full border border-white/25 bg-primary/90 px-2 py-0.5 text-[10px] font-semibold text-on-primary">
+          Partner
+        </span>
+      )}
       {/* Top row */}
       <div className="flex items-start justify-between gap-2 p-2.5 sm:p-3">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -62,6 +81,12 @@ export function CollectionCardOverlay({
             >
               {!board.is_public && <Lock className="h-2.5 w-2.5" aria-hidden />}
               {board.is_public ? "Public" : "Private"}
+            </span>
+          )}
+          {viewLabel && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-md sm:text-[11px]">
+              <Eye className="h-3 w-3 shrink-0 opacity-90" aria-hidden />
+              {viewLabel}
             </span>
           )}
         </div>

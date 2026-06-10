@@ -13,6 +13,7 @@ export function DoubleTapHeartBurst({ show, onComplete }: DoubleTapHeartBurstPro
     <AnimatePresence>
       {show && (
         <motion.div
+          key="double-tap-heart"
           className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
