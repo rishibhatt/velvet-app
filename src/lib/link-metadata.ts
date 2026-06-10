@@ -353,6 +353,7 @@ function mergeMetadata(
   current: { title: string | null; imageUrl: string | null; description: string | null },
   incoming: { title: string | null; imageUrl: string | null; description: string | null },
   pageUrl: string,
+  options?: { preferIncomingImage?: boolean },
 ) {
   if (!current.title && incoming.title) {
     current.title = decodeHtmlEntities(incoming.title);
@@ -360,10 +361,14 @@ function mergeMetadata(
   if (!current.description && incoming.description) {
     current.description = incoming.description;
   }
-  if (!current.imageUrl && incoming.imageUrl) {
+  if (incoming.imageUrl) {
     const normalized = normalizeImageUrl(incoming.imageUrl, pageUrl);
     if (normalized && !isWeakPreviewImage(normalized)) {
-      current.imageUrl = normalized;
+      const shouldUse =
+        !current.imageUrl ||
+        options?.preferIncomingImage ||
+        isWeakPreviewImage(current.imageUrl);
+      if (shouldUse) current.imageUrl = normalized;
     }
   }
 }
@@ -382,8 +387,11 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
       meta,
       { title: null, imageUrl: youTubeThumbnail(fetchUrl), description: null },
       fetchUrl,
+      { preferIncomingImage: true },
     );
-    mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl);
+    mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl, {
+      preferIncomingImage: true,
+    });
   }
 
   if (hostIncludes(fetchUrl, ["google"]) && fetchUrl.includes("/maps")) {
@@ -456,8 +464,8 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
     mergeMetadata(meta, parseHtmlMetadata(html), fetchUrl);
   }
 
-  mergeMetadata(meta, microlink, fetchUrl);
-  mergeMetadata(meta, noembed, fetchUrl);
+  mergeMetadata(meta, microlink, fetchUrl, { preferIncomingImage: true });
+  mergeMetadata(meta, noembed, fetchUrl, { preferIncomingImage: true });
 
   if (source === "pinterest" && !meta.imageUrl) {
     mergeMetadata(meta, { title: null, imageUrl: await fetchPinterestOembed(fetchUrl), description: null }, fetchUrl);
@@ -468,19 +476,26 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
       meta,
       { title: null, imageUrl: youTubeThumbnail(fetchUrl), description: null },
       fetchUrl,
+      { preferIncomingImage: true },
     );
     if (!meta.title) {
-      mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl);
+      mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl, {
+        preferIncomingImage: true,
+      });
     }
   }
 
   if (source === "youtube" && isYouTubeChannelUrl(fetchUrl) && !meta.title) {
-    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 15000 }), fetchUrl);
+    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 15000 }), fetchUrl, {
+      preferIncomingImage: true,
+    });
   }
 
   const titleMissing = !meta.title || meta.title === fetchUrl || meta.title === url;
   if (source === "web" && (!meta.imageUrl || titleMissing)) {
-    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 20000 }), fetchUrl);
+    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 20000 }), fetchUrl, {
+      preferIncomingImage: true,
+    });
   }
 
   if (instagramUsername) {

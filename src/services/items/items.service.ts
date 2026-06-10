@@ -1,5 +1,6 @@
 import { syncBoardCoverFromItems } from "@/lib/collection-previews";
 import { isWeakPreviewImage } from "@/lib/item-preview";
+import { resolvePreviewImageForSave } from "@/lib/resolve-item-preview";
 import {
   extractYouTubeVideoId,
   optimizeStoredImageUrl,
@@ -118,13 +119,20 @@ export const itemsService = {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("You must be signed in to save items.");
 
+    const isLinkSave = input.type === "url" || input.type === "video";
+    const previewForIngest = isLinkSave
+      ? await resolvePreviewImageForSave(
+          input.sourceUrl,
+          input.source ?? "web",
+          input.imageUrl,
+        )
+      : input.imageUrl;
+
     const imageUrl = await resolveItemImageUrl(
-      input.imageUrl,
+      previewForIngest,
       input.source ?? "web",
       input.sourceUrl,
-      {
-        rejectStoredPreview: input.type === "url" || input.type === "video",
-      },
+      { rejectStoredPreview: isLinkSave },
     );
 
     let sourceUrl = input.sourceUrl ?? null;
@@ -259,21 +267,22 @@ export const itemsService = {
     if (input.source !== undefined) patch.source = input.source;
 
     if (input.imageUrl !== undefined) {
-      let nextImage = input.imageUrl;
       const sourceChanged =
         input.sourceUrl !== undefined &&
         (input.sourceUrl?.trim() ?? "") !== (row.source_url?.trim() ?? "");
+      const linkSource = input.source ?? row.source ?? "web";
+      const linkUrl = sourceUrl ?? input.sourceUrl ?? undefined;
 
-      // Don't keep an old Supabase preview when the link URL changed.
-      if (sourceChanged && nextImage && isSupabaseStorageUrl(nextImage)) {
-        nextImage = null;
-      }
+      const nextImage =
+        row.type !== "note"
+          ? await resolvePreviewImageForSave(linkUrl, linkSource, input.imageUrl)
+          : input.imageUrl;
 
       patch.image_url = await resolveItemImageUrl(
         nextImage,
-        input.source ?? row.source ?? "web",
-        sourceUrl ?? input.sourceUrl ?? undefined,
-        { rejectStoredPreview: sourceChanged },
+        linkSource,
+        linkUrl,
+        { rejectStoredPreview: sourceChanged || row.type !== "note" },
       );
     }
 
