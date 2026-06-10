@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,7 +14,10 @@ import {
   Check,
   XCircle,
   Repeat2,
+  Loader2,
 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { fetchUrlMetadata } from "@/services/metadata/metadata.service";
 import { ResaveToBoardSheet } from "@/features/resave/components/ResaveToBoardSheet";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { confirmAction } from "@/lib/confirm";
@@ -37,7 +40,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getItemPreviewImage } from "@/lib/item-preview";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import type { ItemSource } from "@/types/board.types";
+import type { Item, ItemSource } from "@/types/board.types";
 
 function ItemPreview({
   imageUrl,
@@ -116,6 +119,13 @@ export function ItemDetailModal() {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editSourceUrl, setEditSourceUrl] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [editSource, setEditSource] = useState<ItemSource>("web");
+  const [editDescription, setEditDescription] = useState("");
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const metadataRequestRef = useRef(0);
+  const debouncedEditUrl = useDebounce(editSourceUrl, 500);
   const curatorName =
     itemModal.curatorLabel ??
     profile?.full_name ??
@@ -130,15 +140,51 @@ export function ItemDetailModal() {
 
   useBodyScrollLock(itemModal.open && Boolean(item));
 
+  const resetEditState = (from: Item) => {
+    setEditTitle(from.title ?? "");
+    setEditNotes(from.notes ?? "");
+    setEditSourceUrl(from.source_url ?? "");
+    setEditImageUrl(from.image_url);
+    setEditSource(from.source ?? "web");
+    setEditDescription(from.description ?? "");
+    setMetadataLoading(false);
+  };
+
+  const isLinkEditable = item?.type !== "note";
+
   useEffect(() => {
     if (!itemModal.open || !itemModal.startEditing || !item || !canEdit) return;
-    setEditTitle(item.title ?? "");
-    setEditNotes(item.notes ?? "");
+    resetEditState(item);
     setEditing(true);
     useModalStore.setState((state) => ({
       itemModal: { ...state.itemModal, startEditing: false },
     }));
   }, [itemModal.open, itemModal.startEditing, item, canEdit]);
+
+  useEffect(() => {
+    if (!editing || !isLinkEditable || !debouncedEditUrl.trim()) {
+      setMetadataLoading(false);
+      return;
+    }
+
+    const requestId = ++metadataRequestRef.current;
+    setMetadataLoading(true);
+
+    fetchUrlMetadata(debouncedEditUrl)
+      .then((meta) => {
+        if (requestId !== metadataRequestRef.current) return;
+        setEditImageUrl(meta.imageUrl);
+        setEditSource(meta.source);
+        setEditDescription(meta.description ?? "");
+        setEditTitle(meta.title);
+      })
+      .catch(() => {
+        if (requestId !== metadataRequestRef.current) return;
+      })
+      .finally(() => {
+        if (requestId === metadataRequestRef.current) setMetadataLoading(false);
+      });
+  }, [debouncedEditUrl, editing, isLinkEditable]);
 
   const handleShare = async () => {
     if (!item) return;
@@ -170,15 +216,13 @@ export function ItemDetailModal() {
 
   const startEditing = () => {
     if (!item || !canEdit) return;
-    setEditTitle(item.title ?? "");
-    setEditNotes(item.notes ?? "");
+    resetEditState(item);
     setEditing(true);
   };
 
   const cancelEditing = () => {
     if (!item) return;
-    setEditTitle(item.title ?? "");
-    setEditNotes(item.notes ?? "");
+    resetEditState(item);
     setEditing(false);
   };
 
@@ -191,7 +235,18 @@ export function ItemDetailModal() {
         itemId: item.id,
         title: nextTitle,
         notes: nextNotes,
-        description: item.type === "note" ? nextNotes : item.description,
+        description:
+          item.type === "note"
+            ? nextNotes
+            : editDescription.trim() || item.description,
+        ...(isLinkEditable && editSourceUrl.trim()
+          ? {
+              sourceUrl: editSourceUrl.trim(),
+              imageUrl: editImageUrl,
+              source: editSource,
+              type: "url" as const,
+            }
+          : {}),
       });
       setEditing(false);
     } catch {
@@ -210,6 +265,20 @@ export function ItemDetailModal() {
   };
 
   const showModal = itemModal.open && Boolean(item);
+
+  const previewImage =
+    editing && isLinkEditable
+      ? getItemPreviewImage({
+          image_url: editImageUrl,
+          source_url: editSourceUrl,
+          source: editSource,
+        })
+      : item
+        ? getItemPreviewImage(item)
+        : null;
+
+  const previewTitle = editing ? editTitle : (item?.title ?? null);
+  const previewSource = editing && isLinkEditable ? editSource : (item?.source ?? null);
 
   return (
     <>
@@ -235,16 +304,28 @@ export function ItemDetailModal() {
             <div className="relative w-full shrink-0 overflow-hidden bg-surface-container lg:w-[min(46%,500px)] lg:border-r lg:border-outline-variant/20">
               <div className="relative aspect-[5/6] max-h-[min(44dvh,420px)] w-full sm:aspect-[4/5] sm:max-h-[min(48dvh,460px)] lg:absolute lg:inset-0 lg:aspect-auto lg:max-h-none">
                 <ItemPreview
-                  imageUrl={getItemPreviewImage(item)}
-                  title={item.title}
+                  imageUrl={previewImage}
+                  title={previewTitle}
                   type={item.type}
-                  description={item.description ?? item.notes}
-                  source={item.source}
+                  description={
+                    editing && isLinkEditable
+                      ? editDescription || editNotes
+                      : item.description ?? item.notes
+                  }
+                  source={previewSource}
                 />
+                {editing && metadataLoading && isLinkEditable && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-inverse-surface/45 backdrop-blur-[2px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-white" aria-hidden />
+                    <span className="text-xs font-medium text-white">
+                      Fetching preview…
+                    </span>
+                  </div>
+                )}
               </div>
-              {item.source && (
+              {previewSource && (
                 <div className="absolute top-4 left-4 z-10 lg:top-5 lg:left-5">
-                  <SourceBadge source={item.source} />
+                  <SourceBadge source={previewSource} />
                 </div>
               )}
             </div>
@@ -276,21 +357,49 @@ export function ItemDetailModal() {
                 )}
 
                 {editing ? (
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="item-title"
-                      className="block text-sm font-semibold text-on-surface"
-                    >
-                      Save name
-                    </label>
-                    <input
-                      id="item-title"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder="Untitled save"
-                      className="velvet-field w-full rounded-xl px-4 py-3 font-display text-2xl leading-[1.15] text-on-surface sm:text-3xl lg:text-[2rem]"
-                      autoComplete="off"
-                    />
+                  <div className="space-y-4">
+                    {isLinkEditable && (
+                      <div className="space-y-1.5">
+                        <label
+                          htmlFor="item-source-url"
+                          className="flex items-center gap-2 text-sm font-semibold text-on-surface"
+                        >
+                          <Link2 className="h-4 w-4 text-primary" />
+                          Link URL
+                        </label>
+                        <input
+                          id="item-source-url"
+                          type="url"
+                          value={editSourceUrl}
+                          onChange={(e) => setEditSourceUrl(e.target.value)}
+                          placeholder="https://..."
+                          className="velvet-field w-full rounded-xl px-4 py-3 text-sm text-on-surface"
+                          autoComplete="off"
+                          aria-busy={metadataLoading}
+                        />
+                        <p className="text-xs text-on-surface-variant">
+                          Paste or change the link — preview image and title update
+                          automatically.
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="item-title"
+                        className="block text-sm font-semibold text-on-surface"
+                      >
+                        Save name
+                      </label>
+                      <input
+                        id="item-title"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder={metadataLoading ? "Extracting title…" : "Untitled save"}
+                        disabled={metadataLoading}
+                        className="velvet-field w-full rounded-xl px-4 py-3 font-display text-2xl leading-[1.15] text-on-surface disabled:opacity-60 sm:text-3xl lg:text-[2rem]"
+                        autoComplete="off"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <h1 className="font-display text-2xl leading-[1.15] text-on-surface sm:text-3xl lg:text-[2rem]">
@@ -516,7 +625,7 @@ export function ItemDetailModal() {
                             <IconButton
                               label="Save changes"
                               onClick={() => void handleSaveEdit()}
-                              disabled={updateItem.isPending}
+                              disabled={updateItem.isPending || metadataLoading}
                               className="!border-primary/40 !bg-primary-fixed/40 !text-primary hover:!bg-primary-fixed/60 disabled:opacity-50"
                             >
                               <Check className="h-5 w-5" />

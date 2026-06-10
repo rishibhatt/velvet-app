@@ -302,6 +302,16 @@ export interface SaveItemInput {
   tags?: string[];
 }
 
+export interface UpdateItemInput {
+  title?: string | null;
+  notes?: string | null;
+  description?: string | null;
+  sourceUrl?: string | null;
+  imageUrl?: string | null;
+  source?: ItemSource | null;
+  type?: ItemType;
+}
+
 export interface UrlMetadata {
   title: string;
   imageUrl: string | null;

@@ -13,7 +13,7 @@ import type { ItemSource } from "@/types/board.types";
 import { parseSupabaseError, requireSupabase } from "@/lib/supabase-errors";
 import { isSupabaseConfigured } from "@/lib/utils";
 import { createClient } from "@/services/supabase/client";
-import type { Comment, Item, SaveItemInput } from "@/types/board.types";
+import type { Comment, Item, SaveItemInput, UpdateItemInput } from "@/types/board.types";
 import type { Database } from "@/types/database.types";
 
 type ItemUpdate = Database["public"]["Tables"]["items"]["Update"];
@@ -200,16 +200,56 @@ export const itemsService = {
     return savedItem;
   },
 
-  async updateItem(
-    itemId: string,
-    input: { title?: string | null; notes?: string | null; description?: string | null },
-  ): Promise<Item> {
+  async updateItem(itemId: string, input: UpdateItemInput): Promise<Item> {
     requireSupabase();
     const supabase = createClient();
+
+    const { data: existing, error: existingError } = await supabase
+      .from("items")
+      .select("board_id, type, source")
+      .eq("id", itemId)
+      .is("deleted_at", null)
+      .single();
+
+    if (existingError || !existing) {
+      throw new Error(parseSupabaseError(existingError ?? { message: "Item not found" }));
+    }
+
+    const row = existing as { board_id: string; type: string; source: ItemSource | null };
     const patch: ItemUpdate = {};
+
     if (input.title !== undefined) patch.title = input.title;
     if (input.notes !== undefined) patch.notes = input.notes;
     if (input.description !== undefined) patch.description = input.description;
+    if (input.type !== undefined) patch.type = input.type;
+
+    let sourceUrl = input.sourceUrl;
+    if (sourceUrl !== undefined && sourceUrl) {
+      try {
+        const res = await fetch("/api/affiliate/rewrite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sourceUrl }),
+        });
+        const data = (await res.json()) as { url?: string };
+        if (data.url) sourceUrl = data.url;
+      } catch {
+        /* keep original */
+      }
+      patch.source_url = sourceUrl;
+    } else if (sourceUrl !== undefined) {
+      patch.source_url = null;
+    }
+
+    if (input.source !== undefined) patch.source = input.source;
+
+    if (input.imageUrl !== undefined) {
+      patch.image_url = await resolveItemImageUrl(
+        input.imageUrl,
+        input.source ?? row.source ?? "web",
+        sourceUrl ?? undefined,
+      );
+    }
 
     const { data, error } = await supabase
       .from("items")
@@ -220,6 +260,11 @@ export const itemsService = {
       .single();
 
     if (error) throw new Error(parseSupabaseError(error));
+
+    if (input.imageUrl !== undefined && row.board_id) {
+      await syncBoardCoverFromItems(row.board_id);
+    }
+
     return mapItem(data as Record<string, unknown>);
   },
 

@@ -3,7 +3,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { previewImagesFromItems } from "@/lib/collection-previews";
 import { itemsService } from "@/services/items/items.service";
-import type { Board, Item, SaveItemInput } from "@/types/board.types";
+import {
+  refreshBoardLinkPreviews,
+  type RefreshMetadataResult,
+} from "@/services/metadata/refresh-metadata.service";
+import type { Board, Item, SaveItemInput, UpdateItemInput } from "@/types/board.types";
 import { boardKeys, itemKeys } from "../board/keys";
 import { getErrorMessage } from "@/lib/errors";
 import { velvetToast } from "@/lib/toast";
@@ -82,12 +86,8 @@ export function useUpdateItem(boardId: string) {
     mutationFn: ({
       itemId,
       ...input
-    }: {
-      itemId: string;
-      title?: string | null;
-      notes?: string | null;
-      description?: string | null;
-    }) => itemsService.updateItem(itemId, input),
+    }: { itemId: string } & UpdateItemInput) =>
+      itemsService.updateItem(itemId, input),
     meta: { skipErrorToast: true, errorContext: "item" },
     onSuccess: (updated) => {
       queryClient.setQueryData<Item[]>(itemKeys.list(boardId), (old) =>
@@ -102,6 +102,57 @@ export function useUpdateItem(boardId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+    },
+  });
+}
+
+export function useRefreshItemPreviews(boardId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (options: { force?: boolean } = {}) => {
+      const totals: RefreshMetadataResult = {
+        processed: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+        remaining: 0,
+      };
+
+      for (let batch = 0; batch < 10; batch += 1) {
+        const result = await refreshBoardLinkPreviews(boardId, options);
+        totals.processed += result.processed;
+        totals.updated += result.updated;
+        totals.skipped = result.skipped;
+        totals.failed += result.failed;
+        totals.remaining = result.remaining;
+        if (result.remaining === 0 || result.processed === 0) break;
+      }
+
+      return totals;
+    },
+    onSuccess: (result: RefreshMetadataResult) => {
+      if (result.updated === 0 && result.remaining === 0) {
+        velvetToast.info(
+          "Nothing to refresh",
+          "All link previews already look up to date.",
+        );
+        return;
+      }
+
+      velvetToast.success(
+        "Previews refreshed",
+        `Updated ${result.updated} save${result.updated === 1 ? "" : "s"}${
+          result.remaining > 0 ? ` — ${result.remaining} still pending, tap again` : ""
+        }.`,
+      );
+    },
+    onError: (err) => {
+      velvetToast.error("Refresh failed", getErrorMessage(err, "item"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
+      queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
     },
   });
 }

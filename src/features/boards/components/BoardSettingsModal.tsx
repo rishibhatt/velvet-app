@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Trash2, Share2, Link2, FileText } from "lucide-react";
+import { Copy, Trash2, Share2, Link2, FileText, RefreshCw } from "lucide-react";
 import { CollectionVisibilityToggle } from "@/components/molecules/CollectionVisibilityToggle";
 import { ModalShell } from "@/components/organisms/ModalShell";
 import { Button } from "@/components/atoms/Button";
 import { IconButton } from "@/components/atoms/IconButton";
 import { DestructiveIconButton } from "@/components/atoms/DestructiveIconButton";
 import { useUpdateBoard, useDeleteBoard } from "@/queries/board/mutations";
+import { useRefreshItemPreviews } from "@/queries/item/mutations";
 import { getPublicShareUrl } from "@/constants/routes";
 import type { Board } from "@/types/board.types";
 import { useRouter } from "next/navigation";
@@ -40,6 +41,7 @@ export function BoardSettingsModal({
   const openShareSheet = useModalStore((s) => s.openShareSheet);
   const updateBoard = useUpdateBoard(board.id);
   const deleteBoard = useDeleteBoard();
+  const refreshPreviews = useRefreshItemPreviews(board.id);
   const [title, setTitle] = useState(board.title);
   const [description, setDescription] = useState(board.description ?? "");
   const [isPublic, setIsPublic] = useState(board.is_public);
@@ -276,6 +278,38 @@ export function BoardSettingsModal({
               >
                 <Copy className="h-4 w-4" />
               </IconButton>
+            </div>
+          </div>
+        )}
+
+        {canEdit && (
+          <div className="space-y-2 rounded-2xl border border-outline-variant/25 bg-surface-container-low/50 p-4">
+            <p className="text-sm font-semibold text-on-surface">Link preview images</p>
+            <p className="text-xs leading-relaxed text-on-surface-variant">
+              Re-fetch cover photos and titles from the original URLs. Use this if
+              saves show the wrong image (e.g. site icons instead of real previews).
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={RefreshCw}
+                loading={refreshPreviews.isPending}
+                onClick={() => refreshPreviews.mutate({ force: false })}
+              >
+                Fix broken previews
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={RefreshCw}
+                loading={refreshPreviews.isPending}
+                onClick={() => refreshPreviews.mutate({ force: true })}
+              >
+                Refresh all links
+              </Button>
             </div>
           </div>
         )}
