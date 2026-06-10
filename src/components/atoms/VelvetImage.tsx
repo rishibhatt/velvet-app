@@ -1,12 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import Image, { type ImageProps } from "next/image";
 import { canUseNextImage } from "@/lib/remote-image";
 import {
   optimizeImageUrlForDisplay,
   resolveImageWidth,
 } from "@/lib/optimize-image-url";
-import { velvetImageLoader } from "@/lib/velvet-image-loader";
+import { createVelvetImageLoader } from "@/lib/velvet-image-loader";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,11 +26,16 @@ export function VelvetImage({
   priority,
   sizes,
   quality = 70,
+  imageRevision,
   ...props
-}: ImageProps) {
+}: ImageProps & { imageRevision?: string }) {
   const srcString = typeof src === "string" ? src : "";
   const targetWidth = resolveImageWidth(sizes, width);
   const numericQuality = typeof quality === "number" ? quality : 70;
+  const loader = useMemo(
+    () => createVelvetImageLoader(imageRevision),
+    [imageRevision],
+  );
 
   const displaySrc = srcString
     ? optimizeImageUrlForDisplay(srcString, { width: targetWidth })
@@ -74,7 +80,7 @@ export function VelvetImage({
 
   return (
     <Image
-      loader={velvetImageLoader}
+      loader={loader}
       src={displaySrc}
       alt={alt}
       className={className}

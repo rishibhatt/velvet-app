@@ -103,6 +103,7 @@ export function ItemCard({
                 alt={title}
                 fill
                 priority={priority}
+                imageRevision={item.updated_at}
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                 sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
               />

@@ -206,7 +206,7 @@ export const itemsService = {
 
     const { data: existing, error: existingError } = await supabase
       .from("items")
-      .select("board_id, type, source")
+      .select("board_id, type, source, source_url")
       .eq("id", itemId)
       .is("deleted_at", null)
       .single();
@@ -215,7 +215,12 @@ export const itemsService = {
       throw new Error(parseSupabaseError(existingError ?? { message: "Item not found" }));
     }
 
-    const row = existing as { board_id: string; type: string; source: ItemSource | null };
+    const row = existing as {
+      board_id: string;
+      type: string;
+      source: ItemSource | null;
+      source_url: string | null;
+    };
     const patch: ItemUpdate = {};
 
     if (input.title !== undefined) patch.title = input.title;
@@ -244,10 +249,20 @@ export const itemsService = {
     if (input.source !== undefined) patch.source = input.source;
 
     if (input.imageUrl !== undefined) {
+      let nextImage = input.imageUrl;
+      const sourceChanged =
+        input.sourceUrl !== undefined &&
+        (input.sourceUrl?.trim() ?? "") !== (row.source_url?.trim() ?? "");
+
+      // Don't keep an old Supabase preview when the link URL changed.
+      if (sourceChanged && nextImage && isSupabaseStorageUrl(nextImage)) {
+        nextImage = null;
+      }
+
       patch.image_url = await resolveItemImageUrl(
-        input.imageUrl,
+        nextImage,
         input.source ?? row.source ?? "web",
-        sourceUrl ?? undefined,
+        sourceUrl ?? input.sourceUrl ?? undefined,
       );
     }
 

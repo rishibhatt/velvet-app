@@ -9,6 +9,13 @@ import {
 } from "@/services/metadata/refresh-metadata.service";
 import type { Board, Item, SaveItemInput, UpdateItemInput } from "@/types/board.types";
 import { boardKeys, itemKeys } from "../board/keys";
+import {
+  itemsListQueryKey,
+  patchItemInBoardCache,
+  removeItemFromBoardCache,
+  type ItemsPage,
+} from "@/queries/item/cache-utils";
+import type { InfiniteData } from "@tanstack/react-query";
 import { getErrorMessage } from "@/lib/errors";
 import { velvetToast } from "@/lib/toast";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
@@ -29,8 +36,8 @@ export function useSaveItem(boardId: string) {
     meta: { skipErrorToast: true, errorContext: "item" },
     onMutate: async (newItem) => {
       await queryClient.cancelQueries({ queryKey: itemKeys.list(boardId) });
-      const previous = queryClient.getQueryData<Item[]>(
-        itemKeys.list(boardId),
+      const previous = queryClient.getQueryData<InfiniteData<ItemsPage>>(
+        itemsListQueryKey(boardId),
       );
       const optimistic: Item = {
         id: `temp-${Date.now()}`,
@@ -48,14 +55,29 @@ export function useSaveItem(boardId: string) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      queryClient.setQueryData<Item[]>(itemKeys.list(boardId), (old) => [
-        optimistic,
-        ...(old ?? []),
-      ]);
+      queryClient.setQueryData<InfiniteData<ItemsPage>>(
+        itemsListQueryKey(boardId),
+        (old) => {
+          if (!old?.pages.length) {
+            return {
+              pages: [{ items: [optimistic], hasMore: false }],
+              pageParams: [0],
+            };
+          }
+          const [first, ...rest] = old.pages;
+          return {
+            ...old,
+            pages: [
+              { ...first, items: [optimistic, ...first.items] },
+              ...rest,
+            ],
+          };
+        },
+      );
       return { previous };
     },
     onError: (err, _item, ctx) => {
-      queryClient.setQueryData(itemKeys.list(boardId), ctx?.previous);
+      queryClient.setQueryData(itemsListQueryKey(boardId), ctx?.previous);
       velvetToast.error("Couldn't save item", getErrorMessage(err, "item"));
     },
     onSettled: () => {
@@ -90,18 +112,19 @@ export function useUpdateItem(boardId: string) {
       itemsService.updateItem(itemId, input),
     meta: { skipErrorToast: true, errorContext: "item" },
     onSuccess: (updated) => {
-      queryClient.setQueryData<Item[]>(itemKeys.list(boardId), (old) =>
-        (old ?? []).map((i) => (i.id === updated.id ? updated : i)),
-      );
-      queryClient.setQueryData(itemKeys.detail(updated.id), updated);
+      patchItemInBoardCache(queryClient, boardId, updated);
       velvetToast.success("Save updated", "Your changes were saved to this collection.");
     },
     onError: (err) => {
       velvetToast.error("Couldn't update", getErrorMessage(err, "item"));
     },
-    onSettled: () => {
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
+      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) });
+      queryClient.invalidateQueries({
+        queryKey: itemKeys.detail(variables.itemId),
+      });
     },
   });
 }
@@ -166,8 +189,8 @@ export function useDeleteItem(boardId: string) {
       await queryClient.cancelQueries({ queryKey: itemKeys.list(boardId) });
       await queryClient.cancelQueries({ queryKey: boardKeys.list() });
 
-      const previousItems = queryClient.getQueryData<Item[]>(
-        itemKeys.list(boardId),
+      const previousItems = queryClient.getQueryData<InfiniteData<ItemsPage>>(
+        itemsListQueryKey(boardId),
       );
       const previousBoards = queryClient.getQueryData<Board[]>(boardKeys.list());
       const previousDetail = queryClient.getQueryData<Board>(
@@ -175,12 +198,12 @@ export function useDeleteItem(boardId: string) {
       );
 
       const remaining =
-        previousItems?.filter((i) => i.id !== itemId) ?? [];
+        previousItems?.pages.flatMap((page) => page.items).filter((i) => i.id !== itemId) ?? [];
       const preview_images = previewImagesFromItems(remaining);
       const cover_url = preview_images[0] ?? null;
       const item_count = remaining.length;
 
-      queryClient.setQueryData(itemKeys.list(boardId), remaining);
+      removeItemFromBoardCache(queryClient, boardId, itemId);
       queryClient.setQueryData<Board[]>(boardKeys.list(), (old) =>
         patchBoardInList(old, boardId, {
           preview_images,
@@ -198,7 +221,7 @@ export function useDeleteItem(boardId: string) {
     },
     onError: (_err, _id, ctx) => {
       if (ctx?.previousItems) {
-        queryClient.setQueryData(itemKeys.list(boardId), ctx.previousItems);
+        queryClient.setQueryData(itemsListQueryKey(boardId), ctx.previousItems);
       }
       if (ctx?.previousBoards) {
         queryClient.setQueryData(boardKeys.list(), ctx.previousBoards);

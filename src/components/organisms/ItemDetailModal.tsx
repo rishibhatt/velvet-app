@@ -44,12 +44,14 @@ import type { Item, ItemSource } from "@/types/board.types";
 
 function ItemPreview({
   imageUrl,
+  imageRevision,
   title,
   type,
   description,
   source,
 }: {
   imageUrl: string | null;
+  imageRevision?: string;
   title: string | null;
   type: string;
   description?: string | null;
@@ -64,6 +66,7 @@ function ItemPreview({
         className="object-cover"
         priority
         sizes="(max-width: 768px) 100vw, 420px"
+        imageRevision={imageRevision}
       />
     );
   }
@@ -230,20 +233,39 @@ export function ItemDetailModal() {
     if (!item || !canEdit) return;
     const nextTitle = editTitle.trim() || null;
     const nextNotes = editNotes.trim() || null;
+    const linkChanged =
+      isLinkEditable &&
+      editSourceUrl.trim() !== (item.source_url ?? "").trim();
+
+    let imageUrl = editImageUrl;
+    let source = editSource;
+    let description =
+      editDescription.trim() || item.description;
+
+    if (linkChanged && editSourceUrl.trim()) {
+      setMetadataLoading(true);
+      try {
+        const meta = await fetchUrlMetadata(editSourceUrl.trim());
+        imageUrl = meta.imageUrl;
+        source = meta.source;
+        if (meta.description) description = meta.description;
+      } finally {
+        setMetadataLoading(false);
+      }
+    }
+
     try {
       await updateItem.mutateAsync({
         itemId: item.id,
         title: nextTitle,
         notes: nextNotes,
         description:
-          item.type === "note"
-            ? nextNotes
-            : editDescription.trim() || item.description,
+          item.type === "note" ? nextNotes : description,
         ...(isLinkEditable && editSourceUrl.trim()
           ? {
               sourceUrl: editSourceUrl.trim(),
-              imageUrl: editImageUrl,
-              source: editSource,
+              imageUrl,
+              source,
               type: "url" as const,
             }
           : {}),
@@ -305,6 +327,11 @@ export function ItemDetailModal() {
               <div className="relative aspect-[5/6] max-h-[min(44dvh,420px)] w-full sm:aspect-[4/5] sm:max-h-[min(48dvh,460px)] lg:absolute lg:inset-0 lg:aspect-auto lg:max-h-none">
                 <ItemPreview
                   imageUrl={previewImage}
+                  imageRevision={
+                    editing && isLinkEditable
+                      ? (editImageUrl ?? undefined)
+                      : item.updated_at
+                  }
                   title={previewTitle}
                   type={item.type}
                   description={
