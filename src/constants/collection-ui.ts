@@ -38,9 +38,11 @@ export const HOME_OWNED_PREVIEW_COUNT = 4;
 export const ITEM_CARD_SHELL =
   "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-bg-elevated shadow-[var(--shadow-card)] ring-1 ring-outline-variant/20 transition-all duration-300 hover:-translate-y-0.5 hover:ring-primary/25 hover:shadow-[var(--shadow-hover)] active:scale-[0.99]";
 
-export const ITEM_CARD_MEDIA = "relative aspect-square w-full overflow-hidden bg-surface-container-low";
+export const ITEM_CARD_MEDIA =
+  "relative aspect-square w-full overflow-hidden bg-surface-container-low";
 
-export const ITEM_CARD_BODY = "flex flex-col gap-2 border-t border-outline-variant/15 bg-bg-elevated p-3";
+export const ITEM_CARD_BODY =
+  "flex flex-col gap-2 border-t border-outline-variant/15 bg-bg-elevated p-3";
 
 /** Full-bleed poster tile (1-up layout) */
 export const COLLECTION_POSTER_SIZES_SINGLE =

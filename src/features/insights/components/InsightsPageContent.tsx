@@ -13,6 +13,7 @@ import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import type { InsightsPeriod } from "@/types/board.types";
 import Link from "next/link";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
+import { getItemPreviewImage } from "@/lib/item-preview";
 import { VelvetPillSelect } from "@/components/atoms/VelvetPillSelect";
 
 const InsightsCharts = dynamic(
@@ -150,19 +151,28 @@ export function InsightsPageContent() {
           <section className="mb-8">
             <h2 className="font-display mb-3 text-lg text-on-surface">Most saved by others</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {data.top_items.map((item) => (
-                <div key={item.id} className="min-w-0">
-                  <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-container-low">
-                    {item.image_url && (
-                      <VelvetImage src={item.image_url} alt="" fill className="object-cover" sizes="144px" />
-                    )}
+              {data.top_items.map((item) => {
+                const preview = getItemPreviewImage(item);
+                return (
+                  <div key={item.id} className="min-w-0">
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-container-low">
+                      {preview && (
+                        <VelvetImage
+                          src={preview}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="144px"
+                        />
+                      )}
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs font-medium text-on-surface">{item.title}</p>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Saved {item.resave_count ?? 0} times
+                    </p>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs font-medium text-on-surface">{item.title}</p>
-                  <p className="text-[11px] text-on-surface-variant">
-                    Saved {item.resave_count ?? 0} times
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         ),

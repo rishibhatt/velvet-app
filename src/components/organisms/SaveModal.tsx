@@ -10,7 +10,12 @@ import {
   Upload,
   StickyNote,
   Sparkles,
+  Loader2,
 } from "lucide-react";
+import { SourceBadge } from "@/components/molecules/SourceBadge";
+import { canUseNextImage } from "@/lib/remote-image";
+import { isSupabaseStorageUrl } from "@/lib/supabase-image";
+import type { ItemSource } from "@/types/board.types";
 import { UI_LABELS } from "@/constants/ui-labels";
 import { velvetToast } from "@/lib/toast";
 import { Button } from "@/components/atoms/Button";
@@ -30,6 +35,43 @@ import { cn } from "@/lib/utils";
 
 type SaveMode = "link" | "upload" | "note";
 
+function SavePreviewImage({
+  src,
+  loading,
+  alt,
+}: {
+  src: string | null;
+  loading?: boolean;
+  alt: string;
+}) {
+  if (loading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 bg-surface-container p-2 text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+        <span className="text-[10px] font-medium leading-tight text-on-surface-variant">
+          Fetching preview…
+        </span>
+      </div>
+    );
+  }
+
+  if (!src) return null;
+
+  const useNative =
+    src.startsWith("blob:") ||
+    src.startsWith("data:") ||
+    (!isSupabaseStorageUrl(src) && !canUseNextImage(src));
+
+  if (useNative) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
+    );
+  }
+
+  return <VelvetImage src={src} alt={alt} fill className="object-cover" sizes="96px" />;
+}
+
 export function SaveModal() {
   const { saveModal, closeSaveModal } = useModalStore();
   const { data: boards = [], isError: boardsError } = useBoards();
@@ -40,13 +82,16 @@ export function SaveModal() {
   const [boardId, setBoardId] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  const [source, setSource] = useState<string>("web");
+  const [source, setSource] = useState<ItemSource>("web");
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [linkDescription, setLinkDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagsSectionRef = useRef<HTMLDivElement>(null);
+  const metadataRequestRef = useRef(0);
 
   const debouncedUrl = useDebounce(url, 500);
   const saveItem = useSaveItem(boardId || boards[0]?.id || "");
@@ -57,18 +102,35 @@ export function SaveModal() {
   }, [saveModal.boardId, boards]);
 
   useEffect(() => {
-    if (mode !== "link" || !debouncedUrl) return;
+    if (mode !== "link" || !debouncedUrl) {
+      setMetadataLoading(false);
+      return;
+    }
+
+    const requestId = ++metadataRequestRef.current;
+    setMetadataLoading(true);
+    setImageUrl(null);
+    setLinkDescription("");
+
     fetchUrlMetadata(debouncedUrl)
       .then((meta) => {
+        if (requestId !== metadataRequestRef.current) return;
         setTitle(meta.title);
         setImageUrl(meta.imageUrl);
+        setLinkDescription(meta.description ?? "");
         setSource(meta.source);
-        suggestTags(meta.title).then(setTags);
+        suggestTags(meta.title).then((suggested) => {
+          if (requestId === metadataRequestRef.current) setTags(suggested);
+        });
       })
       .catch(() => {
+        if (requestId !== metadataRequestRef.current) return;
         setTitle(debouncedUrl);
         setSource("web");
         velvetToast.info("Couldn't fetch preview", "You can still save with a custom title.");
+      })
+      .finally(() => {
+        if (requestId === metadataRequestRef.current) setMetadataLoading(false);
       });
   }, [debouncedUrl, mode]);
 
@@ -143,7 +205,10 @@ export function SaveModal() {
         sourceUrl: mode === "link" ? url || undefined : undefined,
         imageUrl: imageUrl ?? undefined,
         title: title.trim(),
-        description: mode === "note" ? notes.trim() : undefined,
+        description:
+          mode === "note"
+            ? notes.trim()
+            : linkDescription.trim() || undefined,
         notes: mode === "note" ? notes.trim() : notes,
         source: mode === "note" ? "web" : (source as never),
         tags: selectedTags,
@@ -177,6 +242,8 @@ export function SaveModal() {
     setSelectedTags([]);
     setTags([]);
     setSource("web");
+    setLinkDescription("");
+    setMetadataLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -187,6 +254,8 @@ export function SaveModal() {
   };
 
   const previewSrc = localPreview || imageUrl;
+  const showMetadataLoader = mode === "link" && metadataLoading && !localPreview;
+  const showPreviewImage = Boolean(previewSrc) && !showMetadataLoader;
   const tagColors = [
     "bg-tertiary-fixed text-on-tertiary-fixed-variant",
     "bg-secondary-fixed text-on-secondary-fixed-variant",
@@ -292,14 +361,10 @@ export function SaveModal() {
 
         <div className="mt-4 flex gap-4">
           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container shadow-sm">
-            {previewSrc ? (
-              <VelvetImage
-                src={previewSrc}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="96px"
-              />
+            {showMetadataLoader ? (
+              <SavePreviewImage src={null} loading alt="" />
+            ) : showPreviewImage ? (
+              <SavePreviewImage src={previewSrc} alt={title || "Preview"} />
             ) : mode === "note" && notes ? (
               <div className="flex h-full items-center justify-center p-2 text-center text-[10px] text-on-surface-variant line-clamp-4">
                 {notes}
@@ -307,6 +372,11 @@ export function SaveModal() {
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs text-on-surface-variant">
                 Preview
+              </div>
+            )}
+            {mode === "link" && source && !showMetadataLoader && (showPreviewImage || title) && (
+              <div className="absolute bottom-1.5 left-1.5 z-10">
+                <SourceBadge source={source} sourceUrl={url} size="sm" showLabel={false} />
               </div>
             )}
           </div>
@@ -317,13 +387,17 @@ export function SaveModal() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter title..."
-              className="w-full border-none bg-transparent p-0 font-display text-lg leading-tight text-on-surface focus:outline-none"
+              placeholder={
+                showMetadataLoader ? "Extracting title…" : "Enter title..."
+              }
+              disabled={showMetadataLoader}
+              className="w-full border-none bg-transparent p-0 font-display text-lg leading-tight text-on-surface focus:outline-none disabled:opacity-60"
               aria-label="Item title"
+              aria-busy={showMetadataLoader}
             />
             {url && mode === "link" && (
               <p className="mt-1 truncate text-sm text-on-surface-variant">
-                via {getDomain(url)}
+                {showMetadataLoader ? "Reading link metadata…" : `via ${getDomain(url)}`}
               </p>
             )}
           </div>

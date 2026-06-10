@@ -1,21 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ExternalLink, StickyNote } from "lucide-react";
+import { StickyNote } from "lucide-react";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
+import { ItemCardQuickActions } from "@/components/molecules/ItemCardQuickActions";
 import { SourceBadge } from "@/components/molecules/SourceBadge";
 import {
   ITEM_CARD_BODY,
   ITEM_CARD_MEDIA,
   ITEM_CARD_SHELL,
 } from "@/constants/collection-ui";
-import { getItemSourceUrl } from "@/lib/item-source";
+import { getItemDisplayTitle, getItemPreviewImage } from "@/lib/item-preview";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types/board.types";
 
 interface ItemCardProps {
   item: Item;
   onClick?: () => void;
+  onEdit?: (item: Item) => void;
+  boardId?: string;
+  canEdit?: boolean;
   /** First above-the-fold tile — improves LCP */
   priority?: boolean;
 }
@@ -27,30 +31,41 @@ function linkPlaceholderClass(source: Item["source"]) {
   return "from-surface-container to-primary-fixed/25";
 }
 
-function ItemSourceButton({ item }: { item: Item }) {
-  const sourceUrl = getItemSourceUrl(item);
-  if (!sourceUrl) return null;
-
+function ItemCardToolbar({
+  item,
+  boardId,
+  canEdit,
+  onEdit,
+}: Pick<ItemCardProps, "item" | "boardId" | "canEdit" | "onEdit">) {
   return (
-    <a
-      href={sourceUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant ring-1 ring-outline-variant/25 transition hover:bg-surface-container-high hover:text-primary"
-      aria-label="View source"
-      title="View source"
+    <div
+      className={cn(
+        "absolute top-2 right-2 z-20",
+        "opacity-100 transition-opacity duration-200",
+        "md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
+      )}
     >
-      <ExternalLink className="h-4 w-4" strokeWidth={2} />
-    </a>
+      <ItemCardQuickActions
+        item={item}
+        boardId={boardId}
+        canEdit={canEdit}
+        onEdit={onEdit}
+      />
+    </div>
   );
 }
 
-export function ItemCard({ item, onClick, priority = false }: ItemCardProps) {
+export function ItemCard({
+  item,
+  onClick,
+  onEdit,
+  boardId,
+  canEdit = false,
+  priority = false,
+}: ItemCardProps) {
   const isNote = item.type === "note";
-  const previewUrl = item.image_url;
-  const title = item.title?.trim() || (isNote ? "Note" : "Saved link");
-  const hasSource = Boolean(getItemSourceUrl(item));
+  const previewUrl = getItemPreviewImage(item);
+  const title = getItemDisplayTitle(item);
 
   return (
     <motion.article
@@ -60,16 +75,24 @@ export function ItemCard({ item, onClick, priority = false }: ItemCardProps) {
       layout
     >
       {isNote ? (
-        <div className="flex aspect-square flex-col bg-gradient-to-br from-primary-fixed/50 via-secondary-fixed/30 to-tertiary-fixed/40 p-4">
-          <div className="mb-auto flex items-start justify-between gap-2">
-            <div className="velvet-icon-chip h-9 w-9 shrink-0">
-              <StickyNote className="h-4 w-4" strokeWidth={2} />
+        <div className="relative aspect-square w-full">
+          <div className="flex h-full flex-col bg-gradient-to-br from-primary-fixed/50 via-secondary-fixed/30 to-tertiary-fixed/40 p-4">
+            <div className="mb-auto flex items-start justify-between gap-2">
+              <div className="velvet-icon-chip h-9 w-9 shrink-0">
+                <StickyNote className="h-4 w-4" strokeWidth={2} />
+              </div>
+              <SourceBadge source="upload" size="sm" />
             </div>
-            <SourceBadge source="upload" size="sm" />
+            <h3 className="font-display line-clamp-4 text-sm leading-snug text-on-surface">
+              {title}
+            </h3>
           </div>
-          <h3 className="font-display line-clamp-4 text-sm leading-snug text-on-surface">
-            {title}
-          </h3>
+          <ItemCardToolbar
+            item={item}
+            boardId={boardId}
+            canEdit={canEdit}
+            onEdit={onEdit}
+          />
         </div>
       ) : (
         <>
@@ -114,15 +137,19 @@ export function ItemCard({ item, onClick, priority = false }: ItemCardProps) {
                 />
               </div>
             )}
+
+            <ItemCardToolbar
+              item={item}
+              boardId={boardId}
+              canEdit={canEdit}
+              onEdit={onEdit}
+            />
           </div>
 
           <div className={ITEM_CARD_BODY}>
-            <div className="flex items-start gap-2">
-              <h3 className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-snug text-on-surface">
-                {title}
-              </h3>
-              {hasSource && <ItemSourceButton item={item} />}
-            </div>
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-on-surface">
+              {title}
+            </h3>
             {item.tags && item.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {item.tags.slice(0, 2).map((tag) => (

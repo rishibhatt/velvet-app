@@ -301,6 +301,19 @@ export default function BoardDetailPage({
                 key={item.id}
                 item={item}
                 priority={index === 0}
+                boardId={id}
+                canEdit={canEditItems}
+                onEdit={
+                  canEditItems
+                    ? (editItem) =>
+                        openItemModal(editItem.id, {
+                          snapshot: editItem,
+                          boardId: id,
+                          canEdit: true,
+                          startEditing: true,
+                        })
+                    : undefined
+                }
                 onClick={() =>
                   openItemModal(item.id, {
                     snapshot: item,

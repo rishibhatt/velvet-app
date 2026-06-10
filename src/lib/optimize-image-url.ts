@@ -13,9 +13,34 @@ export function extractYouTubeVideoId(url: string): string | null {
     if (parsed.pathname.startsWith("/embed/")) {
       return parsed.pathname.split("/")[2] ?? null;
     }
+    if (parsed.pathname.startsWith("/live/")) {
+      return parsed.pathname.split("/")[2] ?? null;
+    }
     return parsed.searchParams.get("v");
   } catch {
     return null;
+  }
+}
+
+export function isYouTubeVideoUrl(url: string): boolean {
+  return extractYouTubeVideoId(url) !== null;
+}
+
+export function isYouTubeChannelUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (!host.includes("youtube.com") && host !== "youtu.be") return false;
+    if (isYouTubeVideoUrl(url)) return false;
+    const path = parsed.pathname;
+    return (
+      path.startsWith("/@") ||
+      path.startsWith("/channel/") ||
+      path.startsWith("/c/") ||
+      path.startsWith("/user/")
+    );
+  } catch {
+    return false;
   }
 }
 

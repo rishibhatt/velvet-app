@@ -20,6 +20,7 @@ export function PublicItemGrid({ items, curatorLabel }: PublicItemGridProps) {
           key={item.id}
           item={item}
           priority={index === 0}
+          boardId={item.board_id}
           onClick={() =>
             openItemModal(item.id, {
               snapshot: item,

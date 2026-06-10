@@ -9,6 +9,7 @@ export interface ItemModalState {
   snapshot?: Item;
   readOnly?: boolean;
   canEdit?: boolean;
+  startEditing?: boolean;
   curatorLabel?: string;
 }
 
@@ -36,6 +37,7 @@ interface ModalStore {
       boardId?: string;
       readOnly?: boolean;
       canEdit?: boolean;
+      startEditing?: boolean;
       curatorLabel?: string;
     },
   ) => void;
@@ -67,6 +69,7 @@ export const useModalStore = create<ModalStore>((set) => ({
         snapshot: options?.snapshot,
         readOnly: options?.readOnly,
         canEdit: options?.canEdit,
+        startEditing: options?.startEditing,
         curatorLabel: options?.curatorLabel,
       },
     }),

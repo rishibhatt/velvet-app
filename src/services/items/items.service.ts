@@ -1,5 +1,10 @@
 import { syncBoardCoverFromItems } from "@/lib/collection-previews";
-import { optimizeStoredImageUrl } from "@/lib/optimize-image-url";
+import { isWeakPreviewImage } from "@/lib/item-preview";
+import {
+  extractYouTubeVideoId,
+  optimizeStoredImageUrl,
+  youTubeThumbnailUrl,
+} from "@/lib/optimize-image-url";
 import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 import {
   ingestRemoteImage,
@@ -23,14 +28,23 @@ const ITEM_SELECT = `
 async function resolveItemImageUrl(
   imageUrl: string | undefined | null,
   source?: ItemSource | null,
+  sourceUrl?: string | null,
 ): Promise<string | null> {
-  if (!imageUrl) return null;
-  if (isSupabaseStorageUrl(imageUrl)) return imageUrl;
+  let url = imageUrl ?? null;
+  if (url && isWeakPreviewImage(url)) url = null;
 
-  const stored = await ingestRemoteImage(imageUrl, "items");
+  if (!url && source === "youtube" && sourceUrl) {
+    const id = extractYouTubeVideoId(sourceUrl);
+    if (id) url = youTubeThumbnailUrl(id);
+  }
+
+  if (!url) return null;
+  if (isSupabaseStorageUrl(url)) return url;
+
+  const stored = await ingestRemoteImage(url, "items");
   if (stored) return stored;
 
-  return optimizeStoredImageUrl(imageUrl, source);
+  return optimizeStoredImageUrl(url, source);
 }
 
 function mapItem(row: Record<string, unknown>): Item {
@@ -100,6 +114,7 @@ export const itemsService = {
     const imageUrl = await resolveItemImageUrl(
       input.imageUrl,
       input.source ?? "web",
+      input.sourceUrl,
     );
 
     let sourceUrl = input.sourceUrl ?? null;

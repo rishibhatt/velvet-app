@@ -1,6 +1,15 @@
 import type { ItemSource } from "@/types/board.types";
 import {
+  extractInstagramUsername,
+  formatInstagramProfileTitle,
+  isInstagramProfileUrl,
+  parseInstagramEmbeddedData,
+} from "@/lib/instagram-profile";
+import { isWeakPreviewImage } from "@/lib/item-preview";
+import {
   extractYouTubeVideoId,
+  isYouTubeChannelUrl,
+  isYouTubeVideoUrl,
   optimizeStoredImageUrl,
   youTubeThumbnailUrl,
 } from "@/lib/optimize-image-url";
@@ -17,12 +26,21 @@ export interface ParsedLinkMetadata {
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
+const EMPTY_META = { title: null, imageUrl: null, description: null };
+
 export function detectSourceFromUrl(url: string): ItemSource {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");
     if (hostname.includes("instagram")) return "instagram";
     if (hostname.includes("youtube") || hostname === "youtu.be") return "youtube";
-    if (hostname.includes("amazon")) return "amazon";
+    if (
+      hostname.includes("amazon") ||
+      hostname === "amzn.to" ||
+      hostname === "amzn.in" ||
+      hostname === "a.co"
+    ) {
+      return "amazon";
+    }
     if (hostname.includes("pinterest") || hostname === "pin.it") return "pinterest";
     return "web";
   } catch {
@@ -37,7 +55,30 @@ function decodeHtmlEntities(value: string): string {
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    )
     .trim();
+}
+
+/** Short links (amzn.in, amzn.to) must be expanded before metadata APIs run. */
+async function resolveCanonicalUrl(url: string): Promise<string> {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: HTML_FETCH_HEADERS,
+      redirect: "follow",
+      signal: AbortSignal.timeout(12000),
+    });
+    return response.url || url;
+  } catch {
+    return url;
+  }
+}
+
+function isAmazonUrl(url: string): boolean {
+  return detectSourceFromUrl(url) === "amazon";
 }
 
 /** Reads og/twitter meta regardless of attribute order. */
@@ -67,14 +108,19 @@ export function parseHtmlMetadata(html: string): {
   };
 
   const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const titleFromTag = titleTag?.[1]
+    ? decodeHtmlEntities(titleTag[1].trim())
+    : null;
+  const ogTitle = readMeta(["og:title", "twitter:title"]);
   const title =
-    readMeta(["og:title", "twitter:title"]) ??
-    titleTag?.[1]?.trim() ??
-    null;
+    ogTitle && !/^instagram$/i.test(ogTitle.trim())
+      ? ogTitle
+      : titleFromTag ?? ogTitle;
   const imageUrl =
     readMeta([
       "og:image",
       "og:image:url",
+      "og:image:secure_url",
       "twitter:image",
       "twitter:image:src",
     ]) ?? null;
@@ -105,14 +151,26 @@ function googleMapsStaticImage(url: string): string | null {
   }
 }
 
+const HTML_FETCH_HEADERS: Record<string, string> = {
+  "User-Agent": BROWSER_UA,
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Cache-Control": "no-cache",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Sec-Fetch-User": "?1",
+  "Upgrade-Insecure-Requests": "1",
+};
+
 async function fetchHtml(url: string): Promise<string | null> {
+  const isInstagram = hostIncludes(url, ["instagram"]);
+  const timeoutMs = isInstagram ? 15000 : 10000;
   try {
     const response = await fetch(url, {
-      headers: {
-        "User-Agent": BROWSER_UA,
-        Accept: "text/html,application/xhtml+xml",
-      },
-      signal: AbortSignal.timeout(8000),
+      headers: HTML_FETCH_HEADERS,
+      signal: AbortSignal.timeout(timeoutMs),
       redirect: "follow",
     });
     if (!response.ok) return null;
@@ -122,34 +180,39 @@ async function fetchHtml(url: string): Promise<string | null> {
   }
 }
 
-async function fetchMicrolink(url: string): Promise<{
+async function fetchMicrolink(
+  url: string,
+  options: { timeoutMs?: number } = {},
+): Promise<{
   title: string | null;
   imageUrl: string | null;
   description: string | null;
 }> {
+  const timeoutMs = options.timeoutMs ?? 10000;
   try {
-    const endpoint = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=false&video=false&audio=false`;
+    const endpoint = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=false&video=false&audio=false&timeout=${Math.min(timeoutMs, 30000)}`;
     const response = await fetch(endpoint, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(timeoutMs + 5000),
     });
-    if (!response.ok) return { title: null, imageUrl: null, description: null };
+    if (!response.ok) return EMPTY_META;
     const json = (await response.json()) as {
       data?: {
         title?: string;
         description?: string;
         image?: { url?: string };
-        logo?: { url?: string };
       };
     };
     const data = json.data;
+    const imageUrl = data?.image?.url ?? null;
+    const title = data?.title?.trim() ?? null;
     return {
-      title: data?.title ?? null,
-      imageUrl: data?.image?.url ?? data?.logo?.url ?? null,
+      title: title && !/^instagram$/i.test(title) ? title : null,
+      imageUrl: imageUrl && !isWeakPreviewImage(imageUrl) ? imageUrl : null,
       description: data?.description ?? null,
     };
   } catch {
-    return { title: null, imageUrl: null, description: null };
+    return EMPTY_META;
   }
 }
 
@@ -163,21 +226,60 @@ async function fetchNoembed(url: string): Promise<{
     const response = await fetch(endpoint, {
       signal: AbortSignal.timeout(6000),
     });
-    if (!response.ok) return { title: null, imageUrl: null, description: null };
+    if (!response.ok) return EMPTY_META;
     const data = (await response.json()) as {
       title?: string;
       thumbnail_url?: string;
       description?: string;
+      author_name?: string;
       error?: string;
     };
-    if (data.error) return { title: null, imageUrl: null, description: null };
+    if (data.error) return EMPTY_META;
+    const imageUrl =
+      data.thumbnail_url && !isWeakPreviewImage(data.thumbnail_url)
+        ? data.thumbnail_url
+        : null;
+    const description =
+      data.description ??
+      (data.author_name ? `By ${data.author_name}` : null);
     return {
       title: data.title ?? null,
-      imageUrl: data.thumbnail_url ?? null,
-      description: data.description ?? null,
+      imageUrl,
+      description,
     };
   } catch {
-    return { title: null, imageUrl: null, description: null };
+    return EMPTY_META;
+  }
+}
+
+async function fetchYoutubeOembed(url: string): Promise<{
+  title: string | null;
+  imageUrl: string | null;
+  description: string | null;
+}> {
+  try {
+    const endpoint = `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`;
+    const response = await fetch(endpoint, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!response.ok) return EMPTY_META;
+    const data = (await response.json()) as {
+      title?: string;
+      thumbnail_url?: string;
+      author_name?: string;
+    };
+    const imageUrl =
+      data.thumbnail_url && !isWeakPreviewImage(data.thumbnail_url)
+        ? data.thumbnail_url
+        : youTubeThumbnail(url);
+    return {
+      title: data.title ?? null,
+      imageUrl,
+      description: data.author_name ? `Channel: ${data.author_name}` : null,
+    };
+  } catch {
+    return EMPTY_META;
   }
 }
 
@@ -192,7 +294,7 @@ async function fetchSpotifyOembed(url: string): Promise<{
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(8000),
     });
-    if (!response.ok) return { title: null, imageUrl: null, description: null };
+    if (!response.ok) return EMPTY_META;
     const data = (await response.json()) as {
       title?: string;
       thumbnail_url?: string;
@@ -200,11 +302,14 @@ async function fetchSpotifyOembed(url: string): Promise<{
     };
     return {
       title: data.title ?? null,
-      imageUrl: data.thumbnail_url ?? null,
+      imageUrl:
+        data.thumbnail_url && !isWeakPreviewImage(data.thumbnail_url)
+          ? data.thumbnail_url
+          : null,
       description: data.description ?? null,
     };
   } catch {
-    return { title: null, imageUrl: null, description: null };
+    return EMPTY_META;
   }
 }
 
@@ -217,7 +322,8 @@ async function fetchPinterestOembed(url: string): Promise<string | null> {
     });
     if (!response.ok) return null;
     const data = (await response.json()) as { thumbnail_url?: string };
-    return data.thumbnail_url ?? null;
+    const thumb = data.thumbnail_url ?? null;
+    return thumb && !isWeakPreviewImage(thumb) ? thumb : null;
   } catch {
     return null;
   }
@@ -243,30 +349,59 @@ function hostIncludes(url: string, fragments: string[]): boolean {
   }
 }
 
+function mergeMetadata(
+  current: { title: string | null; imageUrl: string | null; description: string | null },
+  incoming: { title: string | null; imageUrl: string | null; description: string | null },
+  pageUrl: string,
+) {
+  if (!current.title && incoming.title) {
+    current.title = decodeHtmlEntities(incoming.title);
+  }
+  if (!current.description && incoming.description) {
+    current.description = incoming.description;
+  }
+  if (!current.imageUrl && incoming.imageUrl) {
+    const normalized = normalizeImageUrl(incoming.imageUrl, pageUrl);
+    if (normalized && !isWeakPreviewImage(normalized)) {
+      current.imageUrl = normalized;
+    }
+  }
+}
+
 export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetadata> {
-  const source = detectSourceFromUrl(url);
-  let title: string | null = null;
-  let imageUrl: string | null = null;
-  let description: string | null = null;
+  const needsCanonical =
+    hostIncludes(url, ["amzn.in", "amzn.to", "a.co", "pin.it", "youtu.be"]) ||
+    isAmazonUrl(url);
+  const fetchUrl = needsCanonical ? await resolveCanonicalUrl(url) : url;
 
-  if (source === "youtube") {
-    imageUrl = youTubeThumbnail(url);
+  const source = detectSourceFromUrl(fetchUrl);
+  const meta = { title: null as string | null, imageUrl: null as string | null, description: null as string | null };
+
+  if (source === "youtube" && isYouTubeVideoUrl(fetchUrl)) {
+    mergeMetadata(
+      meta,
+      { title: null, imageUrl: youTubeThumbnail(fetchUrl), description: null },
+      fetchUrl,
+    );
+    mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl);
   }
 
-  if (hostIncludes(url, ["google"]) && url.includes("/maps")) {
-    imageUrl = googleMapsStaticImage(url) ?? imageUrl;
+  if (hostIncludes(fetchUrl, ["google"]) && fetchUrl.includes("/maps")) {
+    mergeMetadata(meta, { title: null, imageUrl: googleMapsStaticImage(fetchUrl), description: null }, fetchUrl);
   }
 
-  if (hostIncludes(url, ["spotify"])) {
-    const spotify = await fetchSpotifyOembed(url);
-    title = title ?? spotify.title;
-    imageUrl = imageUrl ?? spotify.imageUrl;
-    description = description ?? spotify.description;
+  if (hostIncludes(fetchUrl, ["spotify"])) {
+    mergeMetadata(meta, await fetchSpotifyOembed(fetchUrl), fetchUrl);
   }
 
-  const needsNoembed =
-    hostIncludes(url, [
-      "instagram",
+  // Instagram: Microlink returns the IG logo — rely on direct HTML OG tags instead.
+  const useMicrolink =
+    !hostIncludes(fetchUrl, ["instagram"]) &&
+    hostIncludes(fetchUrl, [
+      "amazon",
+      "amzn.to",
+      "amzn.in",
+      "a.co",
       "facebook",
       "fb.watch",
       "fb.com",
@@ -275,61 +410,95 @@ export async function resolveLinkMetadata(url: string): Promise<ParsedLinkMetada
       "tiktok",
       "reddit",
       "redd.it",
-    ]) || (source === "pinterest" && !imageUrl);
+    ]);
 
-  if (hostIncludes(url, ["reddit", "redd.it"]) && (!title || !imageUrl)) {
-    const microlink = await fetchMicrolink(url);
-    title = title ?? microlink.title;
-    imageUrl = imageUrl ?? microlink.imageUrl;
-    description = description ?? microlink.description;
+  const instagramProfile = source === "instagram" && isInstagramProfileUrl(fetchUrl);
+  const instagramUsername = instagramProfile ? extractInstagramUsername(fetchUrl) : null;
+
+  const useNoembed =
+    (hostIncludes(fetchUrl, [
+      "instagram",
+      "youtube",
+      "youtu.be",
+      "twitter",
+      "x.com",
+      "tiktok",
+      "vimeo",
+      "reddit",
+      "redd.it",
+    ]) ||
+      source === "pinterest") &&
+    !instagramProfile;
+
+  const microlinkTimeout = isAmazonUrl(fetchUrl) ? 28000 : 10000;
+
+  const [html, microlink, noembed] = await Promise.all([
+    fetchHtml(fetchUrl),
+    useMicrolink
+      ? fetchMicrolink(fetchUrl, { timeoutMs: microlinkTimeout })
+      : Promise.resolve(EMPTY_META),
+    useNoembed ? fetchNoembed(fetchUrl) : Promise.resolve(EMPTY_META),
+  ]);
+
+  if (html) {
+    if (instagramProfile) {
+      const embedded = parseInstagramEmbeddedData(html);
+      mergeMetadata(
+        meta,
+        {
+          title: embedded.fullName,
+          imageUrl: embedded.profilePicUrl,
+          description: embedded.biography,
+        },
+        fetchUrl,
+      );
+    }
+    mergeMetadata(meta, parseHtmlMetadata(html), fetchUrl);
   }
 
-  if (source === "instagram" || needsNoembed) {
-    const microlink = await fetchMicrolink(url);
-    title = title ?? microlink.title;
-    imageUrl = imageUrl ?? microlink.imageUrl;
-    description = description ?? microlink.description;
+  mergeMetadata(meta, microlink, fetchUrl);
+  mergeMetadata(meta, noembed, fetchUrl);
+
+  if (source === "pinterest" && !meta.imageUrl) {
+    mergeMetadata(meta, { title: null, imageUrl: await fetchPinterestOembed(fetchUrl), description: null }, fetchUrl);
   }
 
-  if ((needsNoembed || source === "pinterest") && !imageUrl) {
-    const noembed = await fetchNoembed(url);
-    title = title ?? noembed.title;
-    imageUrl = imageUrl ?? noembed.imageUrl;
-    description = description ?? noembed.description;
-  }
-
-  if (source === "pinterest" && !imageUrl) {
-    imageUrl = await fetchPinterestOembed(url);
-  }
-
-  if (!title || !imageUrl) {
-    const html = await fetchHtml(url);
-    if (html) {
-      const parsed = parseHtmlMetadata(html);
-      title = title ?? parsed.title;
-      imageUrl = imageUrl ?? parsed.imageUrl;
-      description = description ?? parsed.description;
+  if (source === "youtube" && isYouTubeVideoUrl(fetchUrl)) {
+    mergeMetadata(
+      meta,
+      { title: null, imageUrl: youTubeThumbnail(fetchUrl), description: null },
+      fetchUrl,
+    );
+    if (!meta.title) {
+      mergeMetadata(meta, await fetchYoutubeOembed(fetchUrl), fetchUrl);
     }
   }
 
-  if (source === "youtube" && !imageUrl) {
-    imageUrl = youTubeThumbnail(url);
+  if (source === "youtube" && isYouTubeChannelUrl(fetchUrl) && !meta.title) {
+    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 15000 }), fetchUrl);
   }
 
-  imageUrl = normalizeImageUrl(imageUrl, url);
-
-  if (source === "youtube") {
-    imageUrl = youTubeThumbnail(url) ?? imageUrl;
+  const titleMissing = !meta.title || meta.title === fetchUrl || meta.title === url;
+  if (source === "web" && (!meta.imageUrl || titleMissing)) {
+    mergeMetadata(meta, await fetchMicrolink(fetchUrl, { timeoutMs: 20000 }), fetchUrl);
   }
 
-  if (imageUrl) {
-    imageUrl = optimizeStoredImageUrl(imageUrl, source);
+  if (instagramUsername) {
+    meta.title = formatInstagramProfileTitle(meta.title, instagramUsername);
+  }
+
+  if (meta.imageUrl && isWeakPreviewImage(meta.imageUrl)) {
+    meta.imageUrl = null;
+  }
+
+  if (meta.imageUrl) {
+    meta.imageUrl = optimizeStoredImageUrl(meta.imageUrl, source);
   }
 
   return {
-    title: title ?? url,
-    imageUrl,
-    description,
+    title: meta.title ?? (instagramUsername ? `@${instagramUsername}` : fetchUrl),
+    imageUrl: meta.imageUrl,
+    description: meta.description,
     source,
   };
 }

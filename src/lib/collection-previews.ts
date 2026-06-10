@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/services/supabase/client";
 import { isSupabaseConfigured } from "@/lib/utils";
-import type { Board } from "@/types/board.types";
+import { getItemPreviewImage } from "@/lib/item-preview";
+import type { Board, ItemSource } from "@/types/board.types";
 import type { Database } from "@/types/database.types";
 
 type VelvetSupabase = SupabaseClient<Database>;
@@ -109,11 +110,17 @@ export async function syncBoardCoverFromItems(boardId: string): Promise<void> {
 
 /** Derive poster URLs from in-memory items (optimistic UI). */
 export function previewImagesFromItems(
-  items: Array<{ image_url?: string | null; deleted_at?: string | null }>,
+  items: Array<{
+    image_url?: string | null;
+    source_url?: string | null;
+    source?: ItemSource | null;
+    deleted_at?: string | null;
+  }>,
 ): string[] {
   return items
-    .filter((i) => !i.deleted_at && i.image_url)
-    .map((i) => i.image_url as string)
+    .filter((i) => !i.deleted_at)
+    .map((i) => getItemPreviewImage(i))
+    .filter((url): url is string => Boolean(url))
     .slice(0, PREVIEW_LIMIT);
 }
 

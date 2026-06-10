@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +18,7 @@ import {
 import { ResaveToBoardSheet } from "@/features/resave/components/ResaveToBoardSheet";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 import { confirmAction } from "@/lib/confirm";
+import { getItemShareUrl } from "@/lib/item-resource";
 import { shareOrCopy } from "@/lib/share";
 import { Button } from "@/components/atoms/Button";
 import { IconButton } from "@/components/atoms/IconButton";
@@ -33,6 +34,7 @@ import {
 import { useModalStore } from "@/store/modal.store";
 import { formatRelativeTime } from "@/utils/format";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getItemPreviewImage } from "@/lib/item-preview";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { ItemSource } from "@/types/board.types";
@@ -128,15 +130,22 @@ export function ItemDetailModal() {
 
   useBodyScrollLock(itemModal.open && Boolean(item));
 
+  useEffect(() => {
+    if (!itemModal.open || !itemModal.startEditing || !item || !canEdit) return;
+    setEditTitle(item.title ?? "");
+    setEditNotes(item.notes ?? "");
+    setEditing(true);
+    useModalStore.setState((state) => ({
+      itemModal: { ...state.itemModal, startEditing: false },
+    }));
+  }, [itemModal.open, itemModal.startEditing, item, canEdit]);
+
   const handleShare = async () => {
     if (!item) return;
-    const url =
-      item.source_url?.trim() ||
-      (typeof window !== "undefined" ? window.location.href : "");
     await shareOrCopy({
       title: item.title ?? "Velvet save",
       text: item.title ?? undefined,
-      url,
+      url: getItemShareUrl(item),
     });
   };
 
@@ -226,7 +235,7 @@ export function ItemDetailModal() {
             <div className="relative w-full shrink-0 overflow-hidden bg-surface-container lg:w-[min(46%,500px)] lg:border-r lg:border-outline-variant/20">
               <div className="relative aspect-[5/6] max-h-[min(44dvh,420px)] w-full sm:aspect-[4/5] sm:max-h-[min(48dvh,460px)] lg:absolute lg:inset-0 lg:aspect-auto lg:max-h-none">
                 <ItemPreview
-                  imageUrl={item.image_url}
+                  imageUrl={getItemPreviewImage(item)}
                   title={item.title}
                   type={item.type}
                   description={item.description ?? item.notes}
