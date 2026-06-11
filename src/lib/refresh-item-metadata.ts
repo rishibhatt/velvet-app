@@ -7,7 +7,6 @@ import {
   optimizeStoredImageUrl,
   youTubeThumbnailUrl,
 } from "@/lib/optimize-image-url";
-import { serverIngestRemoteImage } from "@/lib/server-ingest-image";
 import type { Item, ItemSource } from "@/types/board.types";
 import type { Database } from "@/types/database.types";
 
@@ -72,10 +71,7 @@ export async function refreshItemFromSourceUrl(
 
     let storedImage: string | null = null;
     if (imageUrl) {
-      storedImage = await serverIngestRemoteImage(supabase, userId, imageUrl);
-      if (!storedImage) {
-        storedImage = optimizeStoredImageUrl(imageUrl, source);
-      }
+      storedImage = optimizeStoredImageUrl(imageUrl, source);
     }
 
     const nextTitle =

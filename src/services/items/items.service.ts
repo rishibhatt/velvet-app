@@ -30,6 +30,11 @@ const ITEM_SELECT = `
 type ResolveImageOptions = {
   /** Link saves must ingest a fresh preview — never reuse an unrelated stored blob. */
   rejectStoredPreview?: boolean;
+  /**
+   * Keep the external preview URL shown in the save modal.
+   * Server-side ingest on Netlify can fetch a different image than the browser preview.
+   */
+  preferExternalPreview?: boolean;
 };
 
 async function resolveItemImageUrl(
@@ -49,6 +54,20 @@ async function resolveItemImageUrl(
 
   if (!url) return null;
   if (isSupabaseStorageUrl(url)) return url;
+
+  if (options?.preferExternalPreview) {
+    const external = optimizeStoredImageUrl(url, source);
+    // #region agent log
+    logDeployDebug({
+      runId: "post-fix-netlify",
+      hypothesisId: "C",
+      location: "items.service.ts:resolveItemImageUrl",
+      message: "kept external preview url",
+      data: { sourceUrl, previewUrl: url, storedUrl: external },
+    });
+    // #endregion
+    return external;
+  }
 
   const stored = await ingestRemoteImage(url, "items", {
     referer: sourceUrl ?? undefined,
@@ -135,7 +154,10 @@ export const itemsService = {
       previewForIngest,
       input.source ?? "web",
       input.sourceUrl,
-      { rejectStoredPreview: isLinkSave },
+      {
+        rejectStoredPreview: isLinkSave,
+        preferExternalPreview: isLinkSave,
+      },
     );
 
     // #region agent log
@@ -298,11 +320,15 @@ export const itemsService = {
           ? await resolvePreviewImageForSave(linkUrl, linkSource, input.imageUrl)
           : input.imageUrl;
 
+      const isLinkItem = row.type === "url" || row.type === "video";
       patch.image_url = await resolveItemImageUrl(
         nextImage,
         linkSource,
         linkUrl,
-        { rejectStoredPreview: sourceChanged || row.type !== "note" },
+        {
+          rejectStoredPreview: sourceChanged || isLinkItem,
+          preferExternalPreview: isLinkItem,
+        },
       );
     }
 
