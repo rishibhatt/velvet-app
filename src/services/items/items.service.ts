@@ -1,5 +1,4 @@
 import { syncBoardCoverFromItems } from "@/lib/collection-previews";
-import { logDeployDebug } from "@/lib/deploy-debug";
 import { isWeakPreviewImage } from "@/lib/item-preview";
 import { resolvePreviewImageForSave } from "@/lib/resolve-item-preview";
 import {
@@ -56,17 +55,7 @@ async function resolveItemImageUrl(
   if (isSupabaseStorageUrl(url)) return url;
 
   if (options?.preferExternalPreview) {
-    const external = optimizeStoredImageUrl(url, source);
-    // #region agent log
-    logDeployDebug({
-      runId: "post-fix-netlify",
-      hypothesisId: "C",
-      location: "items.service.ts:resolveItemImageUrl",
-      message: "kept external preview url",
-      data: { sourceUrl, previewUrl: url, storedUrl: external },
-    });
-    // #endregion
-    return external;
+    return optimizeStoredImageUrl(url, source);
   }
 
   const stored = await ingestRemoteImage(url, "items", {
@@ -159,23 +148,6 @@ export const itemsService = {
         preferExternalPreview: isLinkSave,
       },
     );
-
-    // #region agent log
-    logDeployDebug({
-      runId: "netlify-pre-fix",
-      hypothesisId: "B,C",
-      location: "items.service.ts:saveItem",
-      message: "resolved save image",
-      data: {
-        sourceUrl: input.sourceUrl ?? null,
-        inputImageUrl: input.imageUrl ?? null,
-        previewForIngest,
-        finalImageUrl: imageUrl,
-        isLinkSave,
-        previewMatchesInput: previewForIngest === input.imageUrl,
-      },
-    });
-    // #endregion
 
     let sourceUrl = input.sourceUrl ?? null;
     if (sourceUrl) {

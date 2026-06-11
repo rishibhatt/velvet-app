@@ -10,7 +10,6 @@ import {
   ITEM_CARD_MEDIA,
   ITEM_CARD_SHELL,
 } from "@/constants/collection-ui";
-import { logDeployDebug } from "@/lib/deploy-debug";
 import { getItemDisplayTitle, getItemPreviewImage } from "@/lib/item-preview";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types/board.types";
@@ -67,29 +66,6 @@ export function ItemCard({
   const isNote = item.type === "note";
   const previewUrl = getItemPreviewImage(item);
   const title = getItemDisplayTitle(item);
-  const isRecentlyCreated =
-    item.created_at &&
-    Date.now() - new Date(item.created_at).getTime() < 5 * 60 * 1000;
-
-  if ((item.type === "url" || item.type === "video") && isRecentlyCreated) {
-    // #region agent log
-    logDeployDebug({
-      runId: "netlify-pre-fix",
-      hypothesisId: "D,E",
-      location: "ItemCard.tsx:render",
-      message: "recent item card render",
-      data: {
-        itemId: item.id,
-        sourceUrl: item.source_url,
-        storedImageUrl: item.image_url,
-        previewUrl,
-        title,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      },
-    });
-    // #endregion
-  }
 
   return (
     <motion.article
