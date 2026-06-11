@@ -8,6 +8,7 @@ import { VelvetImage } from "@/components/atoms/VelvetImage";
 import { VelvetLogo } from "@/components/atoms/VelvetLogo";
 import { BoardCard } from "@/components/organisms/BoardCard";
 import { CollectionCardSkeleton } from "@/components/organisms/CollectionCard";
+import { PageWidth, PageWidthFrame } from "@/components/layouts/PageWidth";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
 import { getCreatorProfileUrl } from "@/lib/app-url";
@@ -42,52 +43,54 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
     <div className="relative min-h-screen bg-background pb-24 md:pb-0">
       <AdaptiveNavbar />
 
-      <div className="relative h-32 w-full overflow-hidden sm:h-40 md:h-48">
-        <div className="absolute inset-0 z-0">
-          {profile.banner_url ? (
-            <VelvetImage
-              src={profile.banner_url}
-              alt=""
-              fill
-              className="object-cover object-center"
-              sizes="100vw"
-              priority
-            />
-          ) : (
-            <div
-              className="h-full w-full bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender"
-              aria-hidden
-            />
-          )}
-        </div>
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-20 bg-gradient-to-b from-black/15 to-transparent sm:h-24"
-          aria-hidden
-        />
-        <div className="page-container absolute inset-x-0 top-0 z-20 pt-4">
-          <div className="flex items-center justify-between gap-3">
-            <PageBackButton
-              href={ROUTES.explore}
-              label="Explore"
-              className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
-            />
-            <ShareButton
-              variant="icon"
-              url={shareUrl}
-              title={`${profile.full_name ?? profile.username} on Velvet`}
-              text={profile.bio ?? undefined}
-              imageUrl={profile.avatar_url ?? profile.banner_url}
-              eyebrow="Velvet profile"
-              preview
-              label="Share profile"
-              analyticsEvent={ANALYTICS_EVENTS.PROFILE_SHARED}
-              analyticsProperties={{ username: profile.username }}
-            />
+      <PageWidthFrame>
+        <div className="relative h-32 overflow-hidden sm:h-40 md:h-48 md:rounded-2xl">
+          <div className="absolute inset-0 z-0">
+            {profile.banner_url ? (
+              <VelvetImage
+                src={profile.banner_url}
+                alt=""
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 768px) 100vw, min(100vw, 1280px)"
+                priority
+              />
+            ) : (
+              <div
+                className="h-full w-full bg-gradient-to-r from-accent-blush via-accent-coral to-accent-lavender"
+                aria-hidden
+              />
+            )}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-20 bg-gradient-to-b from-black/15 to-transparent sm:h-24"
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 top-0 z-20 px-4 pt-4 sm:px-6 md:px-0">
+            <div className="flex items-center justify-between gap-3">
+              <PageBackButton
+                href={ROUTES.explore}
+                label="Explore"
+                className="border-white/40 bg-bg-elevated/90 shadow-md backdrop-blur-md"
+              />
+              <ShareButton
+                variant="icon"
+                url={shareUrl}
+                title={`${profile.full_name ?? profile.username} on Velvet`}
+                text={profile.bio ?? undefined}
+                imageUrl={profile.avatar_url ?? profile.banner_url}
+                eyebrow="Velvet profile"
+                preview
+                label="Share profile"
+                analyticsEvent={ANALYTICS_EVENTS.PROFILE_SHARED}
+                analyticsProperties={{ username: profile.username }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </PageWidthFrame>
 
-      <header className="page-container relative z-10 pb-6 text-center">
+      <PageWidth as="header" className="relative z-10 pb-6 text-center">
         <div className="-mt-12 sm:-mt-14">
           <Avatar
             src={profile.avatar_url}
@@ -122,9 +125,9 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
         <p className="mt-3 text-sm font-medium text-on-surface-variant">
           {boards.length} public collection{boards.length === 1 ? "" : "s"}
         </p>
-      </header>
+      </PageWidth>
 
-      <main className="page-container pb-20">
+      <PageWidth as="main" className="pb-20">
         <h2 className="font-display mb-4 text-lg text-on-surface sm:text-xl">
           Public collections
         </h2>
@@ -158,7 +161,7 @@ export function CreatorProfileView({ profile, boards }: CreatorProfileViewProps)
           <span>Curated on</span>
           <VelvetLogo variant="footer" href={ROUTES.home} />
         </div>
-      </main>
+      </PageWidth>
     </div>
   );
 }

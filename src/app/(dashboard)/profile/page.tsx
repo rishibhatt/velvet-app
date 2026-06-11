@@ -21,11 +21,12 @@ import { ProfileInsightsTeaser } from "@/features/profile/components/ProfileInsi
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBoards, useLikedBoards } from "@/queries/board/queries";
 import { CollectionCreateFab } from "@/components/molecules/CollectionCreateFab";
+import { PageWidth } from "@/components/layouts/PageWidth";
 import { useModalStore } from "@/store/modal.store";
 
 function ProfilePageSkeleton() {
   return (
-    <main className="mx-auto w-full max-w-5xl px-margin-mobile py-stack-lg md:px-margin-desktop md:py-12">
+    <PageWidth as="main" narrow className="py-stack-lg md:py-12">
       <Skeleton className="h-[280px] w-full rounded-3xl sm:h-[320px]" />
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -37,7 +38,7 @@ function ProfilePageSkeleton() {
       <div className="mt-6">
         <CollectionCardSkeletonGrid count={4} />
       </div>
-    </main>
+    </PageWidth>
   );
 }
 
@@ -79,27 +80,27 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-margin-mobile py-12 text-center text-on-surface-variant">
+      <PageWidth as="main" narrow className="py-12 text-center text-on-surface-variant">
         Could not load your profile.
-      </main>
+      </PageWidth>
     );
   }
 
   if (editing) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-margin-mobile py-stack-lg md:px-margin-desktop md:py-12">
+      <PageWidth as="main" narrow className="max-w-3xl py-stack-lg md:py-12">
         <h1 className="font-display mb-8 text-3xl text-on-surface">Edit profile</h1>
         <ProfileEditor
           profile={profile}
           onCancel={() => setEditing(false)}
           onSaved={() => setEditing(false)}
         />
-      </main>
+      </PageWidth>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-margin-mobile py-stack-lg md:px-margin-desktop md:py-12">
+    <PageWidth as="main" narrow className="py-stack-lg md:py-12">
       <ProfileHeroCard
         profile={profile}
         onEdit={() => setEditing(true)}
@@ -125,6 +126,6 @@ export default function ProfilePage() {
       />
 
       <CollectionCreateFab onClick={openCreateBoard} />
-    </main>
+    </PageWidth>
   );
 }

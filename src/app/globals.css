@@ -115,6 +115,7 @@
   --spacing-gutter: 24px;
   --spacing-margin-mobile: 20px;
   --spacing-margin-desktop: 64px;
+  --layout-max-width: 80rem;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -289,7 +290,7 @@ body {
 
 .page-container {
   width: 100%;
-  max-width: 80rem;
+  max-width: var(--layout-max-width);
   margin-inline: auto;
   padding-inline: max(1rem, var(--spacing-margin-mobile));
 }
