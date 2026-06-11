@@ -49,7 +49,9 @@ async function resolveItemImageUrl(
   if (!url) return null;
   if (isSupabaseStorageUrl(url)) return url;
 
-  const stored = await ingestRemoteImage(url, "items");
+  const stored = await ingestRemoteImage(url, "items", {
+    referer: sourceUrl ?? undefined,
+  });
   if (stored) return stored;
 
   return optimizeStoredImageUrl(url, source);

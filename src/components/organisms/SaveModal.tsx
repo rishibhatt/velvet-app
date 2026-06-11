@@ -220,7 +220,6 @@ export function SaveModal() {
       try {
         const meta = await fetchUrlMetadata(url.trim());
         metadataUrlRef.current = url.trim();
-        finalImageUrl = meta.imageUrl;
         finalSource = meta.source;
         if (meta.description) finalDescription = meta.description;
         if (meta.title) finalTitle = meta.title;

@@ -25,7 +25,7 @@ export function previewImageFromSourceUrl(
 
 /**
  * Authoritative preview URL at save time.
- * Prefers source_url-derived images, then fresh metadata — never a Supabase URL from UI state.
+ * Prefers source_url-derived images, then the preview the user already saw — never a stale Supabase blob.
  */
 export async function resolvePreviewImageForSave(
   sourceUrl: string | null | undefined,
@@ -33,17 +33,8 @@ export async function resolvePreviewImageForSave(
   clientImageUrl?: string | null,
 ): Promise<string | null> {
   const fromSource = previewImageFromSourceUrl(sourceUrl, source);
-  if (fromSource) return fromSource;
-
-  if (sourceUrl?.trim()) {
-    try {
-      const meta = await fetchUrlMetadata(sourceUrl.trim());
-      if (meta.imageUrl && !isWeakPreviewImage(meta.imageUrl)) {
-        return meta.imageUrl;
-      }
-    } catch {
-      /* fall through */
-    }
+  if (fromSource) {
+    return fromSource;
   }
 
   if (
@@ -52,6 +43,19 @@ export async function resolvePreviewImageForSave(
     !isWeakPreviewImage(clientImageUrl)
   ) {
     return clientImageUrl;
+  }
+
+  let metaImageUrl: string | null = null;
+  if (sourceUrl?.trim()) {
+    try {
+      const meta = await fetchUrlMetadata(sourceUrl.trim());
+      metaImageUrl = meta.imageUrl;
+      if (meta.imageUrl && !isWeakPreviewImage(meta.imageUrl)) {
+        return meta.imageUrl;
+      }
+    } catch {
+      /* fall through */
+    }
   }
 
   return null;

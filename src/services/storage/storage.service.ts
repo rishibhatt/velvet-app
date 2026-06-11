@@ -124,6 +124,7 @@ export async function uploadImage(
 export async function ingestRemoteImage(
   imageUrl: string,
   folder: UploadFolder = "items",
+  options: { referer?: string } = {},
 ): Promise<string | null> {
   if (!imageUrl || isSupabaseStorageUrl(imageUrl)) {
     return imageUrl || null;
@@ -134,7 +135,10 @@ export async function ingestRemoteImage(
       const res = await fetch("/api/images/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: imageUrl }),
+        body: JSON.stringify({
+          url: imageUrl,
+          referer: options.referer,
+        }),
         credentials: "same-origin",
       });
       if (!res.ok) return null;

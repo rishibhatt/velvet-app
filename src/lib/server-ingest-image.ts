@@ -5,7 +5,7 @@ import type { Database } from "@/types/database.types";
 
 const BUCKET = "velvet-uploads";
 const BROWSER_UA =
-  "Mozilla/5.0 (compatible; Velvet/1.0; +https://the-velvet.netlify.app)";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 const MAX_BYTES = 8 * 1024 * 1024;
 
 function looksLikeImage(bytes: Uint8Array): boolean {
@@ -28,13 +28,23 @@ export async function serverIngestRemoteImage(
   supabase: VelvetSupabase,
   userId: string,
   imageUrl: string,
+  options: { referer?: string } = {},
 ): Promise<string | null> {
   if (!imageUrl || isSupabaseStorageUrl(imageUrl)) return imageUrl || null;
   if (!isSafeExternalUrl(imageUrl)) return null;
 
+  const referer =
+    options.referer && isSafeExternalUrl(options.referer)
+      ? options.referer
+      : undefined;
+
   try {
     const upstream = await fetch(imageUrl, {
-      headers: { "User-Agent": BROWSER_UA, Accept: "image/*,*/*;q=0.8" },
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Accept: "image/*,*/*;q=0.8",
+        ...(referer ? { Referer: referer } : {}),
+      },
       signal: AbortSignal.timeout(12_000),
       redirect: "follow",
     });

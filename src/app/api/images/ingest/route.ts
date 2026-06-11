@@ -11,8 +11,9 @@ export async function POST(request: Request) {
   if (error) return error;
 
   try {
-    const body = (await request.json()) as { url?: string };
+    const body = (await request.json()) as { url?: string; referer?: string };
     const url = body.url;
+    const referer = body.referer;
 
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -27,7 +28,10 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
-    const stored = await serverIngestRemoteImage(supabase, user!.id, url);
+
+    const stored = await serverIngestRemoteImage(supabase, user!.id, url, {
+      referer,
+    });
 
     if (!stored) {
       return NextResponse.json({ error: "Could not store preview" }, { status: 502 });
