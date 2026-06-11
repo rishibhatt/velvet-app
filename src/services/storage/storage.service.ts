@@ -1,4 +1,5 @@
 import imageCompression from "browser-image-compression";
+import { logDeployDebug } from "@/lib/deploy-debug";
 import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 import { createClient } from "@/services/supabase/client";
 
@@ -142,7 +143,25 @@ export async function ingestRemoteImage(
         credentials: "same-origin",
       });
       if (!res.ok) return null;
-      const data = (await res.json()) as { url?: string };
+      const data = (await res.json()) as {
+        url?: string;
+        debug?: Record<string, unknown>;
+      };
+      // #region agent log
+      logDeployDebug({
+        runId: "netlify-pre-fix",
+        hypothesisId: "C",
+        location: "storage.service.ts:ingestRemoteImage",
+        message: "ingest api response",
+        data: {
+          requestUrl: imageUrl,
+          referer: options.referer ?? null,
+          status: res.status,
+          returnedUrl: data.url ?? null,
+          debug: data.debug ?? null,
+        },
+      });
+      // #endregion
       return data.url ?? null;
     } catch {
       return null;

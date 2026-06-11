@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/api-auth";
 import { isSupabaseStorageUrl } from "@/lib/supabase-image";
-import { serverIngestRemoteImage } from "@/lib/server-ingest-image";
+import {
+  serverIngestRemoteImage,
+  type ServerIngestDebug,
+} from "@/lib/server-ingest-image";
 import { isSafeExternalUrl } from "@/lib/url-security";
 import { createClient } from "@/services/supabase/server";
 
@@ -28,16 +31,23 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
+    let debug: ServerIngestDebug | null = null;
 
     const stored = await serverIngestRemoteImage(supabase, user!.id, url, {
       referer,
+      onDebug: (entry) => {
+        debug = entry;
+      },
     });
 
     if (!stored) {
-      return NextResponse.json({ error: "Could not store preview" }, { status: 502 });
+      return NextResponse.json(
+        { error: "Could not store preview", debug },
+        { status: 502 },
+      );
     }
 
-    return NextResponse.json({ url: stored });
+    return NextResponse.json({ url: stored, debug });
   } catch {
     return NextResponse.json({ error: "Ingest failed" }, { status: 500 });
   }

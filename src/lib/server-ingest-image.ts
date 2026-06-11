@@ -23,12 +23,22 @@ function looksLikeImage(bytes: Uint8Array): boolean {
 
 type VelvetSupabase = SupabaseClient<Database>;
 
+export type ServerIngestDebug = {
+  requestedUrl: string;
+  referer: string | null;
+  upstreamUrl?: string;
+  contentType?: string;
+  byteLength?: number;
+  storedUrl?: string | null;
+  failedAt?: string;
+};
+
 /** Server-side download, compress, and store a link-preview image in Supabase. */
 export async function serverIngestRemoteImage(
   supabase: VelvetSupabase,
   userId: string,
   imageUrl: string,
-  options: { referer?: string } = {},
+  options: { referer?: string; onDebug?: (debug: ServerIngestDebug) => void } = {},
 ): Promise<string | null> {
   if (!imageUrl || isSupabaseStorageUrl(imageUrl)) return imageUrl || null;
   if (!isSafeExternalUrl(imageUrl)) return null;
@@ -39,6 +49,10 @@ export async function serverIngestRemoteImage(
       : undefined;
 
   try {
+    const debug: ServerIngestDebug = {
+      requestedUrl: imageUrl,
+      referer: referer ?? null,
+    };
     const upstream = await fetch(imageUrl, {
       headers: {
         "User-Agent": BROWSER_UA,
@@ -48,13 +62,28 @@ export async function serverIngestRemoteImage(
       signal: AbortSignal.timeout(12_000),
       redirect: "follow",
     });
-    if (!upstream.ok) return null;
+    debug.upstreamUrl = upstream.url;
+    if (!upstream.ok) {
+      debug.failedAt = `upstream:${upstream.status}`;
+      options.onDebug?.(debug);
+      return null;
+    }
 
     let bytes = new Uint8Array(await upstream.arrayBuffer());
-    if (bytes.byteLength === 0 || bytes.byteLength > MAX_BYTES) return null;
+    debug.byteLength = bytes.byteLength;
+    if (bytes.byteLength === 0 || bytes.byteLength > MAX_BYTES) {
+      debug.failedAt = "byte-size";
+      options.onDebug?.(debug);
+      return null;
+    }
 
     const contentType = upstream.headers.get("content-type") ?? "";
-    if (!contentType.startsWith("image/") && !looksLikeImage(bytes)) return null;
+    debug.contentType = contentType;
+    if (!contentType.startsWith("image/") && !looksLikeImage(bytes)) {
+      debug.failedAt = "not-image";
+      options.onDebug?.(debug);
+      return null;
+    }
 
     try {
       const sharp = (await import("sharp")).default;
@@ -74,11 +103,22 @@ export async function serverIngestRemoteImage(
       cacheControl: "31536000",
       upsert: false,
     });
-    if (error) return null;
+    if (error) {
+      debug.failedAt = "upload";
+      options.onDebug?.(debug);
+      return null;
+    }
 
     const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    debug.storedUrl = data.publicUrl;
+    options.onDebug?.(debug);
     return data.publicUrl;
   } catch {
+    options.onDebug?.({
+      requestedUrl: imageUrl,
+      referer: referer ?? null,
+      failedAt: "exception",
+    });
     return null;
   }
 }

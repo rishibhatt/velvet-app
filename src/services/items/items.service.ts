@@ -1,4 +1,5 @@
 import { syncBoardCoverFromItems } from "@/lib/collection-previews";
+import { logDeployDebug } from "@/lib/deploy-debug";
 import { isWeakPreviewImage } from "@/lib/item-preview";
 import { resolvePreviewImageForSave } from "@/lib/resolve-item-preview";
 import {
@@ -136,6 +137,23 @@ export const itemsService = {
       input.sourceUrl,
       { rejectStoredPreview: isLinkSave },
     );
+
+    // #region agent log
+    logDeployDebug({
+      runId: "netlify-pre-fix",
+      hypothesisId: "B,C",
+      location: "items.service.ts:saveItem",
+      message: "resolved save image",
+      data: {
+        sourceUrl: input.sourceUrl ?? null,
+        inputImageUrl: input.imageUrl ?? null,
+        previewForIngest,
+        finalImageUrl: imageUrl,
+        isLinkSave,
+        previewMatchesInput: previewForIngest === input.imageUrl,
+      },
+    });
+    // #endregion
 
     let sourceUrl = input.sourceUrl ?? null;
     if (sourceUrl) {

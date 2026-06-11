@@ -16,6 +16,7 @@ import {
   type ItemsPage,
 } from "@/queries/item/cache-utils";
 import type { InfiniteData } from "@tanstack/react-query";
+import { logDeployDebug } from "@/lib/deploy-debug";
 import { getErrorMessage } from "@/lib/errors";
 import { velvetToast } from "@/lib/toast";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
@@ -84,7 +85,26 @@ export function useSaveItem(boardId: string) {
       queryClient.invalidateQueries({ queryKey: itemKeys.list(boardId) });
       queryClient.invalidateQueries({ queryKey: boardKeys.list() });
     },
-    onSuccess: (item) => {
+    onSuccess: (item, variables) => {
+      // #region agent log
+      logDeployDebug({
+        runId: "netlify-pre-fix",
+        hypothesisId: "D",
+        location: "mutations.ts:useSaveItem:onSuccess",
+        message: "save mutation success",
+        data: {
+          hookBoardId: boardId,
+          inputBoardId: variables.boardId,
+          itemId: item.id,
+          sourceUrl: item.source_url,
+          inputSourceUrl: variables.sourceUrl,
+          inputImageUrl: variables.imageUrl,
+          savedImageUrl: item.image_url,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        },
+      });
+      // #endregion
       queryClient.setQueryData<InfiniteData<ItemsPage>>(
         itemsListQueryKey(boardId),
         (old) => {

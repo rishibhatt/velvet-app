@@ -17,6 +17,7 @@ import { canUseNextImage } from "@/lib/remote-image";
 import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 import type { ItemSource } from "@/types/board.types";
 import { UI_LABELS } from "@/constants/ui-labels";
+import { logDeployDebug } from "@/lib/deploy-debug";
 import { velvetToast } from "@/lib/toast";
 import { Button } from "@/components/atoms/Button";
 import { SegmentButton } from "@/components/atoms/SegmentButton";
@@ -232,6 +233,24 @@ export function SaveModal() {
         setMetadataLoading(false);
       }
     }
+
+    // #region agent log
+    logDeployDebug({
+      runId: "netlify-pre-fix",
+      hypothesisId: "A,B",
+      location: "SaveModal.tsx:handleSave",
+      message: "save modal final payload",
+      data: {
+        origin: window.location.origin,
+        url: url.trim(),
+        stateImageUrl: imageUrl,
+        finalImageUrl,
+        previewSrc: localPreview || imageUrl,
+        previewMatchesFinal: finalImageUrl === (localPreview || imageUrl),
+        source: finalSource,
+      },
+    });
+    // #endregion
 
     try {
       await saveItem.mutateAsync({

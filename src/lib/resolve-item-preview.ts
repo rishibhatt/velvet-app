@@ -1,3 +1,4 @@
+import { logDeployDebug } from "@/lib/deploy-debug";
 import { isWeakPreviewImage } from "@/lib/item-preview";
 import {
   extractYouTubeVideoId,
@@ -34,6 +35,15 @@ export async function resolvePreviewImageForSave(
 ): Promise<string | null> {
   const fromSource = previewImageFromSourceUrl(sourceUrl, source);
   if (fromSource) {
+    // #region agent log
+    logDeployDebug({
+      runId: "netlify-pre-fix",
+      hypothesisId: "A,B",
+      location: "resolve-item-preview.ts:resolvePreviewImageForSave",
+      message: "resolved from source url",
+      data: { sourceUrl, source, fromSource, clientImageUrl },
+    });
+    // #endregion
     return fromSource;
   }
 
@@ -42,6 +52,15 @@ export async function resolvePreviewImageForSave(
     !isSupabaseStorageUrl(clientImageUrl) &&
     !isWeakPreviewImage(clientImageUrl)
   ) {
+    // #region agent log
+    logDeployDebug({
+      runId: "netlify-pre-fix",
+      hypothesisId: "A,B",
+      location: "resolve-item-preview.ts:resolvePreviewImageForSave",
+      message: "resolved from client preview url",
+      data: { sourceUrl, source, clientImageUrl },
+    });
+    // #endregion
     return clientImageUrl;
   }
 
@@ -51,6 +70,15 @@ export async function resolvePreviewImageForSave(
       const meta = await fetchUrlMetadata(sourceUrl.trim());
       metaImageUrl = meta.imageUrl;
       if (meta.imageUrl && !isWeakPreviewImage(meta.imageUrl)) {
+        // #region agent log
+        logDeployDebug({
+          runId: "netlify-pre-fix",
+          hypothesisId: "B",
+          location: "resolve-item-preview.ts:resolvePreviewImageForSave",
+          message: "resolved from metadata fallback",
+          data: { sourceUrl, source, clientImageUrl, metaImageUrl: meta.imageUrl },
+        });
+        // #endregion
         return meta.imageUrl;
       }
     } catch {
@@ -58,5 +86,14 @@ export async function resolvePreviewImageForSave(
     }
   }
 
+  // #region agent log
+  logDeployDebug({
+    runId: "netlify-pre-fix",
+    hypothesisId: "B",
+    location: "resolve-item-preview.ts:resolvePreviewImageForSave",
+    message: "no preview resolved",
+    data: { sourceUrl, source, clientImageUrl, metaImageUrl },
+  });
+  // #endregion
   return null;
 }
