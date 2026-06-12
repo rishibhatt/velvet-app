@@ -83,6 +83,7 @@ export function exploreMetadata(): Metadata {
     title: `Explore public collections | ${BRAND.name}`,
     description: `Discover trending moodboards and curated inspiration from the ${BRAND.name} community. Browse wedding, travel, fashion, and more — free to explore.`,
     path: ROUTES.explore,
+    robots: { index: true, follow: true },
   });
 }
 

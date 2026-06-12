@@ -5,6 +5,9 @@ import {
   isEmailVerificationExempt,
   isEmailVerified,
 } from "@/lib/auth-redirect";
+import { ROUTES } from "@/constants/routes";
+
+const PUBLIC_HOME_REDIRECT = 308;
 
 const protectedRoutes = [
   "/",
@@ -36,10 +39,11 @@ function redirectWithCookies(
   request: NextRequest,
   pathname: string,
   supabaseResponse: NextResponse,
+  status = 307,
 ) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
-  const redirect = NextResponse.redirect(url);
+  const redirect = NextResponse.redirect(url, status);
   supabaseResponse.cookies.getAll().forEach((cookie) => {
     redirect.cookies.set(cookie);
   });
@@ -62,6 +66,11 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!supabaseUrl || !supabaseKey) {
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.explore;
+      return NextResponse.redirect(url, PUBLIC_HOME_REDIRECT);
+    }
     if (isProtected(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/setup";
@@ -95,7 +104,12 @@ export async function proxy(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user && pathname === "/") {
-      return redirectWithCookies(request, "/explore", supabaseResponse);
+      return redirectWithCookies(
+        request,
+        ROUTES.explore,
+        supabaseResponse,
+        PUBLIC_HOME_REDIRECT,
+      );
     }
 
     if (!user && isProtected(pathname)) {
@@ -123,6 +137,11 @@ export async function proxy(request: NextRequest) {
       }
     }
   } catch {
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.explore;
+      return NextResponse.redirect(url, PUBLIC_HOME_REDIRECT);
+    }
     if (isProtected(pathname)) {
       return redirectWithCookies(request, "/login", supabaseResponse);
     }

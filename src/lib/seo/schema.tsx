@@ -17,7 +17,7 @@ export function organizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: BRAND.name,
-    url: generateCanonicalUrl("/"),
+    url: generateCanonicalUrl(ROUTES.explore),
     logo: generateCanonicalUrl(BRAND.logo.icon512),
   };
 }
@@ -27,12 +27,7 @@ export function websiteSchema() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: BRAND.name,
-    url: generateCanonicalUrl("/"),
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${generateCanonicalUrl("/search")}?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+    url: generateCanonicalUrl(ROUTES.explore),
   };
 }
 

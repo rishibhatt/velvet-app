@@ -17,8 +17,7 @@ function entry(path: string, priority: number, lastModified?: string): SitemapEn
 
 export async function generateVelvetSitemap(): Promise<MetadataRoute.Sitemap> {
   const urls: SitemapEntry[] = [
-    entry("/", 1),
-    entry(ROUTES.explore, 0.9),
+    entry(ROUTES.explore, 1),
     entry("/brands", 0.7),
     ...MOODS.filter((mood) => mood.value !== "other").map((mood) =>
       entry(ROUTES.category(mood.value), 0.8),

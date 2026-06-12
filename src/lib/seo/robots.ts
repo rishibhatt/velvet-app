@@ -7,6 +7,7 @@ export function velvetRobots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: ["/", "/explore", "/u/", "/wedding", "/travel", "/home", "/fashion", "/events", "/lifestyle", "/tag/", "/brands"],
       disallow: [
+        "/$",
         "/api/",
         "/boards/",
         "/profile",
