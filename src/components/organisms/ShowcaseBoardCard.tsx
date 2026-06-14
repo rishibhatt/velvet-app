@@ -1,6 +1,7 @@
 import {
   CollectionCard,
   CollectionCardSkeleton,
+  type CollectionCardProps,
   type CollectionCardVariant,
 } from "@/components/organisms/CollectionCard";
 import type { Board, Profile } from "@/types/board.types";
@@ -13,6 +14,8 @@ interface ShowcaseBoardCardProps {
   publicHref?: string;
   owner?: Pick<Profile, "username" | "full_name" | "avatar_url">;
   className?: string;
+  trafficPreset?: CollectionCardProps["trafficPreset"];
+  trafficContext?: CollectionCardProps["trafficContext"];
 }
 
 export function ShowcaseBoardCard({
@@ -21,6 +24,8 @@ export function ShowcaseBoardCard({
   publicHref,
   owner,
   className,
+  trafficPreset,
+  trafficContext,
 }: ShowcaseBoardCardProps) {
   return (
     <CollectionCard
@@ -29,6 +34,8 @@ export function ShowcaseBoardCard({
       publicHref={publicHref}
       owner={owner}
       className={className}
+      trafficPreset={trafficPreset}
+      trafficContext={trafficContext}
     />
   );
 }

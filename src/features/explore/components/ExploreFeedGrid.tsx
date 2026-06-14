@@ -29,6 +29,8 @@ export function ExploreFeedGrid({ boards, ads, onBoardClick }: ExploreFeedGridPr
     }
   }, [ads]);
 
+  const firstBoardIndex = feed.findIndex((item) => item.type === "board");
+
   return (
     <motion.div
       className={COLLECTION_CARD_GRID}
@@ -36,23 +38,29 @@ export function ExploreFeedGrid({ boards, ads, onBoardClick }: ExploreFeedGridPr
       initial="initial"
       animate="animate"
     >
-      {feed.map((entry, index) => (
-        <motion.div
-          key={entry.type === "ad" ? `ad-${entry.data.id}` : entry.data.id}
-          variants={fadeUp}
-        >
-          {entry.type === "ad" ? (
-            <AdCard ad={entry.data} />
-          ) : (
-            <ExploreCollectionCard
-              board={entry.data}
-              owner={entry.data.owner}
-              onClick={() => onBoardClick(entry.data)}
-              priority={index === 0}
-            />
-          )}
-        </motion.div>
-      ))}
+      {feed.map((entry, index) => {
+        const isFirstBoard = entry.type === "board" && index === firstBoardIndex;
+
+        return (
+          <motion.div
+            key={entry.type === "ad" ? `ad-${entry.data.id}` : entry.data.id}
+            variants={fadeUp}
+            initial={isFirstBoard ? false : "initial"}
+          >
+            {entry.type === "ad" ? (
+              <AdCard ad={entry.data} />
+            ) : (
+              <ExploreCollectionCard
+                board={entry.data}
+                owner={entry.data.owner}
+                onClick={() => onBoardClick(entry.data)}
+                priority={isFirstBoard}
+                trafficPreset="internal_explore"
+              />
+            )}
+          </motion.div>
+        );
+      })}
     </motion.div>
   );
 }

@@ -86,6 +86,7 @@ export default function HomePage() {
                     board={board}
                     variant="discover"
                     owner={board.owner}
+                    trafficPreset="internal_home"
                   />
                 </div>
               ))}

@@ -13,6 +13,13 @@ import {
   track,
   trackPageView,
 } from "@/lib/analytics";
+import {
+  captureAttributionFromSearchParams,
+  getAttributionProperties,
+  hasAttributionParams,
+  parseAttributionFromSearchParams,
+} from "@/lib/attribution";
+import { registerPostHogSuperProperties } from "@/lib/analytics/posthog";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { boardsService } from "@/services/boards/boards.service";
 import { boardKeys } from "@/queries/board/keys";
@@ -41,7 +48,24 @@ function AnalyticsRuntime() {
     meta: { skipErrorToast: true, errorContext: "board" },
   });
   const lastPageRef = useRef<string | null>(null);
+  const lastAttributionRef = useRef<string | null>(null);
   const identifiedUserRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const parsed = parseAttributionFromSearchParams(searchParams);
+    if (!hasAttributionParams(parsed)) return;
+
+    const snapshot = captureAttributionFromSearchParams(searchParams);
+    if (!snapshot) return;
+
+    const signature = JSON.stringify(snapshot);
+    if (lastAttributionRef.current === signature) return;
+    lastAttributionRef.current = signature;
+
+    const props = getAttributionProperties();
+    registerPostHogSuperProperties(props);
+    track(ANALYTICS_EVENTS.ATTRIBUTION_CAPTURED, props);
+  }, [searchParams]);
 
   useEffect(() => {
     const boot = () => {

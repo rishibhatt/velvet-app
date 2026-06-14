@@ -4,8 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { CollectionPosterEmptyVariant } from "@/components/molecules/CollectionPosterGrid";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
-import { getAppBaseUrl } from "@/lib/app-url";
-import { getCollectionHref } from "@/lib/collection-href";
+import { getCollectionHref, getTrackedCollectionHref } from "@/lib/collection-href";
+import type { PresetContext, TrackedLinkPreset } from "@/lib/attribution";
 import { COLLECTION_CARD_SHELL } from "@/constants/collection-ui";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -32,6 +32,9 @@ export interface CollectionCardProps {
   onClick?: () => void;
   /** First visible card — improves LCP on discover grids */
   priority?: boolean;
+  /** Internal navigation attribution (explore, search, etc.) */
+  trafficPreset?: TrackedLinkPreset;
+  trafficContext?: PresetContext;
 }
 
 export function CollectionCard({
@@ -43,6 +46,8 @@ export function CollectionCard({
   className,
   onClick,
   priority = false,
+  trafficPreset,
+  trafficContext,
 }: CollectionCardProps) {
   const { user, profile, isAuthenticated, isAuthReady } = useAuth();
   const openShareSheet = useModalStore((s) => s.openShareSheet);
@@ -64,30 +69,27 @@ export function CollectionCard({
         }
       : undefined);
 
-  const boardHref = getCollectionHref(board, {
-    userId: user?.id,
-    ownerUsername: shareOwner?.username ?? owner?.username,
-  });
+  const boardHref = trafficPreset
+    ? getTrackedCollectionHref(board, {
+        userId: user?.id,
+        ownerUsername: shareOwner?.username ?? owner?.username,
+        preset: trafficPreset,
+        presetContext: trafficContext,
+      })
+    : getCollectionHref(board, {
+        userId: user?.id,
+        ownerUsername: shareOwner?.username ?? owner?.username,
+      });
   const posterEmpty: CollectionPosterEmptyVariant =
     emptyVariant ?? (variant === "owned" ? "own" : "other");
   const canLike =
     variant !== "owned" && board.is_public && user?.id !== board.owner_id;
 
   const shareUrl = useMemo(() => {
-    const path =
-      publicHref ??
-      (board.slug && shareOwner?.username
-        ? ROUTES.publicCollection(shareOwner.username, board.slug)
-        : board.slug
-          ? ROUTES.legacyPublicCollection(board.slug)
-          : boardHref);
-
-    const base = getAppBaseUrl();
-    if (base && path.startsWith("/")) {
-      return `${base}${path}`;
-    }
-    return getPublicShareUrl(shareOwner?.username ?? "", board.slug ?? "", base || undefined);
-  }, [board.slug, boardHref, publicHref, shareOwner?.username]);
+    if (!board.slug) return "";
+    const username = shareOwner?.username ?? "";
+    return getPublicShareUrl(username, board.slug);
+  }, [board.slug, shareOwner?.username]);
 
   const handleShare = useCallback(() => {
     if (!board.is_public) {

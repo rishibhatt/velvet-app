@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass } from "lucide-react";
@@ -8,15 +9,34 @@ import { Button } from "@/components/atoms/Button";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { loginWithReturn, signupWithReturn } from "@/lib/auth-redirect-path";
+import { useReturnPath } from "@/hooks/useReturnPath";
 
 const guestMobileNav = [
   { href: ROUTES.explore, label: "Explore", icon: Compass },
 ] as const;
 
 export function PublicNavbar() {
-  const pathname = usePathname();
-  const returnPath = pathname || ROUTES.explore;
+  return (
+    <Suspense fallback={<PublicNavbarShell returnPath={ROUTES.explore} />}>
+      <PublicNavbarContent />
+    </Suspense>
+  );
+}
 
+function PublicNavbarContent() {
+  const pathname = usePathname();
+  const returnPath = useReturnPath(ROUTES.explore);
+
+  return <PublicNavbarShell pathname={pathname} returnPath={returnPath} />;
+}
+
+function PublicNavbarShell({
+  pathname = ROUTES.explore,
+  returnPath = ROUTES.explore,
+}: {
+  pathname?: string;
+  returnPath?: string;
+}) {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-outline-variant/20 bg-bg-elevated/95 shadow-sm backdrop-blur-md">

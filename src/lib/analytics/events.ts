@@ -34,6 +34,7 @@ export const ANALYTICS_EVENTS = {
   AD_IMPRESSION: "ad_impression",
   AD_CLICKED: "ad_clicked",
   AFFILIATE_LINK_CLICKED: "affiliate_link_clicked",
+  ATTRIBUTION_CAPTURED: "attribution_captured",
 } as const;
 
 export type AnalyticsEventName =

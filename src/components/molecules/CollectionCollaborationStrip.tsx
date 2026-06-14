@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Bookmark,
@@ -26,6 +26,7 @@ import { useUIStore } from "@/store/ui.store";
 import { velvetToast } from "@/lib/toast";
 import { ROUTES } from "@/constants/routes";
 import { loginWithReturn } from "@/lib/auth-redirect-path";
+import { useReturnPath } from "@/hooks/useReturnPath";
 import { cn } from "@/lib/utils";
 import type { Board } from "@/types/board.types";
 
@@ -126,7 +127,7 @@ export function CollectionCollaborationStrip({
   className,
 }: CollectionCollaborationStripProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const returnPath = useReturnPath(ROUTES.explore);
   const { setCollabPanelOpen } = useUIStore();
   const { collabState, isOwner, isMember, canEdit } = useCollectionCollaborationState(
     board,
@@ -271,7 +272,7 @@ export function CollectionCollaborationStrip({
               Request to collaborate
             </Button>
           ) : (
-            <Link href={loginWithReturn(pathname || ROUTES.explore)} className="w-full sm:w-auto">
+            <Link href={loginWithReturn(returnPath)} className="w-full sm:w-auto">
               <Button variant="primary" size="sm" icon={Users} className="w-full">
                 Sign in to collaborate
               </Button>

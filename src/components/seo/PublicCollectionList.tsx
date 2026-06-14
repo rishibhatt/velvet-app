@@ -2,9 +2,20 @@ import Link from "next/link";
 import { BoardCard } from "@/components/organisms/BoardCard";
 import { COLLECTION_CARD_GRID } from "@/constants/collection-ui";
 import { ROUTES } from "@/constants/routes";
+import type { PresetContext, TrackedLinkPreset } from "@/lib/attribution";
 import type { Board } from "@/types/board.types";
 
-export function PublicCollectionList({ boards }: { boards: Board[] }) {
+interface PublicCollectionListProps {
+  boards: Board[];
+  trafficPreset?: TrackedLinkPreset;
+  trafficContext?: PresetContext;
+}
+
+export function PublicCollectionList({
+  boards,
+  trafficPreset,
+  trafficContext,
+}: PublicCollectionListProps) {
   if (boards.length === 0) {
     return (
       <p className="rounded-2xl bg-surface-container-low py-12 text-center text-on-surface-variant">
@@ -29,6 +40,8 @@ export function PublicCollectionList({ boards }: { boards: Board[] }) {
             showLike
             emptyVariant="other"
             publicHref={href}
+            trafficPreset={trafficPreset}
+            trafficContext={trafficContext}
           />
         );
       })}

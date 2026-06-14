@@ -23,19 +23,31 @@ export function CategoryPage({ mood, boards }: { mood: Mood; boards: Board[] }) 
         <div className="mb-10">
           <CreatorLeaderboard defaultMood={mood} compact />
         </div>
-        <Section title="Trending collections" boards={trending} />
-        <Section title="Top collections" boards={top} />
-        <Section title="Newest collections" boards={newest} />
+        <Section title="Trending collections" boards={trending} mood={mood} />
+        <Section title="Top collections" boards={top} mood={mood} />
+        <Section title="Newest collections" boards={newest} mood={mood} />
       </div>
     </main>
   );
 }
 
-function Section({ title, boards }: { title: string; boards: Board[] }) {
+function Section({
+  title,
+  boards,
+  mood,
+}: {
+  title: string;
+  boards: Board[];
+  mood: Mood;
+}) {
   return (
     <section className="mb-12">
       <h2 className="mb-4 font-display text-xl text-on-surface">{title}</h2>
-      <PublicCollectionList boards={boards} />
+      <PublicCollectionList
+        boards={boards}
+        trafficPreset="internal_category"
+        trafficContext={{ mood }}
+      />
     </section>
   );
 }

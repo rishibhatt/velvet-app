@@ -94,7 +94,7 @@ export default function BoardDetailPage({
     { rootMargin: "320px", threshold: 0 },
   );
   const { data: activities = [] } = useBoardActivity(id);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { openSaveModal, openItemModal, openShareSheet } = useModalStore();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const queryClient = useQueryClient();
@@ -183,6 +183,11 @@ export default function BoardDetailPage({
       ? heroImages
       : (board.preview_images ?? (board.cover_url ? [board.cover_url] : []));
 
+  const shareUsername =
+    profile?.username ??
+    board?.members?.find((member) => member.user_id === board.owner_id)?.profile?.username ??
+    "";
+
   const handleShare = () => {
     if (!board.is_public) {
       velvetToast.info("Make it public", "Open settings and set visibility to Public.");
@@ -193,7 +198,7 @@ export default function BoardDetailPage({
       return;
     }
     openShareSheet({
-      url: getPublicShareUrl("", board.slug),
+      url: getPublicShareUrl(shareUsername, board.slug),
       title: board.title,
       text: board.description ?? undefined,
       imageUrls: previewUrls.slice(0, 4),
@@ -220,7 +225,7 @@ export default function BoardDetailPage({
             share={
               board.is_public && board.slug
                 ? {
-                    url: getPublicShareUrl("", board.slug),
+                    url: getPublicShareUrl(shareUsername, board.slug),
                     title: board.title,
                     text: board.description ?? undefined,
                     imageUrls: previewUrls.slice(0, 4),

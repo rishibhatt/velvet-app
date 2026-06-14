@@ -27,7 +27,11 @@ export default async function TagPage({ params }: PageProps) {
             Public collections and creators using this Velvet tag.
           </p>
         </header>
-        <PublicCollectionList boards={data.boards} />
+        <PublicCollectionList
+          boards={data.boards}
+          trafficPreset="internal_tag"
+          trafficContext={{ slug }}
+        />
         <CreatorLinks boards={data.boards} />
       </div>
     </main>

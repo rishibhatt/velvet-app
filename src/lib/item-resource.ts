@@ -1,4 +1,5 @@
 import { ROUTES } from "@/constants/routes";
+import { buildTrackedUrl } from "@/lib/attribution";
 import { getClientAppBaseUrl } from "@/lib/app-url";
 import { getItemSourceUrl } from "@/lib/item-source";
 import type { Item } from "@/types/board.types";
@@ -32,10 +33,22 @@ export function getItemResourceUrl(item: ResourceItem): string | null {
   return item.image_url?.trim() ?? null;
 }
 
-/** Best URL to share for this save. */
+/** Best URL to share for this save. External URLs are unchanged; Velvet deep links get share UTMs. */
 export function getItemShareUrl(item: ResourceItem): string {
-  return (
-    getItemResourceUrl(item) ??
-    (typeof window !== "undefined" ? window.location.href : "")
-  );
+  const resource = getItemResourceUrl(item);
+  if (!resource) {
+    return typeof window !== "undefined" ? window.location.href : "";
+  }
+
+  const external = getItemSourceUrl(item);
+  if (external) return external;
+
+  if (item.board_id && item.id) {
+    return buildTrackedUrl(resource, "share_item", {
+      boardId: item.board_id,
+      itemId: item.id,
+    });
+  }
+
+  return resource;
 }

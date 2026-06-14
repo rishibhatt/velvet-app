@@ -58,7 +58,7 @@ export default async function handler() {
             html: `
               <p>This week, your boards were seen by <strong>${views}</strong> people.</p>
               ${topBoard ? `<p>Your top board: <strong>${topBoard.title}</strong> (${topBoard.weekly_view_count ?? 0} views)</p>` : ""}
-              <p><a href="${appUrl}/insights">See your full insights →</a></p>
+              <p><a href="${appUrl}/insights?utm_source=velvet&utm_medium=email&utm_campaign=weekly_digest&utm_content=${encodeURIComponent(user.id)}">See your full insights →</a></p>
             `,
           });
           emailsSent++;

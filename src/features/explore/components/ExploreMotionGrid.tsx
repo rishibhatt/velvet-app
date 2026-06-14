@@ -27,6 +27,7 @@ export function ExploreMotionGrid({ boards, onBoardClick }: ExploreMotionGridPro
             owner={board.owner}
             onClick={() => onBoardClick(board)}
             priority={index === 0}
+            trafficPreset="internal_explore"
           />
         </motion.div>
       ))}

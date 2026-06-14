@@ -5,6 +5,7 @@ import {
   identifyPostHog,
   initPostHog,
   isFeatureEnabled,
+  registerPostHogSuperProperties,
   resetPostHog,
 } from "@/lib/analytics/posthog";
 import {
@@ -14,6 +15,7 @@ import {
   type AnalyticsUser,
   sanitizeProperties,
 } from "@/lib/analytics/events";
+import { getAttributionProperties } from "@/lib/attribution";
 
 export { ANALYTICS_EVENTS };
 
@@ -26,7 +28,10 @@ export function track(
   properties?: AnalyticsProperties,
 ) {
   if (typeof window === "undefined") return;
-  const safe = sanitizeProperties(properties);
+  const safe = sanitizeProperties({
+    ...getAttributionProperties(),
+    ...properties,
+  });
   trackGoogleEvent(event, safe);
   capturePostHog(event, safe);
   trackClarityEvent(event, safe);
@@ -41,7 +46,7 @@ export function trackPageView(url: string, title?: string) {
 }
 
 export function identify(user: AnalyticsUser) {
-  identifyPostHog(user);
+  identifyPostHog(user, getAttributionProperties());
 }
 
 export function resetAnalytics() {

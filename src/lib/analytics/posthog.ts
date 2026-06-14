@@ -57,14 +57,19 @@ export function capturePostHog(
   void withPostHog((posthog) => posthog.capture(event, properties));
 }
 
-export function identifyPostHog(user: AnalyticsUser) {
+export function identifyPostHog(user: AnalyticsUser, extraProperties?: AnalyticsProperties) {
   void withPostHog((posthog) =>
     posthog.identify(user.id, {
       email: user.email ?? undefined,
       username: user.username ?? undefined,
       collection_count: user.collection_count,
+      ...extraProperties,
     }),
   );
+}
+
+export function registerPostHogSuperProperties(properties: AnalyticsProperties) {
+  void withPostHog((posthog) => posthog.register(properties));
 }
 
 export function resetPostHog() {

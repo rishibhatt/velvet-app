@@ -8,8 +8,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatCount } from "@/utils/format";
 import { velvetToast } from "@/lib/toast";
 import { loginWithReturn } from "@/lib/auth-redirect-path";
+import { useReturnPath } from "@/hooks/useReturnPath";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
 
 interface CollectionCardLikePillProps {
   boardId: string;
@@ -30,7 +30,7 @@ export function CollectionCardLikePill({
   onLikeBurst,
   className,
 }: CollectionCardLikePillProps) {
-  const pathname = usePathname();
+  const returnPath = useReturnPath("/explore");
   const { isAuthenticated, isAuthReady } = useAuth();
   const { likeCount: displayCount, isLiked: displayLiked, isPending, toggleLike } =
     useBoardLikeDisplay({ boardId, likeCount, isLiked });
@@ -58,7 +58,7 @@ export function CollectionCardLikePill({
   if (isAuthReady && !isAuthenticated) {
     return (
       <Link
-        href={loginWithReturn(pathname || "/explore")}
+        href={loginWithReturn(returnPath)}
         onClick={(e) => e.stopPropagation()}
         className={shell}
         aria-label="Sign in to like"

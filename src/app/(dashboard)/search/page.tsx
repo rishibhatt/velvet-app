@@ -11,7 +11,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ProfileSearchCard } from "@/components/molecules/ProfileSearchCard";
 import { CollectionListRow } from "@/components/molecules/CollectionListRow";
 import { ROUTES } from "@/constants/routes";
-import { getCollectionHref } from "@/lib/collection-href";
+import { getTrackedCollectionHref } from "@/lib/collection-href";
 import { ANALYTICS_EVENTS, track } from "@/lib/analytics";
 
 function matchesQuery(
@@ -181,9 +181,11 @@ function SearchContent() {
                 <li key={board.id}>
                   <CollectionListRow
                     board={board}
-                    href={getCollectionHref(board, {
+                    href={getTrackedCollectionHref(board, {
                       userId: user?.id,
                       ownerUsername: board.owner?.username,
+                      preset: "internal_search",
+                      presetContext: { query: normalized },
                     })}
                     owner={board.owner}
                     scope="public"

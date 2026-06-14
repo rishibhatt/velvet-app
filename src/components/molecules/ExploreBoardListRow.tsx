@@ -2,7 +2,7 @@
 
 import { CollectionListRow } from "@/components/molecules/CollectionListRow";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getCollectionHref } from "@/lib/collection-href";
+import { getTrackedCollectionHref } from "@/lib/collection-href";
 import type { Board, Profile } from "@/types/board.types";
 import type { PublicBoard } from "@/services/discover/discover.service";
 
@@ -18,9 +18,10 @@ export function ExploreBoardListRow({
   onClick,
 }: ExploreBoardListRowProps) {
   const { user } = useAuth();
-  const href = getCollectionHref(board, {
+  const href = getTrackedCollectionHref(board, {
     userId: user?.id,
     ownerUsername: owner?.username ?? board.owner?.username,
+    preset: "internal_explore",
   });
 
   return (

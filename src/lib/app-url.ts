@@ -1,6 +1,20 @@
 import { ROUTES } from "@/constants/routes";
+import { buildTrackedUrl } from "@/lib/attribution";
+import type { PresetContext } from "@/lib/attribution";
 
 const trimSlash = (url: string) => url.replace(/\/$/, "");
+
+export type UrlBuilderOptions = {
+  baseUrl?: string;
+  /** When false, skip UTM tagging (e.g. canonical SEO URLs). Default true. */
+  track?: boolean;
+  presetContext?: PresetContext;
+};
+
+function resolveUrlOptions(options?: string | UrlBuilderOptions): UrlBuilderOptions {
+  if (typeof options === "string") return { baseUrl: options };
+  return options ?? {};
+}
 
 /**
  * Canonical app origin for server, emails, and config screens.
@@ -74,19 +88,39 @@ export function getEmailVerifiedUrl(baseUrl?: string): string {
 export function getPublicShareUrl(
   username: string,
   slug: string,
-  baseUrl?: string,
+  options?: string | UrlBuilderOptions,
 ): string {
+  const { baseUrl, track = true, presetContext } = resolveUrlOptions(options);
   const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
   const path = username
     ? ROUTES.publicCollection(username, slug)
     : ROUTES.legacyPublicCollection(slug);
-  return base ? `${trimSlash(base)}${path}` : path;
+  const raw = base ? `${trimSlash(base)}${path}` : path;
+
+  if (!track) return raw;
+
+  return buildTrackedUrl(raw, "share_collection", {
+    username,
+    slug,
+    ...presetContext,
+  });
 }
 
-export function getCreatorProfileUrl(username: string, baseUrl?: string): string {
+export function getCreatorProfileUrl(
+  username: string,
+  options?: string | UrlBuilderOptions,
+): string {
+  const { baseUrl, track = true, presetContext } = resolveUrlOptions(options);
   const base = baseUrl ?? getClientAppBaseUrl() ?? getAppBaseUrl();
   const path = ROUTES.creator(username);
-  return base ? `${trimSlash(base)}${path}` : path;
+  const raw = base ? `${trimSlash(base)}${path}` : path;
+
+  if (!track) return raw;
+
+  return buildTrackedUrl(raw, "share_profile", {
+    username,
+    ...presetContext,
+  });
 }
 
 /** URLs to allow in Supabase → Authentication → Redirect URLs. */

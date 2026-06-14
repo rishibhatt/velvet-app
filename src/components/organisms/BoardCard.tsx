@@ -17,6 +17,9 @@ interface BoardCardProps {
   emptyVariant?: CollectionPosterEmptyVariant;
   className?: string;
   onClick?: () => void;
+  priority?: boolean;
+  trafficPreset?: CollectionCardProps["trafficPreset"];
+  trafficContext?: CollectionCardProps["trafficContext"];
 }
 
 export function BoardCard({
@@ -28,6 +31,9 @@ export function BoardCard({
   emptyVariant,
   className,
   onClick,
+  priority,
+  trafficPreset,
+  trafficContext,
 }: BoardCardProps) {
   return (
     <CollectionCard
@@ -38,6 +44,9 @@ export function BoardCard({
       emptyVariant={emptyVariant}
       className={className}
       onClick={onClick}
+      priority={priority}
+      trafficPreset={trafficPreset}
+      trafficContext={trafficContext}
     />
   );
 }

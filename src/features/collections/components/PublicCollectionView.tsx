@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/atoms/Button";
@@ -36,6 +36,7 @@ import { likesService } from "@/services/likes/likes.service";
 import { likeKeys } from "@/queries/likes/keys";
 import { useBoardLikeDisplay } from "@/hooks/useBoardLikeDisplay";
 import { ROUTES, getPublicShareUrl } from "@/constants/routes";
+import { resolveTrafficSource } from "@/lib/attribution";
 import { previewImagesFromItems } from "@/lib/collection-previews";
 import { BoardViewTracker } from "@/features/collections/components/BoardViewTracker";
 import type { Board, Item, Tag } from "@/types/board.types";
@@ -62,6 +63,8 @@ export function PublicCollectionView({
   relatedCollections = [],
 }: PublicCollectionViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const trafficSource = resolveTrafficSource(searchParams);
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const { collabPanelOpen, setCollabPanelOpen } = useUIStore();
   const showCollab = useLazyMount(collabPanelOpen);
@@ -117,7 +120,7 @@ export function PublicCollectionView({
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <BoardViewTracker boardId={board.id} mood={board.mood} source="share" />
+      <BoardViewTracker boardId={board.id} mood={board.mood} source={trafficSource} />
       <AdaptiveNavbar />
       <CollectionCoverHero
         size="public"

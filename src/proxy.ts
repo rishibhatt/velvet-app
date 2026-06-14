@@ -40,14 +40,22 @@ function redirectWithCookies(
   pathname: string,
   supabaseResponse: NextResponse,
   status = 307,
+  search?: string,
 ) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
+  url.search = search ?? "";
   const redirect = NextResponse.redirect(url, status);
   supabaseResponse.cookies.getAll().forEach((cookie) => {
     redirect.cookies.set(cookie);
   });
   return redirect;
+}
+
+function redirectToLogin(request: NextRequest, supabaseResponse: NextResponse) {
+  const returnPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  const search = `next=${encodeURIComponent(returnPath)}`;
+  return redirectWithCookies(request, "/login", supabaseResponse, 307, search);
 }
 
 function isProtected(pathname: string): boolean {
@@ -113,7 +121,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!user && isProtected(pathname)) {
-      return redirectWithCookies(request, "/login", supabaseResponse);
+      return redirectToLogin(request, supabaseResponse);
     }
 
     if (
@@ -143,7 +151,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url, PUBLIC_HOME_REDIRECT);
     }
     if (isProtected(pathname)) {
-      return redirectWithCookies(request, "/login", supabaseResponse);
+      return redirectToLogin(request, supabaseResponse);
     }
   }
 
