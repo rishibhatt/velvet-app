@@ -45,7 +45,6 @@ export function ExploreFeedGrid({ boards, ads, onBoardClick }: ExploreFeedGridPr
           <motion.div
             key={entry.type === "ad" ? `ad-${entry.data.id}` : entry.data.id}
             variants={fadeUp}
-            initial={isFirstBoard ? false : "initial"}
           >
             {entry.type === "ad" ? (
               <AdCard ad={entry.data} />
